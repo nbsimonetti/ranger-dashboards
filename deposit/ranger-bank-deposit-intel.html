@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Ranger Bank — Deposit Market Intelligence</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<style>
+:root {
+  --navy:    #1B365D;
+  --navy2:   #254a7a;
+  --gold:    #C8A951;
+  --gold-lt: #f5ecd5;
+  --bg:      #f4f6f9;
+  --surface: #ffffff;
+  --border:  #e2e8f0;
+  --text:    #1a202c;
+  --muted:   #718096;
+  --blue:    #2b6cb0;
+  --green:   #276749;
+  --r:       8px;
+  --shadow:  0 2px 8px rgba(0,0,0,.09);
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       background:var(--bg); color:var(--text); font-size:14px; line-height:1.5; }
+
+/* ── Header ─────────────────────────────────────────────── */
+header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
+         color:#fff; padding:16px 24px 14px; position:sticky; top:0; z-index:100; }
+.hdr { max-width:1500px; margin:0 auto; display:flex; align-items:center;
+       justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.hdr-left { display:flex; align-items:center; gap:14px; min-width:0; }
+.hdr-logo { font-size:20px; font-weight:800; letter-spacing:-.3px; white-space:nowrap; }
+.hdr-logo span { color:var(--gold); }
+.hdr-sub { font-size:11.5px; color:rgba(255,255,255,.6); }
+.hdr-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.hdr-meta { font-size:11px; color:rgba(255,255,255,.55); text-align:right; white-space:nowrap; }
+.hdr-meta strong { color:rgba(255,255,255,.85); }
+
+/* Search */
+.search-wrap { position:relative; }
+.search-wrap input { width:200px; padding:7px 10px 7px 30px; border:1px solid rgba(255,255,255,.2);
+  border-radius:6px; background:rgba(255,255,255,.1); color:#fff; font-size:12.5px; }
+.search-wrap input::placeholder { color:rgba(255,255,255,.4); }
+.search-wrap input:focus { outline:2px solid var(--gold); background:rgba(255,255,255,.15); }
+.search-wrap::before { content:'🔍'; position:absolute; left:8px; top:50%; transform:translateY(-50%);
+  font-size:12px; pointer-events:none; }
+
+/* Refresh button */
+.btn-refresh { display:inline-flex; align-items:center; gap:6px; padding:7px 14px;
+  border-radius:6px; border:1px solid var(--gold); background:transparent;
+  color:var(--gold); font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.btn-refresh:hover { background:var(--gold); color:var(--navy); }
+.btn-refresh.loading { opacity:.7; pointer-events:none; }
+.btn-refresh .spin { display:none; width:14px; height:14px; border:2px solid rgba(200,169,81,.3);
+  border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; }
+.btn-refresh.loading .spin { display:inline-block; }
+.btn-refresh.loading .icon { display:none; }
+
+/* Hamburger */
+.hamburger { display:none; background:none; border:none; color:#fff; font-size:24px; cursor:pointer;
+  padding:4px 8px; line-height:1; }
+
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── Notice bar ──────────────────────────────────────────── */
+.notice { padding:8px 24px; font-size:12px; border-bottom:2px solid var(--gold); background:var(--gold-lt); color:#5a4a1e; }
+.notice .inner { max-width:1500px; margin:0 auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.badge { display:inline-flex; align-items:center; gap:3px; padding:1px 7px;
+  border-radius:12px; font-size:10.5px; font-weight:700; vertical-align:middle; }
+.badge-gold  { background:var(--gold); color:var(--navy); }
+.badge-green { background:#c6f6d5; color:#276749; }
+.badge-blue  { background:#bee3f8; color:#2b6cb0; }
+.badge-red   { background:#fed7d7; color:#9b2c2c; }
+
+/* ── Main ────────────────────────────────────────────────── */
+.main { max-width:1500px; margin:0 auto; padding:16px 16px 48px; }
+
+/* ── Loading ─────────────────────────────────────────────── */
+#loading { text-align:center; padding:80px 20px; }
+.spinner { width:40px; height:40px; border:4px solid #d4c5a0;
+  border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
+#loading p { color:var(--muted); font-size:15px; }
+#loading .sub { font-size:12px; margin-top:6px; color:#a0aec0; }
+
+/* ── Stat cards ──────────────────────────────────────────── */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:12px; margin-bottom:16px; }
+.stat-card { background:var(--surface); border-radius:var(--r); padding:14px 16px;
+  box-shadow:var(--shadow); border-left:4px solid var(--border); }
+.stat-card.navy   { border-left-color:var(--navy); }
+.stat-card.gold   { border-left-color:var(--gold); }
+.stat-card.green  { border-left-color:#38a169; }
+.stat-card.teal   { border-left-color:#319795; }
+.stat-card.orange { border-left-color:#dd6b20; }
+.stat-card.purple { border-left-color:#805ad5; }
+.stat-label { font-size:10.5px; font-weight:600; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.5px; }
+.stat-value { font-size:24px; font-weight:700; margin-top:3px; line-height:1; }
+.stat-note  { font-size:10.5px; color:var(--muted); margin-top:3px; }
+
+/* ── Filter panel ────────────────────────────────────────── */
+.fpanel { background:var(--surface); border-radius:var(--r); padding:14px 16px;
+  box-shadow:var(--shadow); margin-bottom:16px; }
+.fpanel-hdr { display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:12px; gap:8px; flex-wrap:wrap; }
+.fpanel-title { font-weight:700; font-size:13px; }
+.btn-sm { background:none; border:1px solid var(--border); border-radius:6px;
+  padding:5px 12px; font-size:11.5px; cursor:pointer; color:var(--muted); white-space:nowrap; }
+.btn-sm:hover { background:#f7fafc; color:var(--text); }
+.btn-export { background:var(--navy); color:#fff; border-color:var(--navy); }
+.btn-export:hover { background:var(--navy2); }
+.fgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; }
+.fi label { display:block; font-size:10.5px; font-weight:600; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+.fi select,.fi input[type=text] { width:100%; border:1px solid var(--border); border-radius:6px;
+  padding:7px 10px; font-size:12.5px; background:#f8fafc; color:var(--text);
+  -webkit-appearance:none; appearance:none; min-height:36px; }
+.fi select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
+.fi select:focus,.fi input:focus { outline:2px solid var(--navy); outline-offset:1px; }
+.range-wrap { margin-top:3px; }
+.range-wrap input[type=range] { width:100%; accent-color:var(--navy); }
+.fpanel-foot { display:flex; align-items:center; justify-content:space-between;
+  margin-top:10px; padding-top:8px; border-top:1px solid var(--border); gap:8px; flex-wrap:wrap; }
+.fcount { font-size:12px; color:var(--muted); }
+.fcount strong { color:var(--text); }
+
+/* ── Tabs ────────────────────────────────────────────────── */
+.tabbar { display:flex; gap:0; background:var(--surface);
+  border-radius:var(--r) var(--r) 0 0; padding:0 4px;
+  border-bottom:2px solid var(--border); box-shadow:var(--shadow);
+  overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.tab-btn { padding:11px 16px; font-size:12.5px; font-weight:600; border:none;
+  background:none; cursor:pointer; color:var(--muted);
+  border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap;
+  min-height:44px; }
+.tab-btn.active { color:var(--navy); border-bottom-color:var(--gold); }
+.tab-btn:hover:not(.active) { color:var(--text); }
+.tabcontent { display:none; background:var(--surface);
+  border-radius:0 0 var(--r) var(--r); box-shadow:var(--shadow); }
+.tabcontent.active { display:block; }
+
+/* ── Table ───────────────────────────────────────────────── */
+.tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; max-height:70vh; overflow-y:auto; }
+table { width:100%; border-collapse:collapse; }
+thead tr { background:#f7fafc; }
+th { padding:10px 12px; font-size:10.5px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.5px; color:var(--muted); text-align:left; white-space:nowrap;
+  cursor:pointer; user-select:none; min-height:44px;
+  position:sticky; top:0; background:#f7fafc; z-index:2; box-shadow:0 1px 0 var(--border); }
+th:hover:not(.nosort) { color:var(--text); }
+th.nosort { cursor:default; }
+th.sort-asc::after  { content:' ▲'; color:var(--navy); }
+th.sort-desc::after { content:' ▼'; color:var(--navy); }
+td { padding:9px 12px; border-bottom:1px solid #f0f4f8; vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:#fafbfd; }
+tr.ranger-row td { background:var(--gold-lt); }
+td.right { text-align:right; font-variant-numeric:tabular-nums; }
+.bank-name { font-weight:600; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.alert-rate { position:relative; }
+.alert-rate::after { content:'🔥'; margin-left:3px; font-size:11px; }
+
+/* Rate display */
+.apy-hi  { color:#22543d; font-weight:700; font-size:14px; }
+.apy-mid { color:#276749; font-weight:700; font-size:14px; }
+.apy-lo  { color:#4a5568; font-weight:700; font-size:13px; }
+.apy-sub { font-size:10px; color:var(--muted); display:block; margin-top:1px; }
+.cof-hi  { color:#22543d; font-weight:700; font-size:14px; }
+.cof-mid { color:#276749; font-weight:700; font-size:14px; }
+.cof-lo  { color:#4a5568; font-weight:700; font-size:14px; }
+.cof-na  { color:#a0aec0; font-size:12px; }
+.cof-sub { font-size:10px; color:var(--muted); display:block; margin-top:1px; }
+
+/* Competition badges */
+.lvl { display:inline-block; padding:2px 8px; border-radius:20px; font-size:10.5px; font-weight:700; }
+.lvl-soft { background:#ebf8ff; color:#2b6cb0; }
+.lvl-mod  { background:#fffaf0; color:#c05621; }
+.lvl-hot  { background:#fff5f5; color:#c53030; }
+
+/* Product pills */
+.pp { display:inline-block; padding:2px 7px; border-radius:20px; font-size:10.5px; font-weight:600; white-space:nowrap; }
+.pp-cd      { background:#ebf8ff; color:#2b6cb0; }
+.pp-savings { background:#f0fff4; color:#276749; }
+.pp-mmkt    { background:#fffaf0; color:#c05621; }
+.pp-ichk    { background:#faf5ff; color:#6b46c1; }
+.pp-ira     { background:#fff5f5; color:#c53030; }
+.pill-charter { background:#f0f4f8; color:#4a5568; display:inline-block; padding:2px 8px;
+  border-radius:20px; font-size:10.5px; font-weight:600; }
+
+/* Special flags */
+.sf-promo  { background:#fefcbf; color:#744210; font-size:9.5px; padding:1px 5px; border-radius:4px; font-weight:700; }
+.sf-jumbo  { background:#e9d8fd; color:#553c9a; font-size:9.5px; padding:1px 5px; border-radius:4px; font-weight:700; }
+
+/* Links */
+.link-btn { display:inline-flex; align-items:center; gap:3px; padding:5px 10px;
+  border-radius:6px; font-size:11.5px; font-weight:600; text-decoration:none;
+  white-space:nowrap; border:1px solid; transition:background .12s; min-height:32px; }
+.link-p { background:#ebf4ff; color:#2b6cb0; border-color:#bee3f8; }
+.link-p:hover { background:#bee3f8; }
+.link-s { background:#f7fafc; color:#4a5568; border-color:#e2e8f0; }
+.link-s:hover { background:#edf2f7; }
+
+.tbl-note { font-size:11px; color:var(--muted); padding:10px 14px;
+  background:#f9fbfd; border-top:1px solid var(--border); line-height:1.6; }
+
+/* ── Pagination ──────────────────────────────────────────── */
+.pgbar { display:flex; align-items:center; justify-content:space-between;
+  padding:9px 14px; border-top:1px solid var(--border); flex-wrap:wrap; gap:8px; }
+.pginfo { font-size:12px; color:var(--muted); }
+.pgbtns { display:flex; gap:3px; flex-wrap:wrap; }
+.pgbtns button { padding:5px 10px; border:1px solid var(--border); border-radius:5px;
+  background:var(--surface); font-size:11.5px; cursor:pointer; min-height:32px; min-width:32px; }
+.pgbtns button:hover:not(:disabled):not(.active) { background:#ebf4ff; border-color:#bee3f8; }
+.pgbtns button.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+.pgbtns button:disabled { opacity:.4; cursor:default; }
+.pgsize select { border:1px solid var(--border); border-radius:5px; padding:4px 8px; font-size:11.5px; }
+
+/* ── Charts ──────────────────────────────────────────────── */
+.charts-wrap { padding:16px; }
+.cgrid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.ccard { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r); padding:14px; }
+.ccard.wide { grid-column:1 / -1; }
+.clabel { font-size:11.5px; font-weight:700; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.4px; margin-bottom:10px; }
+.clabel span { font-weight:400; color:#a0aec0; margin-left:4px; }
+
+/* ── CD Matrix ───────────────────────────────────────────── */
+.matrix-wrap { padding:16px; }
+.matrix-tbl th,.matrix-tbl td { text-align:center; padding:7px 9px; min-width:60px; }
+.matrix-tbl td:first-child,.matrix-tbl th:first-child { text-align:left; min-width:140px; white-space:nowrap; }
+.cell-apy   { font-weight:700; font-size:12.5px; border-radius:4px; display:block; padding:3px 5px; }
+.cell-hi    { background:#c6f6d5; color:#22543d; }
+.cell-mid   { background:#fefcbf; color:#744210; }
+.cell-lo    { background:#fed7d7; color:#9b2c2c; }
+.cell-na    { color:#a0aec0; font-size:11px; }
+
+/* ── Map ─────────────────────────────────────────────────── */
+.map-wrap { padding:14px; }
+#map { height:500px; border-radius:var(--r); overflow:hidden; }
+.map-legend { display:flex; gap:14px; margin-bottom:10px; align-items:center; flex-wrap:wrap; }
+.mleg { display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--muted); }
+.mdot { width:11px; height:11px; border-radius:50%; border:2px solid rgba(0,0,0,.15); }
+.map-note { font-size:10.5px; color:var(--muted); margin-top:8px; }
+
+/* ── Ranger Rate Input Modal ─────────────────────────────── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200;
+  align-items:center; justify-content:center; padding:20px; }
+.modal-overlay.show { display:flex; }
+.modal { background:#fff; border-radius:12px; padding:24px; max-width:480px; width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto; }
+.modal h3 { font-size:16px; margin-bottom:4px; color:var(--navy); }
+.modal p { font-size:12.5px; color:var(--muted); margin-bottom:16px; }
+.modal label { display:block; font-size:11px; font-weight:600; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; margin-top:12px; }
+.modal input { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px;
+  font-size:13px; }
+.modal-btns { display:flex; gap:8px; margin-top:20px; justify-content:flex-end; }
+.modal-btns button { padding:8px 18px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid; }
+.btn-modal-save { background:var(--navy); color:#fff; border-color:var(--navy); }
+.btn-modal-cancel { background:#fff; color:var(--muted); border-color:var(--border); }
+.ranger-indicator { display:inline-block; background:var(--gold); color:var(--navy); font-size:9.5px;
+  font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px; vertical-align:middle; }
+
+/* ── Back to top ─────────────────────────────────────────── */
+.btt { position:fixed; bottom:20px; right:20px; width:44px; height:44px;
+  border-radius:50%; background:var(--navy); color:var(--gold); border:2px solid var(--gold);
+  font-size:20px; cursor:pointer; display:none; z-index:50; box-shadow:0 4px 12px rgba(0,0,0,.2);
+  align-items:center; justify-content:center; }
+.btt.show { display:flex; }
+
+/* ── Print ───────────────────────────────────────────────── */
+@media print {
+  header,.fpanel,.tabbar,.pgbar,.btn-refresh,.btt,.notice,.search-wrap,.hamburger { display:none !important; }
+  .tabcontent { display:block !important; page-break-inside:avoid; }
+  .main { padding:0; }
+  body { font-size:11px; }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width:1100px) {
+  .cgrid { grid-template-columns:1fr; }
+  .ccard.wide { grid-column:auto; }
+}
+@media (max-width:768px) {
+  .hdr { gap:8px; }
+  .hdr-sub,.hdr-meta { display:none; }
+  .search-wrap input { width:140px; }
+  .hamburger { display:block; }
+  .fpanel.collapsed .fgrid,
+  .fpanel.collapsed .fpanel-foot { display:none; }
+  .tabbar { padding:0; }
+  .tab-btn { padding:10px 12px; font-size:11.5px; }
+  #map { height:350px; }
+}
+@media (max-width:480px) {
+  header { padding:12px 12px 10px; }
+  .main { padding:10px 8px 48px; }
+  .stat-grid { grid-template-columns:1fr 1fr; gap:8px; }
+  .stat-card { padding:10px 12px; }
+  .stat-value { font-size:20px; }
+  .fgrid { grid-template-columns:1fr; }
+  .tab-btn { padding:9px 10px; font-size:11px; }
+  .search-wrap input { width:110px; }
+  .btn-refresh span.label { display:none; }
+  #map { height:280px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <div class="hdr-left">
+      <button class="hamburger" id="hamburger" aria-label="Toggle filters">☰</button>
+      <div>
+        <div class="hdr-logo">Ranger <span>Bank</span> — Deposit Market Intelligence</div>
+        <div class="hdr-sub">TX community bank competitive analysis · FDIC + scraped advertised rates</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="search-wrap">
+        <input type="text" id="global-search" placeholder="Search banks, cities…" aria-label="Search">
+      </div>
+      <button class="btn-refresh" id="btn-refresh" title="Re-fetch FDIC data">
+        <span class="icon">↻</span><span class="spin"></span>
+        <span class="label">Refresh Data</span>
+      </button>
+      <div class="hdr-meta" id="hdr-meta">Loading…</div>
+    </div>
+  </div>
+</header>
+
+<div class="notice" id="notice-bar">
+  <div class="inner" id="notice-inner">
+    <span class="badge badge-gold">● LOADING</span> Connecting to FDIC BankFind API…
+  </div>
+</div>
+
+<div class="main">
+  <div id="loading">
+    <div class="spinner"></div>
+    <p id="lmsg">Connecting to FDIC BankFind API…</p>
+    <p class="sub" id="lsub"></p>
+  </div>
+
+  <div id="app" style="display:none">
+
+    <!-- Stat cards -->
+    <div class="stat-grid" id="stat-grid">
+      <div class="stat-card navy">
+        <div class="stat-label">TX Banks</div>
+        <div class="stat-value" id="s-banks">—</div>
+        <div class="stat-note">Active community banks</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">With FDIC COF</div>
+        <div class="stat-value" id="s-cof-count">—</div>
+        <div class="stat-note">Banks with cost-of-funds data</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Avg Cost of Funds</div>
+        <div class="stat-value" id="s-avg-cof">—</div>
+        <div class="stat-note">Blended deposit cost (FDIC)</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label">Banks w/ Rates</div>
+        <div class="stat-value" id="s-scraped">—</div>
+        <div class="stat-note">Scraped advertised rates</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">Products Found</div>
+        <div class="stat-value" id="s-products">—</div>
+        <div class="stat-note">Deposit product rates</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">Highest COF</div>
+        <div class="stat-value" id="s-max-cof">—</div>
+        <div class="stat-note">Most deposit-competitive</div>
+      </div>
+      <div class="stat-card navy">
+        <div class="stat-label">Avg Loan-to-Deposit</div>
+        <div class="stat-value" id="s-avg-ltd">—</div>
+        <div class="stat-note">FDIC LNLSNET ÷ DEP</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">Fed Funds Rate</div>
+        <div class="stat-value" id="s-fed-funds">—</div>
+        <div class="stat-note" id="s-fed-note">Target range</div>
+      </div>
+    </div>
+
+    <!-- Ranger Bank rate input prompt -->
+    <div id="ranger-prompt" style="background:var(--gold-lt);border:1px solid var(--gold);border-radius:var(--r);
+      padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="font-size:13px;color:var(--navy)">
+        <strong>Position Ranger Bank:</strong> Enter your target rates to see how you rank vs. competitors.
+      </div>
+      <button class="btn-sm" style="background:var(--navy);color:var(--gold);border-color:var(--navy)" id="btn-ranger-open">
+        Set Ranger Rates
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="fpanel" id="fpanel">
+      <div class="fpanel-hdr">
+        <div class="fpanel-title">Filter & Sort</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn-sm btn-export" id="btn-csv">Export CSV</button>
+          <button class="btn-sm" id="btn-print" onclick="window.print()">Print</button>
+          <button class="btn-sm" id="btn-reset">Reset All</button>
+        </div>
+      </div>
+      <div class="fgrid" id="fgrid">
+        <div class="fi">
+          <label>Region</label>
+          <select id="f-region"><option value="">All Regions</option></select>
+        </div>
+        <div class="fi">
+          <label>City / Market</label>
+          <select id="f-city"><option value="">All Cities</option></select>
+        </div>
+        <div class="fi">
+          <label>Product Type</label>
+          <select id="f-type">
+            <option value="">All Products</option>
+            <option value="cd">Certificate of Deposit</option>
+            <option value="savings">Savings</option>
+            <option value="mmkt">Money Market</option>
+            <option value="ichk">Interest Checking</option>
+            <option value="ira">IRA</option>
+          </select>
+        </div>
+        <div class="fi">
+          <label>CD Term</label>
+          <select id="f-term"><option value="">All Terms</option></select>
+        </div>
+        <div class="fi">
+          <label>Min APY: <strong id="f-apy-val">0.00%</strong></label>
+          <div class="range-wrap">
+            <input type="range" id="f-apy" min="0" max="10" step="0.1" value="0">
+          </div>
+        </div>
+        <div class="fi">
+          <label>Bank Asset Size</label>
+          <select id="f-asset">
+            <option value="">All Sizes</option>
+            <option value="under100">Under $100M</option>
+            <option value="100to500">$100M – $500M</option>
+            <option value="500to1b">$500M – $1B</option>
+            <option value="1bto3b">$1B – $3B</option>
+          </select>
+        </div>
+        <div class="fi">
+          <label>Charter Type</label>
+          <select id="f-charter">
+            <option value="">All Charters</option>
+            <option value="state">State Bank</option>
+            <option value="national">National Bank</option>
+            <option value="savings">Savings Bank</option>
+          </select>
+        </div>
+        <div class="fi">
+          <label>Data Available</label>
+          <select id="f-data">
+            <option value="">All Banks</option>
+            <option value="cof">Has FDIC COF</option>
+            <option value="scraped">Has Scraped Rates</option>
+            <option value="website">Has Website</option>
+          </select>
+        </div>
+      </div>
+      <div class="fpanel-foot">
+        <div class="fcount" id="fcount-wrap">Showing <strong id="fc-count">—</strong></div>
+        <div id="last-refresh" style="font-size:11px;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tabbar" role="tablist">
+      <button class="tab-btn active" data-tab="markets" role="tab">Market Intel</button>
+      <button class="tab-btn" data-tab="scanner" role="tab">Rate Scanner</button>
+      <button class="tab-btn" data-tab="cof" role="tab">Cost of Funds</button>
+      <button class="tab-btn" data-tab="cdmatrix" role="tab">CD Analysis</button>
+      <button class="tab-btn" data-tab="charts" role="tab">Charts</button>
+      <button class="tab-btn" data-tab="map" role="tab">Map</button>
+    </div>
+
+    <!-- MARKET INTELLIGENCE tab -->
+    <div class="tabcontent active" id="tab-markets" role="tabpanel">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th data-col="city" data-tbl="mkt">Market</th>
+            <th data-col="regionLabel" data-tbl="mkt">Region</th>
+            <th data-col="bankCount" data-tbl="mkt">Competitors</th>
+            <th data-col="avgCd12" data-tbl="mkt">Avg 12mo CD</th>
+            <th data-col="avgSavings" data-tbl="mkt">Avg Savings</th>
+            <th data-col="avgMmkt" data-tbl="mkt">Avg Money Mkt</th>
+            <th data-col="bestApy" data-tbl="mkt">Best Rate</th>
+            <th data-col="avgApy" data-tbl="mkt" class="sort-asc">Avg All APY</th>
+            <th class="nosort">Products</th>
+            <th class="nosort">Environment</th>
+            <th data-col="opportunity" data-tbl="mkt">Opportunity</th>
+          </tr></thead>
+          <tbody id="mkt-body"></tbody>
+        </table>
+      </div>
+      <div class="tbl-note">
+        <strong>Rate Environment:</strong> Based on avg advertised APY.
+        <span style="color:#2b6cb0;font-weight:600">Low</span> = easy to attract depositors.
+        <span style="color:#c05621;font-weight:600">Moderate</span> = avg competition.
+        <span style="color:#c53030;font-weight:600">High</span> = you must match.
+      </div>
+      <div class="pgbar">
+        <div class="pgsize">Rows: <select id="mkt-pg-size"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></div>
+        <div class="pginfo" id="mkt-pg-info"></div>
+        <div class="pgbtns" id="mkt-pg-btns"></div>
+      </div>
+    </div>
+
+    <!-- RATE SCANNER tab -->
+    <div class="tabcontent" id="tab-scanner" role="tabpanel">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th data-col="bankName" data-tbl="scan">Bank</th>
+            <th data-col="city" data-tbl="scan">Market</th>
+            <th data-col="regionLabel" data-tbl="scan">Region</th>
+            <th data-col="productType" data-tbl="scan">Product</th>
+            <th data-col="termMonths" data-tbl="scan">Term</th>
+            <th data-col="apy" data-tbl="scan" class="sort-desc">APY</th>
+            <th data-col="minBalance" data-tbl="scan">Min Balance</th>
+            <th data-col="assetM" data-tbl="scan">Bank Size</th>
+            <th data-col="spreadVsNatl" data-tbl="scan">vs Natl Avg</th>
+            <th class="nosort">Rate Page</th>
+          </tr></thead>
+          <tbody id="scan-body"></tbody>
+        </table>
+      </div>
+      <div class="tbl-note">
+        Each row = one advertised deposit product. Rates scraped from public bank websites. Click <strong>View Rates</strong> for source.
+      </div>
+      <div class="pgbar">
+        <div class="pgsize">Rows: <select id="scan-pg-size"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></div>
+        <div class="pginfo" id="scan-pg-info"></div>
+        <div class="pgbtns" id="scan-pg-btns"></div>
+      </div>
+    </div>
+
+    <!-- COST OF FUNDS tab -->
+    <div class="tabcontent" id="tab-cof" role="tabpanel">
+      <div style="padding:10px 14px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" id="btn-health-toggle" style="font-size:11px">Show Health Metrics</button>
+        <span style="font-size:10.5px;color:var(--muted)" id="cof-health-legend"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th data-col="name" data-tbl="cof">Bank</th>
+            <th data-col="city" data-tbl="cof">City</th>
+            <th data-col="regionLabel" data-tbl="cof">Region</th>
+            <th data-col="impliedRate" data-tbl="cof" class="sort-desc">Cost of Funds</th>
+            <th data-col="cofPctile" data-tbl="cof">COF %ile</th>
+            <th data-col="eintexpM" data-tbl="cof">Ann. Int. Expense</th>
+            <th data-col="depM" data-tbl="cof">Total Deposits</th>
+            <th data-col="assetM" data-tbl="cof">Total Assets</th>
+            <th data-col="branchCount" data-tbl="cof">Branches</th>
+            <th data-col="ltd" data-tbl="cof" class="health-col" style="display:none">LTD Ratio</th>
+            <th data-col="roa" data-tbl="cof" class="health-col" style="display:none">ROA</th>
+            <th data-col="texasRatio" data-tbl="cof" class="health-col" style="display:none">Texas Ratio</th>
+            <th data-col="nim" data-tbl="cof" class="health-col" style="display:none">NIM Proxy</th>
+            <th data-col="depGrowth" data-tbl="cof" class="health-col" style="display:none">Dep Growth</th>
+            <th data-col="charterType" data-tbl="cof">Charter</th>
+            <th class="nosort">Website</th>
+          </tr></thead>
+          <tbody id="cof-body"></tbody>
+        </table>
+      </div>
+      <div class="tbl-note">
+        <strong>Cost of Funds</strong> = FDIC EINTEXP ÷ DEP × 100. <strong>COF %ile</strong> = rank among all TX banks.
+        <strong>LTD</strong> = Loans ÷ Deposits. <strong>Texas Ratio</strong> = Noncurrent loans ÷ (Equity + Loan loss reserves).
+        <strong>NIM Proxy</strong> = (Int Income − Int Expense) ÷ Assets. <strong>Dep Growth</strong> = QoQ change in deposits.
+      </div>
+      <div class="pgbar">
+        <div class="pgsize">Rows: <select id="cof-pg-size"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></div>
+        <div class="pginfo" id="cof-pg-info"></div>
+        <div class="pgbtns" id="cof-pg-btns"></div>
+      </div>
+    </div>
+
+    <!-- CD ANALYSIS tab -->
+    <div class="tabcontent" id="tab-cdmatrix" role="tabpanel">
+      <div class="matrix-wrap">
+        <div class="ccard wide" style="margin-bottom:16px">
+          <div class="clabel">CD Yield Curve <span>— avg and best advertised APY by term</span></div>
+          <div style="position:relative;height:220px"><canvas id="ch-curve"></canvas></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <span style="font-size:11.5px;font-weight:700;color:var(--muted)">View:</span>
+          <button class="btn-sm" id="matrix-btn-all" style="background:var(--navy);color:#fff;border-color:var(--navy)">All Banks</button>
+          <button class="btn-sm" id="matrix-btn-region">By Region (avg)</button>
+          <div style="margin-left:auto;font-size:11px;color:var(--muted)">
+            <span class="cell-apy cell-hi" style="display:inline-block;width:24px;height:12px;vertical-align:middle;border-radius:3px"></span> high
+            <span class="cell-apy cell-mid" style="display:inline-block;width:24px;height:12px;vertical-align:middle;border-radius:3px"></span> mid
+            <span class="cell-apy cell-lo" style="display:inline-block;width:24px;height:12px;vertical-align:middle;border-radius:3px"></span> low
+          </div>
+        </div>
+        <div style="background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden">
+          <div class="tbl-wrap">
+            <table class="matrix-tbl">
+              <thead id="matrix-thead"></thead>
+              <tbody id="matrix-body"></tbody>
+            </table>
+          </div>
+          <div class="tbl-note">Best advertised CD APY per bank per term. Color = relative position within column.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS tab -->
+    <div class="tabcontent" id="tab-charts" role="tabpanel">
+      <div class="charts-wrap">
+        <div class="cgrid">
+          <div class="ccard wide">
+            <div class="clabel">Top 30 Highest Advertised Rates <span>scraped from bank websites</span></div>
+            <div style="position:relative;height:400px"><canvas id="ch-top"></canvas></div>
+          </div>
+          <div class="ccard">
+            <div class="clabel">Top 30 Banks by Cost of Funds <span>FDIC EINTEXP ÷ DEP</span></div>
+            <div style="position:relative;height:400px"><canvas id="ch-cof-top"></canvas></div>
+          </div>
+          <div class="ccard">
+            <div class="clabel">Average APY by Product Type <span>scraped rates</span></div>
+            <div style="position:relative;height:260px"><canvas id="ch-type"></canvas></div>
+          </div>
+          <div class="ccard">
+            <div class="clabel">Cost of Funds Distribution <span>banks by rate band</span></div>
+            <div style="position:relative;height:260px"><canvas id="ch-cof-dist"></canvas></div>
+          </div>
+          <div class="ccard">
+            <div class="clabel">Rate Environment by Region <span>avg advertised APY</span></div>
+            <div style="position:relative;height:260px"><canvas id="ch-region"></canvas></div>
+          </div>
+          <div class="ccard">
+            <div class="clabel">Avg COF by Asset Size <span>FDIC data</span></div>
+            <div style="position:relative;height:260px"><canvas id="ch-cof-asset"></canvas></div>
+          </div>
+          <div class="ccard">
+            <div class="clabel">Competitor Count by Market <span>banks with scraped rates</span></div>
+            <div style="position:relative;height:260px"><canvas id="ch-mkt-count"></canvas></div>
+          </div>
+          <div class="ccard">
+            <div class="clabel">Charter Type Breakdown <span>all TX banks</span></div>
+            <div style="position:relative;height:260px"><canvas id="ch-charter"></canvas></div>
+          </div>
+          <div class="ccard">
+            <div class="clabel">Loan-to-Deposit Ratio Distribution <span>FDIC data</span></div>
+            <div style="position:relative;height:260px"><canvas id="ch-ltd-dist"></canvas></div>
+          </div>
+          <div class="ccard">
+            <div class="clabel">Bank Health: ROA Distribution <span>FDIC data</span></div>
+            <div style="position:relative;height:260px"><canvas id="ch-roa-dist"></canvas></div>
+          </div>
+          <div class="ccard wide">
+            <div class="clabel">Treasury Avg Interest Rates <span>U.S. Treasury Fiscal Data API</span></div>
+            <div style="position:relative;height:220px"><canvas id="ch-treasury"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP tab -->
+    <div class="tabcontent" id="tab-map" role="tabpanel">
+      <div class="map-wrap">
+        <div class="map-legend">
+          <strong style="font-size:11.5px;color:#4a5568">Color = Cost of Funds:</strong>
+          <div class="mleg"><div class="mdot" style="background:#d69e2e"></div>< 1%</div>
+          <div class="mleg"><div class="mdot" style="background:#68d391"></div>1–2%</div>
+          <div class="mleg"><div class="mdot" style="background:#38a169"></div>2–3%</div>
+          <div class="mleg"><div class="mdot" style="background:#276749"></div>3%+</div>
+          <div class="mleg"><div class="mdot" style="background:var(--gold)"></div>Scraped rates</div>
+          <div class="mleg"><div class="mdot" style="background:#a0aec0"></div>No data</div>
+        </div>
+        <div id="map"></div>
+        <div class="map-note">Click markers for details. Size ∝ assets. Colored markers have COF or scraped data.</div>
+      </div>
+    </div>
+
+  </div><!-- /#app -->
+</div>
+
+<!-- Ranger Rate Modal -->
+<div class="modal-overlay" id="ranger-modal">
+  <div class="modal">
+    <h3>Set Ranger Bank Target Rates</h3>
+    <p>Enter your proposed rates to see how Ranger Bank would rank against TX competitors.</p>
+    <label>12-Month CD APY (%)</label>
+    <input type="number" id="rr-cd12" step="0.01" placeholder="e.g. 4.50">
+    <label>Savings APY (%)</label>
+    <input type="number" id="rr-savings" step="0.01" placeholder="e.g. 1.00">
+    <label>Money Market APY (%)</label>
+    <input type="number" id="rr-mmkt" step="0.01" placeholder="e.g. 3.00">
+    <label>Interest Checking APY (%)</label>
+    <input type="number" id="rr-ichk" step="0.01" placeholder="e.g. 0.50">
+    <label>Alert Threshold APY (%)</label>
+    <input type="number" id="rr-threshold" step="0.01" value="5.00" placeholder="Flag rates above this">
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" id="ranger-cancel">Cancel</button>
+      <button class="btn-modal-save" id="ranger-save">Apply Rates</button>
+    </div>
+  </div>
+</div>
+
+<!-- Back to top -->
+<button class="btt" id="btt" aria-label="Back to top">↑</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SCRAPED RATES DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCRAPED_RATES_START
+const SCRAPED_RATES = {"metadata":{"scraped_at":"2026-03-27T22:37:42.474464+00:00","banks_attempted":317,"banks_with_rates":19,"product_rows":51},"rates":{"5551":{"bank_name":"Extraco Banks, National Association","city":"Temple","website_url":"https://www.extracobanks.com","rates_url":"https://www.extracobanks.com/personal/current-rates","scraped_at":"2026-03-27T22:22:15.915385+00:00","products":[{"type":"savings","name":"Smart Savings","term_months":null,"apy":1.0,"min_balance":null,"source_url":"https://www.extracobanks.com/personal/current-rates"},{"type":"mmkt","name":"Money Market","term_months":null,"apy":3.0,"min_balance":null,"source_url":"https://www.extracobanks.com/personal/current-rates"},{"type":"cd","name":"12-month Special CD","term_months":1,"apy":3.65,"min_balance":null,"source_url":"https://www.extracobanks.com/personal/current-rates"}]},"17612":{"bank_name":"Central Bank","city":"Houston","website_url":"https://www.centralbankhouston.com","rates_url":"https://www.cbhou.com/about/rates","scraped_at":"2026-03-27T22:24:11.300478+00:00","products":[{"type":"cd","name":"12-Month CD","term_months":12,"apy":1.5,"min_balance":100,"source_url":"https://www.cbhou.com/about/rates"}]},"3091":{"bank_name":"The First National Bank of Bastrop","city":"Bastrop","website_url":"https://www.fnbbastrop.bank","rates_url":"https://www.fnbbastrop.bank/rates","scraped_at":"2026-03-27T22:24:52.776570+00:00","products":[{"type":"savings","name":"Savings","term_months":null,"apy":0.1,"min_balance":50,"source_url":"https://www.fnbbastrop.bank/rates"},{"type":"mmkt","name":"Money Market","term_months":null,"apy":0.5,"min_balance":1500,"source_url":"https://www.fnbbastrop.bank/rates"}]},"3226":{"bank_name":"Ciera Bank","city":"Graham","website_url":"https://www.cierabank.com","rates_url":"https://www.cierabank.com/rates","scraped_at":"2026-03-27T22:25:28.153632+00:00","products":[{"type":"savings","name":"Money Market Savings Account","term_months":null,"apy":3.4,"min_balance":2500,"source_url":"https://www.cierabank.com/rates"},{"type":"mmkt","name":"Money Market Deposit Account","term_months":null,"apy":3.25,"min_balance":null,"source_url":"https://www.cierabank.com/rates"}]},"17588":{"bank_name":"The First State Bank","city":"Louise","website_url":"https://www.fsblouise.com","rates_url":"https://www.fsblouise.com/rates","scraped_at":"2026-03-27T22:26:01.265666+00:00","products":[{"type":"mmkt","name":"Tiered Money Market: Tier 3","term_months":null,"apy":2.02,"min_balance":100000,"source_url":"https://www.fsblouise.com/rates"},{"type":"savings","name":"Savings","term_months":null,"apy":0.2,"min_balance":100,"source_url":"https://www.fsblouise.com/rates"}]},"9967":{"bank_name":"American State Bank","city":"Arp","website_url":"https://www.asb.com","rates_url":"https://www.asb.com/deposit-rates","scraped_at":"2026-03-27T22:27:11.485839+00:00","products":[{"type":"savings","name":"American Select Savings","term_months":null,"apy":1.0,"min_balance":100,"source_url":"https://www.asb.com/deposit-rates"},{"type":"mmkt","name":"Pinnacle Money Market Tier 3","term_months":null,"apy":3.25,"min_balance":250000,"source_url":"https://www.asb.com/deposit-rates"}]},"24603":{"bank_name":"First Commercial Bank, National Association","city":"Seguin","website_url":"https://www.1cb.com","rates_url":"https://www.1cb.com/rates","scraped_at":"2026-03-27T22:28:00.073283+00:00","products":[{"type":"cd","name":"2 Year CD","term_months":24,"apy":1.95,"min_balance":2500,"source_url":"https://www.1cb.com/rates"},{"type":"cd","name":"18 Month CD","term_months":18,"apy":2.25,"min_balance":2500,"source_url":"https://www.1cb.com/rates"},{"type":"cd","name":"1 Year CD","term_months":12,"apy":2.5,"min_balance":2500,"source_url":"https://www.1cb.com/rates"},{"type":"cd","name":"6 Month CD","term_months":6,"apy":2.52,"min_balance":2500,"source_url":"https://www.1cb.com/rates"},{"type":"cd","name":"3 Month CD","term_months":3,"apy":2.78,"min_balance":2500,"source_url":"https://www.1cb.com/rates"},{"type":"ichk","name":"Interest Checking","term_months":null,"apy":0.05,"min_balance":1500,"source_url":"https://www.1cb.com/rates"},{"type":"savings","name":"Savings Account","term_months":null,"apy":0.35,"min_balance":100,"source_url":"https://www.1cb.com/rates"},{"type":"ira","name":"1 Yr IRA","term_months":null,"apy":2.5,"min_balance":2500,"source_url":"https://www.1cb.com/rates"}]},"17108":{"bank_name":"Community Bank & Trust, Waco, Texas","city":"Waco","website_url":"https://www.cbtwaco.bank","rates_url":"https://www.cbtwaco.bank/","scraped_at":"2026-03-27T22:28:08.868797+00:00","products":[{"type":"cd","name":"12-Month Special CD","term_months":12,"apy":4.5,"min_balance":null,"source_url":"https://www.cbtwaco.bank/"}]},"3113":{"bank_name":"The Brenham National Bank","city":"Brenham","website_url":"https://www.bnbank.bank","rates_url":"https://www.bnbank.bank/rates","scraped_at":"2026-03-27T22:28:13.620619+00:00","products":[{"type":"ichk","name":"Signature Interest Checking","term_months":null,"apy":1.0,"min_balance":null,"source_url":"https://www.bnbank.bank/rates"},{"type":"savings","name":"Success Savings","term_months":null,"apy":0.01,"min_balance":null,"source_url":"https://www.bnbank.bank/rates"},{"type":"mmkt","name":"Momentum Money Market","term_months":null,"apy":0.01,"min_balance":null,"source_url":"https://www.bnbank.bank/rates"}]},"31936":{"bank_name":"Fayette Savings Bank, SSB","city":"La Grange","website_url":"https://www.fayettesavings.com","rates_url":"https://www.fayettesavings.com/rates","scraped_at":"2026-03-27T22:28:22.930588+00:00","products":[{"type":"cd","name":"3 Month CD","term_months":3,"apy":0.5,"min_balance":1000,"source_url":"https://www.fayettesavings.com/rates"},{"type":"cd","name":"6 Month CD","term_months":6,"apy":3.8,"min_balance":1000,"source_url":"https://www.fayettesavings.com/rates"},{"type":"cd","name":"12 Month CD","term_months":12,"apy":3.5,"min_balance":1000,"source_url":"https://www.fayettesavings.com/rates"},{"type":"cd","name":"18 Month CD","term_months":18,"apy":3.3,"min_balance":1000,"source_url":"https://www.fayettesavings.com/rates"},{"type":"cd","name":"24 Month CD","term_months":24,"apy":2.05,"min_balance":1000,"source_url":"https://www.fayettesavings.com/rates"},{"type":"cd","name":"36 Month CD","term_months":36,"apy":2.05,"min_balance":1000,"source_url":"https://www.fayettesavings.com/rates"},{"type":"cd","name":"48 Month CD","term_months":48,"apy":1.3,"min_balance":1000,"source_url":"https://www.fayettesavings.com/rates"},{"type":"cd","name":"60 Month CD","term_months":60,"apy":1.3,"min_balance":1000,"source_url":"https://www.fayettesavings.com/rates"},{"type":"savings","name":"Health Savings Account","term_months":null,"apy":0.4,"min_balance":100,"source_url":"https://www.fayettesavings.com/rates"},{"type":"mmkt","name":"Money Market Checking","term_months":null,"apy":0.1,"min_balance":24999,"source_url":"https://www.fayettesavings.com/rates"},{"type":"cd","name":"30 Month Roth IRA CD","term_months":30,"apy":3.0,"min_balance":500,"source_url":"https://www.fayettesavings.com/rates"}]},"17811":{"bank_name":"First National Bank in Port Lavaca","city":"Port Lavaca","website_url":"https://WWW.FNBPORTLAVACA.COM","rates_url":"https://www.fnbportlavaca.com/rates/","scraped_at":"2026-03-27T22:29:49.535135+00:00","products":[{"type":"mmkt","name":"Money Market Accounts","term_months":null,"apy":0.8,"min_balance":1000,"source_url":"https://www.fnbportlavaca.com/rates/"}]},"3219":{"bank_name":"Gilmer National Bank, Gilmer, Texas","city":"Gilmer","website_url":"https://www.gnbgilmer.com","rates_url":"https://www.gnbgilmer.com/","scraped_at":"2026-03-27T22:30:15.324134+00:00","products":[{"type":"savings","name":"Savings","term_months":null,"apy":3.31,"min_balance":225,"source_url":"https://www.gnbgilmer.com/"}]},"3302":{"bank_name":"Texana Bank, National Association","city":"Linden","website_url":"https://www.texanabank.com","rates_url":"https://texanabank.com/personal/savings/savings-account/","scraped_at":"2026-03-27T22:30:35.089719+00:00","products":[{"type":"savings","name":"Savings","term_months":null,"apy":0.75,"min_balance":10000,"source_url":"https://texanabank.com/personal/savings/savings-account/"}]},"17881":{"bank_name":"Freedom Bank","city":"Alamo","website_url":"https://www.freedombanktexas.com","rates_url":"https://www.freedombanktexas.com/","scraped_at":"2026-03-27T22:31:25.033277+00:00","products":[{"type":"cd","name":"6-Month CD","term_months":6,"apy":4.07,"min_balance":1000,"source_url":"https://www.freedombanktexas.com/"},{"type":"cd","name":"12-Month IRA CD","term_months":12,"apy":3.82,"min_balance":1000,"source_url":"https://www.freedombanktexas.com/"}]},"18660":{"bank_name":"Charter Bank","city":"Corpus Christi","website_url":"https://www.charterbankcc.com","rates_url":"https://www.charterbankcc.com/rates","scraped_at":"2026-03-27T22:31:26.960604+00:00","products":[{"type":"savings","name":"Savings","term_months":null,"apy":0.5,"min_balance":null,"source_url":"https://www.charterbankcc.com/rates"},{"type":"mmkt","name":"Money Market","term_months":null,"apy":3.2,"min_balance":null,"source_url":"https://www.charterbankcc.com/rates"}]},"58324":{"bank_name":"Lone Star Bank","city":"Houston","website_url":"https://www.lsbtexas.com","rates_url":"https://www.lsbtexas.com/rates","scraped_at":"2026-03-27T22:33:07.966354+00:00","products":[{"type":"cd","name":"CD Promotions","term_months":6,"apy":3.65,"min_balance":100000,"source_url":"https://www.lsbtexas.com/rates"},{"type":"savings","name":"Savings","term_months":null,"apy":3.56,"min_balance":200,"source_url":"https://www.lsbtexas.com/rates"}]},"15355":{"bank_name":"Marion State Bank","city":"Marion","website_url":"https://www.marionstatebanktx.com","rates_url":"https://www.marionstatebanktx.com/rates","scraped_at":"2026-03-27T22:34:16.672893+00:00","products":[{"type":"savings","name":"Savings","term_months":null,"apy":0.25,"min_balance":100,"source_url":"https://www.marionstatebanktx.com/rates"}]},"5589":{"bank_name":"Fannin Bank","city":"Bonham","website_url":"https://www.fanninbank.com","rates_url":"https://www.fanninbank.bank/","scraped_at":"2026-03-27T22:34:46.523563+00:00","products":[{"type":"mmkt","name":"Advantage Plus Account","term_months":null,"apy":4.08,"min_balance":null,"source_url":"https://www.fanninbank.bank/"}]},"15501":{"bank_name":"The Lytle State Bank of Lytle, Texas","city":"Lytle","website_url":"https://www.lytlestatebank.com","rates_url":"https://www.lytlestatebank.com/current-rates","scraped_at":"2026-03-27T22:35:16.298960+00:00","products":[{"type":"cd","name":"Jumbo 12 Month CD","term_months":12,"apy":3.05,"min_balance":100000,"source_url":"https://www.lytlestatebank.com/current-rates"},{"type":"cd","name":"30 Month CD","term_months":30,"apy":1.51,"min_balance":500,"source_url":"https://www.lytlestatebank.com/current-rates"},{"type":"cd","name":"Jumbo 6 Month CD","term_months":6,"apy":2.02,"min_balance":100000,"source_url":"https://www.lytlestatebank.com/current-rates"},{"type":"cd","name":"IRA 18 Month CD","term_months":18,"apy":1.51,"min_balance":500,"source_url":"https://www.lytlestatebank.com/current-rates"},{"type":"savings","name":"Savings Account","term_months":null,"apy":0.1,"min_balance":200,"source_url":"https://www.lytlestatebank.com/current-rates"}]}}};
+// SCRAPED_RATES_END
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+const PRODUCT_LABELS = { cd:'CD', savings:'Savings', mmkt:'Money Market', ichk:'Int. Checking', ira:'IRA' };
+const PRODUCT_LABELS_LONG = { cd:'Certificate of Deposit', savings:'Savings', mmkt:'Money Market', ichk:'Interest Checking', ira:'IRA' };
+const PRODUCT_COLORS = { cd:'#2b6cb0', savings:'#38a169', mmkt:'#d69e2e', ichk:'#805ad5', ira:'#c53030' };
+const PRODUCT_BG     = { cd:'#ebf8ff', savings:'#f0fff4', mmkt:'#fffaf0', ichk:'#faf5ff', ira:'#fff5f5' };
+
+const COUNTY_REGION = {
+  'DALLAS':'north_central','TARRANT':'north_central','COLLIN':'north_central','DENTON':'north_central',
+  'ELLIS':'north_central','JOHNSON':'north_central','PARKER':'north_central','ROCKWALL':'north_central',
+  'WISE':'north_central','KAUFMAN':'north_central','HOOD':'north_central','HUNT':'north_central',
+  'GRAYSON':'north_central','COOKE':'north_central','MONTAGUE':'north_central','JACK':'north_central',
+  'YOUNG':'north_central','STEPHENS':'north_central','EASTLAND':'north_central','COMANCHE':'north_central',
+  'HAMILTON':'north_central','BOSQUE':'north_central','NAVARRO':'north_central','HILL':'north_central',
+  'SOMERVELL':'north_central','ERATH':'north_central','PALO PINTO':'north_central',
+  'HARRIS':'houston','FORT BEND':'houston','MONTGOMERY':'houston','BRAZORIA':'houston',
+  'GALVESTON':'houston','CHAMBERS':'houston','LIBERTY':'houston','WALLER':'houston',
+  'AUSTIN':'houston','WHARTON':'houston','MATAGORDA':'houston',
+  'TRAVIS':'central','WILLIAMSON':'central','HAYS':'central','BASTROP':'central',
+  'CALDWELL':'central','FAYETTE':'central','BURLESON':'central','LEE':'central',
+  'MCLENNAN':'central','BELL':'central','CORYELL':'central','MILAM':'central',
+  'FALLS':'central','ROBERTSON':'central','LEON':'central','BRAZOS':'central',
+  'LIMESTONE':'central','FREESTONE':'central','ANDERSON':'central',
+  'LAMPASAS':'central','BURNET':'central','BLANCO':'central','LLANO':'central','SAN SABA':'central',
+  'BEXAR':'san_antonio','COMAL':'san_antonio','GUADALUPE':'san_antonio','KENDALL':'san_antonio',
+  'WILSON':'san_antonio','ATASCOSA':'san_antonio','MEDINA':'san_antonio','BANDERA':'san_antonio',
+  'KERR':'san_antonio','GILLESPIE':'san_antonio','MASON':'san_antonio','KIMBLE':'san_antonio',
+  'MENARD':'san_antonio','MCCULLOCH':'san_antonio','REAL':'san_antonio','EDWARDS':'san_antonio','UVALDE':'san_antonio',
+  'WEBB':'south','HIDALGO':'south','CAMERON':'south','STARR':'south','ZAPATA':'south',
+  'JIM HOGG':'south','BROOKS':'south','KENEDY':'south','WILLACY':'south','JIM WELLS':'south',
+  'KLEBERG':'south','NUECES':'south','SAN PATRICIO':'south','ARANSAS':'south',
+  'REFUGIO':'south','VICTORIA':'south','CALHOUN':'south','JACKSON':'south',
+  'LAVACA':'south','DE WITT':'south','GONZALES':'south','KARNES':'south',
+  'BEE':'south','LIVE OAK':'south','MCMULLEN':'south','LA SALLE':'south',
+  'FRIO':'south','DIMMIT':'south','MAVERICK':'south','KINNEY':'south','VAL VERDE':'south',
+  'EL PASO':'west','MIDLAND':'west','ECTOR':'west','TOM GREEN':'west','TAYLOR':'west',
+  'HOWARD':'west','DAWSON':'west','ANDREWS':'west','WINKLER':'west','WARD':'west',
+  'REEVES':'west','PECOS':'west','BREWSTER':'west','PRESIDIO':'west','JEFF DAVIS':'west',
+  'CRANE':'west','UPTON':'west','MARTIN':'west','GLASSCOCK':'west','STERLING':'west',
+  'IRION':'west','CONCHO':'west','COKE':'west','RUNNELS':'west','COLEMAN':'west','BROWN':'west','MILLS':'west',
+  'POTTER':'panhandle','RANDALL':'panhandle','MOORE':'panhandle','LUBBOCK':'panhandle',
+  'OLDHAM':'panhandle','DEAF SMITH':'panhandle','PARMER':'panhandle','CASTRO':'panhandle',
+  'SWISHER':'panhandle','BRISCOE':'panhandle','HALL':'panhandle','CHILDRESS':'panhandle',
+  'HARDEMAN':'panhandle','FOARD':'panhandle','COTTLE':'panhandle','MOTLEY':'panhandle',
+  'FLOYD':'panhandle','HALE':'panhandle','LAMB':'panhandle','BAILEY':'panhandle',
+  'COCHRAN':'panhandle','YOAKUM':'panhandle','TERRY':'panhandle','LYNN':'panhandle',
+  'GARZA':'panhandle','KENT':'panhandle','STONEWALL':'panhandle','KING':'panhandle',
+  'KNOX':'panhandle','BAYLOR':'panhandle','ARCHER':'panhandle','CLAY':'panhandle',
+  'WICHITA':'panhandle','WILBARGER':'panhandle','CROSBY':'panhandle','DICKENS':'panhandle',
+  'GRAY':'panhandle','WHEELER':'panhandle','COLLINGSWORTH':'panhandle','DONLEY':'panhandle',
+  'ARMSTRONG':'panhandle','CARSON':'panhandle','HUTCHINSON':'panhandle',
+  'ROBERTS':'panhandle','HEMPHILL':'panhandle','LIPSCOMB':'panhandle',
+  'OCHILTREE':'panhandle','HANSFORD':'panhandle','SHERMAN':'panhandle','HARTLEY':'panhandle','DALLAM':'panhandle',
+  'SMITH':'east','GREGG':'east','HARRISON':'east','RUSK':'east','CHEROKEE':'east',
+  'NACOGDOCHES':'east','SHELBY':'east','SABINE':'east','NEWTON':'east','JASPER':'east',
+  'TYLER':'east','HARDIN':'east','ORANGE':'east','JEFFERSON':'east','LAMAR':'east',
+  'RED RIVER':'east','BOWIE':'east','CASS':'east','MARION':'east','UPSHUR':'east',
+  'WOOD':'east','VAN ZANDT':'east','HENDERSON':'east','HOUSTON':'east','TRINITY':'east',
+  'POLK':'east','SAN AUGUSTINE':'east','SAN JACINTO':'east','WALKER':'east',
+  'ANGELINA':'east','PANOLA':'east','CAMP':'east','MORRIS':'east','TITUS':'east',
+  'FRANKLIN':'east','HOPKINS':'east','RAINS':'east','DELTA':'east','FANNIN':'east',
+};
+const REGION_LABELS = {
+  north_central:'North Central TX', houston:'Greater Houston', central:'Central TX',
+  san_antonio:'San Antonio / Hill Country', south:'South / Border TX',
+  west:'West TX', panhandle:'Panhandle / Plains', east:'East TX', other:'Other TX',
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════════
+const qs  = s => document.querySelector(s);
+const qsa = s => document.querySelectorAll(s);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function fmtM(m) { return m>=1000?`$${(m/1000).toFixed(2)}B`:`$${m.toFixed(0)}M`; }
+function setLoad(msg,sub) { qs('#lmsg').textContent=msg; qs('#lsub').textContent=sub||''; }
+function titleCase(s) { return s ? s.charAt(0) + s.slice(1).toLowerCase() : ''; }
+function countyToRegion(c) { return c ? COUNTY_REGION[c.toUpperCase().replace(/\s+COUNTY$/,'').trim()]||'other' : 'other'; }
+function specGrpToCharter(sg) {
+  return {2:'State Member Bank',4:'State Non-Member Bank',5:'National Bank',7:'Federal Savings Bank',8:'National Bank',9:'State Savings Bank'}[+sg]||'State Bank';
+}
+function charterGroup(ct) { if(!ct)return'state'; if(ct.includes('National'))return'national'; if(ct.includes('Savings'))return'savings'; return'state'; }
+function assetBucket(m) { if(m<100)return'under100'; if(m<500)return'100to500'; if(m<1000)return'500to1b'; return'1bto3b'; }
+function assetLabel(b) { return{under100:'Under $100M','100to500':'$100M–$500M','500to1b':'$500M–$1B','1bto3b':'$1B–$3B'}[b]||b; }
+function mkBtn(label,disabled,onclick) { const b=document.createElement('button'); b.textContent=label; b.disabled=disabled; b.onclick=onclick; return b; }
+function paginatePages(cur,total) {
+  if(total<=7)return Array.from({length:total},(_,i)=>i);
+  const s=new Set([0,total-1,cur,cur-1,cur+1].filter(p=>p>=0&&p<total));
+  const sorted=[...s].sort((a,b)=>a-b); const r=[];
+  for(let i=0;i<sorted.length;i++){if(i>0&&sorted[i]-sorted[i-1]>1)r.push('…'); r.push(sorted[i]);}
+  return r;
+}
+function renderPag(prefix,total,ps,pages,curPage,onPage) {
+  const start=total===0?0:curPage*ps+1;
+  qs(`#${prefix}-pg-info`).textContent=`${start.toLocaleString()}–${Math.min(curPage*ps+ps,total).toLocaleString()} of ${total.toLocaleString()}`;
+  const pgB=qs(`#${prefix}-pg-btns`); pgB.innerHTML='';
+  pgB.appendChild(mkBtn('← Prev',curPage===0,()=>onPage(curPage-1)));
+  paginatePages(curPage,pages).forEach(p=>{
+    if(p==='…'){pgB.insertAdjacentHTML('beforeend','<span style="padding:5px 4px;color:var(--muted)">…</span>');return;}
+    const b=mkBtn(p+1,false,()=>onPage(p));
+    if(p===curPage)b.classList.add('active'); pgB.appendChild(b);
+  });
+  pgB.appendChild(mkBtn('Next →',curPage>=pages-1,()=>onPage(curPage+1)));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  FDIC FETCH
+// ═══════════════════════════════════════════════════════════════════════════════
+const BASE = 'https://banks.data.fdic.gov/api';
+const INST_FIELDS = 'NAME,CITY,COUNTY,STALP,ASSET,CERT,LATITUDE,LONGITUDE,SPECGRP,ESTYMD,REPDTE,WEBADDR,DEP';
+const FIN_FIELDS = 'CERT,EINTEXP,DEP,INTINC,NETINC,LNLSNET,EQTOT,NCLNLS,LNATRES,ROA,ROE,NUMEMP,NONII,ASSET';
+
+// Embedded benchmark rates (update periodically)
+const BENCHMARKS = {
+  updated: '2026-04-05',
+  fedFundsLow: 4.25, fedFundsHigh: 4.50,
+  nationalAvg: { savings: 0.61, cd3: 1.55, cd6: 1.72, cd12: 1.81, cd24: 1.50, cd60: 1.35, mmkt: 0.64, ichk: 0.08 },
+  treasuryAvg: { bills: 4.21, notes: 3.88, bonds: 3.99 },
+};
+
+async function fetchInstitutions(offset=0, limit=300) {
+  const url = `${BASE}/institutions?`+new URLSearchParams({
+    filters:'STALP:TX AND ACTIVE:1 AND ASSET:[1 TO 3000000]',
+    fields:INST_FIELDS, sort_by:'ASSET', sort_order:'DESC', output:'json', limit, offset,
+  });
+  return fetch(url).then(r=>{if(!r.ok)throw new Error(`FDIC ${r.status}`);return r.json();});
+}
+
+async function fetchAllInstitutions() {
+  setLoad('Fetching TX bank list from FDIC…','Page 1');
+  const first = await fetchInstitutions(0);
+  const total = first.meta.total;
+  let raw = first.data.map(d=>d.data);
+  for(let off=300;off<total;off+=300) {
+    setLoad('Fetching TX bank list from FDIC…',`${Math.min(off+300,total)} of ${total}`);
+    raw = raw.concat((await fetchInstitutions(off)).data.map(d=>d.data));
+  }
+  return raw;
+}
+
+async function fetchFinancials() {
+  const results = { current: new Map(), prior: new Map(), currentRepdte: null, priorRepdte: null };
+  const quarters = ['20251231','20250930','20250630','20241231','20240930'];
+  let foundFirst = false;
+  for(const repdte of quarters) {
+    setLoad('Fetching FDIC financial data…',`Trying period ${repdte}`);
+    try {
+      const url=`${BASE}/financials?`+new URLSearchParams({
+        filters:`REPDTE:${repdte}`,fields:FIN_FIELDS,
+        sort_by:'CERT',sort_order:'ASC',output:'json',limit:'10000',
+      });
+      const resp=await fetch(url); if(!resp.ok)continue;
+      const json=await resp.json(); if(!json.data?.length)continue;
+      const map=new Map();
+      for(const item of json.data){
+        const d=item.data;
+        if(d.CERT) map.set(d.CERT,{
+          eintexp:d.EINTEXP||0, dep:d.DEP||0, intinc:d.INTINC||0,
+          netinc:d.NETINC||0, lnlsnet:d.LNLSNET||0, eqtot:d.EQTOT||0,
+          nclnls:d.NCLNLS||0, lnatres:d.LNATRES||0, roa:d.ROA||0,
+          roe:d.ROE||0, numemp:d.NUMEMP||0, nonii:d.NONII||0,
+          asset:d.ASSET||0, repdte,
+        });
+      }
+      if(map.size>0){
+        if(!foundFirst){ results.current=map; results.currentRepdte=repdte; foundFirst=true; }
+        else{ results.prior=map; results.priorRepdte=repdte; break; }
+      }
+    } catch(e){ console.warn('Financials fetch failed for',repdte,e); }
+  }
+  console.log(`FDIC financials: ${results.current.size} banks (${results.currentRepdte}), prior: ${results.prior.size} (${results.priorRepdte})`);
+  return results;
+}
+
+async function fetchBranchCounts() {
+  setLoad('Fetching TX branch locations…','');
+  const map = new Map();
+  try {
+    const PAGE=1000;
+    function url(off){ return `${BASE}/locations?`+new URLSearchParams({
+      filters:'STALP:TX',fields:'CERT',limit:PAGE,offset:off,output:'json',
+    }); }
+    const first=await fetch(url(0)).then(r=>r.json());
+    const total=first.meta.total;
+    first.data.forEach(d=>{ const c=d.data.CERT; map.set(c,(map.get(c)||0)+1); });
+    for(let off=PAGE;off<total;off+=PAGE){
+      setLoad('Fetching TX branch locations…',`${Math.min(off+PAGE,total)} of ${total}`);
+      const page=await fetch(url(off)).then(r=>r.json());
+      page.data.forEach(d=>{ const c=d.data.CERT; map.set(c,(map.get(c)||0)+1); });
+    }
+  } catch(e){ console.warn('Branch count fetch failed',e); }
+  return map;
+}
+
+async function fetchTreasuryRates() {
+  try {
+    setLoad('Fetching Treasury interest rates…','');
+    const url='https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?filter=security_type_desc:eq:Marketable&sort=-record_date&page[size]=20';
+    const resp=await fetch(url);
+    if(!resp.ok) return null;
+    const json=await resp.json();
+    if(!json.data?.length) return null;
+    // Group by most recent date
+    const latest={};
+    const latestDate=json.data[0].record_date;
+    for(const row of json.data){
+      if(row.record_date!==latestDate) break;
+      latest[row.security_desc]={rate:parseFloat(row.avg_interest_rate_amt),date:row.record_date};
+    }
+    console.log('Treasury rates loaded:',latest);
+    return {date:latestDate, rates:latest};
+  } catch(e){ console.warn('Treasury fetch failed',e); return null; }
+}
+
+function normalizeBank(d, finResults, branchMap) {
+  const assetM=parseFloat(((d.ASSET||0)/1000).toFixed(1));
+  const ct=specGrpToCharter(d.SPECGRP);
+  const cert=d.CERT;
+  const fin=finResults.current.get(cert);
+  const finPrior=finResults.prior.get(cert);
+  const eintexp=fin?.eintexp||0;
+  const dep=fin?.dep||d.DEP||0;
+  const cof=(dep>0&&eintexp>0)?parseFloat((eintexp/dep*100).toFixed(3)):null;
+
+  // Derived health metrics
+  const intinc=fin?.intinc||0;
+  const lnlsnet=fin?.lnlsnet||0;
+  const eqtot=fin?.eqtot||0;
+  const nclnls=fin?.nclnls||0;
+  const lnatres=fin?.lnatres||0;
+  const finAsset=fin?.asset||0;
+
+  const ltd=(dep>0&&lnlsnet>0)?parseFloat((lnlsnet/dep*100).toFixed(1)):null;
+  const texasRatio=(eqtot+lnatres>0&&nclnls>0)?parseFloat((nclnls/(eqtot+lnatres)*100).toFixed(1)):null;
+  const nim=(finAsset>0&&(intinc-eintexp)>0)?parseFloat(((intinc-eintexp)/finAsset*100).toFixed(2)):null;
+  const roa=fin?.roa||null;
+  const roe=fin?.roe||null;
+
+  // Deposit growth QoQ
+  const priorDep=finPrior?.dep||0;
+  const depGrowth=(dep>0&&priorDep>0)?parseFloat(((dep-priorDep)/priorDep*100).toFixed(1)):null;
+
+  let websiteUrl=null;
+  if(d.WEBADDR){const wa=d.WEBADDR.trim().replace(/^https?:\/\//i,'');if(wa.length>3&&wa.includes('.'))websiteUrl=`https://${wa}`;}
+  return {
+    cert, name:d.NAME,
+    city:(d.CITY||'').trim().toUpperCase(),
+    county:(d.COUNTY||'').trim().toUpperCase(),
+    region:countyToRegion(d.COUNTY),
+    regionLabel:REGION_LABELS[countyToRegion(d.COUNTY)]||'Other TX',
+    assetM, assetBucket:assetBucket(assetM), assetLbl:assetLabel(assetBucket(assetM)),
+    charterType:ct, charterGroup:charterGroup(ct),
+    lat:parseFloat(d.LATITUDE)||null, lng:parseFloat(d.LONGITUDE)||null,
+    established:d.ESTYMD?d.ESTYMD.slice(-4):null,
+    repdte:d.REPDTE||null, finRepdte:fin?.repdte||null,
+    impliedRate:cof, eintexpM:eintexp/1000, depM:dep/1000,
+    ltd, texasRatio, nim, roa, roe, depGrowth,
+    numemp:fin?.numemp||0, netincM:(fin?.netinc||0)/1000,
+    branchCount:branchMap.get(cert)||0,
+    cofPctile:null, // computed after all banks loaded
+    websiteUrl,
+    hasScraped: SCRAPED_RATES?.rates?.[String(cert)] ? true : false,
+  };
+}
+
+function computeCofPercentiles(banks) {
+  const withCof=banks.filter(b=>b.impliedRate!==null).map(b=>b.impliedRate).sort((a,b)=>a-b);
+  if(!withCof.length) return;
+  for(const b of banks){
+    if(b.impliedRate===null){b.cofPctile=null;continue;}
+    const rank=withCof.filter(v=>v<=b.impliedRate).length;
+    b.cofPctile=Math.round(rank/withCof.length*100);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  DATA PROCESSING
+// ═══════════════════════════════════════════════════════════════════════════════
+function buildScrapedRows(banks) {
+  if(!SCRAPED_RATES?.rates)return[];
+  const bankMap=new Map(banks.map(b=>[String(b.cert),b]));
+  const rows=[];
+  for(const [cert,bd] of Object.entries(SCRAPED_RATES.rates)){
+    const bank=bankMap.get(String(cert));
+    for(const prod of bd.products||[]){
+      rows.push({
+        cert, bankName:bank?.name||bd.bank_name||'Unknown',
+        city:bank?.city||(bd.city||'').toUpperCase(),
+        region:bank?.region||'other',
+        regionLabel:bank?.regionLabel||'Other TX',
+        assetM:bank?.assetM||0, assetBucket:bank?.assetBucket||'under100',
+        charterType:bank?.charterType||'', charterGroup:bank?.charterGroup||'state',
+        websiteUrl:bd.website_url||bank?.websiteUrl||null,
+        ratesUrl:bd.rates_url||null,
+        productType:prod.type,
+        productName:prod.name||(PRODUCT_LABELS[prod.type]||prod.type),
+        termMonths:prod.term_months||null,
+        apy:prod.apy, minBalance:prod.min_balance||null,
+        special:prod.special||null,
+        sourceUrl:prod.source_url||bd.rates_url||bd.website_url||null,
+      });
+    }
+  }
+  return rows;
+}
+
+function buildMarkets(rows) {
+  const map={};
+  for(const r of rows){
+    if(!map[r.city])map[r.city]={city:r.city,region:r.region,regionLabel:r.regionLabel,banks:new Set(),rows:[]};
+    map[r.city].banks.add(r.cert); map[r.city].rows.push(r);
+  }
+  return Object.values(map).map(m=>{
+    const cd12=m.rows.filter(r=>r.productType==='cd'&&r.termMonths===12).map(r=>r.apy);
+    const sav=m.rows.filter(r=>r.productType==='savings').map(r=>r.apy);
+    const mm=m.rows.filter(r=>r.productType==='mmkt').map(r=>r.apy);
+    const all=m.rows.map(r=>r.apy);
+    const avg=arr=>arr.length?parseFloat((arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(2)):null;
+    const best=arr=>arr.length?parseFloat(Math.max(...arr).toFixed(2)):null;
+    const types=[...new Set(m.rows.map(r=>r.productType))];
+    const avgAll=avg(all);
+    const level=avgAll===null?'unknown':avgAll<1.5?'soft':avgAll<3?'mod':'hot';
+    // Opportunity score: low competition + more banks + higher deposit base = more attractive
+    // Score 0-100: lower avg APY = easier entry, more competitors = bigger market
+    const oppScore = avgAll!=null ? Math.round(Math.max(0,Math.min(100,
+      (1 - avgAll/5)*40 + Math.min(m.banks.size/5,1)*30 + Math.min(types.length/4,1)*30
+    ))) : null;
+    return{city:m.city,region:m.region,regionLabel:m.regionLabel,
+      bankCount:m.banks.size,productCount:m.rows.length,
+      avgApy:avgAll,bestApy:best(all),avgCd12:avg(cd12),avgSavings:avg(sav),avgMmkt:avg(mm),
+      products:types,level,opportunity:oppScore};
+  });
+}
+
+function buildCdMatrix(rows) {
+  const cdRows=rows.filter(r=>r.productType==='cd'&&r.termMonths);
+  const terms=[...new Set(cdRows.map(r=>r.termMonths))].sort((a,b)=>a-b);
+  const byBank={};
+  for(const r of cdRows){
+    if(!byBank[r.cert])byBank[r.cert]={cert:r.cert,bankName:r.bankName,city:r.city,
+      regionLabel:r.regionLabel,assetM:r.assetM,sourceUrl:r.sourceUrl,terms:{}};
+    const ex=byBank[r.cert].terms[r.termMonths];
+    if(!ex||r.apy>ex)byBank[r.cert].terms[r.termMonths]=r.apy;
+  }
+  return{banks:Object.values(byBank).sort((a,b)=>b.assetM-a.assetM),terms};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+const S = {
+  banks:[], scrapedRows:[], allScraped:[], markets:[],
+  // filtered views
+  filtBanks:[], filtScraped:[], filtMarkets:[],
+  // sorts
+  mktSort:{col:'avgApy',dir:'asc'}, scanSort:{col:'apy',dir:'desc'}, cofSort:{col:'impliedRate',dir:'desc'},
+  // pages
+  mktPage:0, scanPage:0, cofPage:0, pageSize:25,
+  // filters
+  filters:{region:'',city:'',type:'',term:'',minApy:0,asset:'',charter:'',data:'',search:''},
+  // charts + map
+  charts:{}, map:null, cluster:null,
+  // ranger rates
+  ranger:{cd12:null,savings:null,mmkt:null,ichk:null,threshold:5.0},
+  // treasury + benchmarks
+  treasury:null, showHealth:false,
+  // timestamp
+  lastRefresh:null,
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  FILTER + APPLY
+// ═══════════════════════════════════════════════════════════════════════════════
+let _filterDebounce = null;
+function scheduleFilter() { clearTimeout(_filterDebounce); _filterDebounce=setTimeout(applyFilters,80); }
+
+function applyFilters() {
+  const f=S.filters;
+  const search=f.search.toLowerCase();
+
+  // Filter banks (for COF tab)
+  S.filtBanks=S.banks.filter(b=>{
+    if(search&&!b.name.toLowerCase().includes(search)&&!b.city.toLowerCase().includes(search)&&!String(b.cert).includes(search))return false;
+    if(f.region&&b.region!==f.region)return false;
+    if(f.city&&b.city!==f.city)return false;
+    if(f.asset&&b.assetBucket!==f.asset)return false;
+    if(f.charter&&b.charterGroup!==f.charter)return false;
+    if(f.data==='cof'&&b.impliedRate===null)return false;
+    if(f.data==='scraped'&&!b.hasScraped)return false;
+    if(f.data==='website'&&!b.websiteUrl)return false;
+    return true;
+  });
+  // Sort COF
+  const {col:cc,dir:cd}=S.cofSort; const dd=cd==='asc'?1:-1;
+  S.filtBanks.sort((a,b)=>{const av=a[cc],bv=b[cc];if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return-1;return typeof av==='string'?dd*av.localeCompare(bv):dd*(av-bv);});
+
+  // Filter scraped rows
+  S.filtScraped=S.allScraped.filter(r=>{
+    if(search&&!r.bankName.toLowerCase().includes(search)&&!r.city.toLowerCase().includes(search))return false;
+    if(f.region&&r.region!==f.region)return false;
+    if(f.city&&r.city!==f.city)return false;
+    if(f.type&&r.productType!==f.type)return false;
+    if(f.term&&r.termMonths!==parseInt(f.term))return false;
+    if(r.apy<f.minApy)return false;
+    if(f.asset&&r.assetBucket!==f.asset)return false;
+    if(f.charter&&r.charterGroup!==f.charter)return false;
+    return true;
+  });
+  // Sort scanner
+  const {col:sc,dir:sd}=S.scanSort; const se=sd==='asc'?1:-1;
+  S.filtScraped.sort((a,b)=>{const av=a[sc],bv=b[sc];if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return-1;return typeof av==='string'?se*av.localeCompare(bv):se*(av-bv);});
+
+  // Build markets from filtered scraped
+  S.filtMarkets=buildMarkets(S.filtScraped);
+  const {col:mc,dir:md}=S.mktSort; const me=md==='asc'?1:-1;
+  S.filtMarkets.sort((a,b)=>{const av=a[mc],bv=b[mc];if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return-1;return typeof av==='string'?me*av.localeCompare(bv):me*(av-bv);});
+
+  S.mktPage=0; S.scanPage=0; S.cofPage=0;
+  renderStats(); renderMarkets(); renderScanner(); renderCofTable(); renderActiveTab();
+  updateFilterCount();
+}
+
+function updateFilterCount() {
+  const activeTab=qs('.tab-btn.active')?.dataset.tab;
+  if(activeTab==='cof') qs('#fcount-wrap').innerHTML=`Showing <strong>${S.filtBanks.length.toLocaleString()}</strong> banks`;
+  else if(activeTab==='scanner') qs('#fcount-wrap').innerHTML=`Showing <strong>${S.filtScraped.length.toLocaleString()}</strong> products`;
+  else qs('#fcount-wrap').innerHTML=`Showing <strong>${S.filtMarkets.length}</strong> markets · <strong>${S.filtScraped.length}</strong> products · <strong>${S.filtBanks.length}</strong> banks`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderStats() {
+  const banks=S.filtBanks;
+  const withCof=banks.filter(b=>b.impliedRate!==null);
+  const cofs=withCof.map(b=>b.impliedRate);
+  const avgCof=cofs.length?(cofs.reduce((s,v)=>s+v,0)/cofs.length).toFixed(2):null;
+  const maxCof=cofs.length?Math.max(...cofs).toFixed(2):null;
+  const scrapedBanks=new Set(S.filtScraped.map(r=>r.cert)).size;
+  const ltds=banks.map(b=>b.ltd).filter(v=>v!=null);
+  const avgLtd=ltds.length?(ltds.reduce((s,v)=>s+v,0)/ltds.length).toFixed(1):null;
+
+  qs('#s-banks').textContent=banks.length.toLocaleString();
+  qs('#s-cof-count').textContent=withCof.length.toLocaleString();
+  qs('#s-avg-cof').textContent=avgCof?avgCof+'%':'—';
+  qs('#s-scraped').textContent=scrapedBanks.toLocaleString();
+  qs('#s-products').textContent=S.filtScraped.length.toLocaleString();
+  qs('#s-max-cof').textContent=maxCof?maxCof+'%':'—';
+  qs('#s-avg-ltd').textContent=avgLtd?avgLtd+'%':'—';
+  qs('#s-fed-funds').textContent=`${BENCHMARKS.fedFundsLow}–${BENCHMARKS.fedFundsHigh}%`;
+  qs('#s-fed-note').textContent=`As of ${BENCHMARKS.updated}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MARKET INTELLIGENCE TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderMarkets() {
+  const ps=S.pageSize,start=S.mktPage*ps;
+  const rows=S.filtMarkets.slice(start,start+ps);
+  const total=S.filtMarkets.length,pages=Math.max(1,Math.ceil(total/ps));
+  const threshold=S.ranger.threshold;
+  const apyCell=v=>v!=null?`<span class="${v>=3?'apy-hi':v>=1.5?'apy-mid':'apy-lo'}${v>=threshold?' alert-rate':''}">${v.toFixed(2)}%</span>`:'<span style="color:#a0aec0">—</span>';
+  const levelBadge=lv=>lv==='soft'?'<span class="lvl lvl-soft">Low</span>':lv==='mod'?'<span class="lvl lvl-mod">Moderate</span>':lv==='hot'?'<span class="lvl lvl-hot">High</span>':'—';
+
+  qs('#mkt-body').innerHTML=rows.map(m=>{
+    const types=m.products.map(t=>`<span class="pp pp-${t}">${PRODUCT_LABELS[t]||t}</span>`).join(' ');
+    return`<tr>
+      <td><strong>${esc(titleCase(m.city))}</strong></td>
+      <td style="font-size:12px;color:var(--muted)">${m.regionLabel}</td>
+      <td class="right">${m.bankCount}</td>
+      <td class="right">${apyCell(m.avgCd12)}</td>
+      <td class="right">${apyCell(m.avgSavings)}</td>
+      <td class="right">${apyCell(m.avgMmkt)}</td>
+      <td class="right">${apyCell(m.bestApy)}</td>
+      <td class="right">${apyCell(m.avgApy)}</td>
+      <td style="font-size:11px">${types}</td>
+      <td>${levelBadge(m.level)}</td>
+      <td class="right"><span style="font-weight:700;color:${m.opportunity>=70?'#276749':m.opportunity>=40?'#c05621':'#a0aec0'}">${m.opportunity!=null?m.opportunity:'—'}</span></td>
+    </tr>`;
+  }).join('');
+  renderPag('mkt',total,ps,pages,S.mktPage,p=>{S.mktPage=p;renderMarkets();});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  RATE SCANNER TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderScanner() {
+  const ps=S.pageSize,start=S.scanPage*ps;
+  const rows=S.filtScraped.slice(start,start+ps);
+  const total=S.filtScraped.length,pages=Math.max(1,Math.ceil(total/ps));
+  const threshold=S.ranger.threshold;
+
+  qs('#scan-body').innerHTML=rows.map(r=>{
+    const termT=r.termMonths?(r.termMonths>=12&&r.termMonths%12===0?`${r.termMonths/12}yr`:`${r.termMonths}mo`):'—';
+    const balT=r.minBalance?`$${r.minBalance>=1000?(r.minBalance/1000).toFixed(r.minBalance%1000===0?0:1)+'K':r.minBalance}`:'—';
+    const srcLink=r.sourceUrl?`<a href="${esc(r.sourceUrl)}" target="_blank" rel="noopener" class="link-btn link-p">View Rates ↗</a>`
+      :(r.websiteUrl?`<a href="${esc(r.websiteUrl)}" target="_blank" rel="noopener" class="link-btn link-s">Visit Bank ↗</a>`:'—');
+    const apyV=r.apy>=4?'apy-hi':r.apy>=2?'apy-mid':'apy-lo';
+    const specTag=r.special?`<span class="sf-${r.special}">${r.special.replace('_',' ').toUpperCase()}</span> `:'';
+    return`<tr>
+      <td><div class="bank-name" title="${esc(r.bankName)}">${esc(r.bankName)}</div></td>
+      <td style="font-size:12.5px">${esc(titleCase(r.city))}</td>
+      <td style="font-size:11.5px;color:var(--muted)">${r.regionLabel}</td>
+      <td>${specTag}<span class="pp pp-${r.productType}">${esc(r.productName.slice(0,35))}</span></td>
+      <td class="right" style="font-weight:600">${termT}</td>
+      <td class="right"><span class="${apyV}${r.apy>=threshold?' alert-rate':''}">${r.apy.toFixed(2)}%</span></td>
+      <td class="right" style="font-size:12px;color:var(--muted)">${balT}</td>
+      <td class="right" style="font-size:12px;color:var(--muted)">${r.assetM>0?fmtM(r.assetM):'—'}</td>
+      <td class="right" style="font-size:12px">${(()=>{
+        const nk=r.productType==='cd'&&r.termMonths===12?'cd12':r.productType==='cd'&&r.termMonths===6?'cd6':r.productType==='cd'&&r.termMonths===3?'cd3':r.productType==='cd'&&r.termMonths===24?'cd24':r.productType;
+        const natl=BENCHMARKS.nationalAvg[nk];
+        if(natl==null)return'—';
+        const diffBp=Math.round((r.apy-natl)*100); const sign=diffBp>=0?'+':'';
+        return`<span style="color:${diffBp>=0?'#276749':'#c53030'};font-weight:600">${sign}${diffBp}bp</span>`;
+      })()}</td>
+      <td>${srcLink}</td>
+    </tr>`;
+  }).join('');
+  renderPag('scan',total,ps,pages,S.scanPage,p=>{S.scanPage=p;renderScanner();});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  COST OF FUNDS TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+function healthColor(val,thresholds) {
+  if(val==null) return 'color:#a0aec0';
+  if(val<=thresholds[0]) return 'color:#276749;font-weight:700';
+  if(val<=thresholds[1]) return 'color:#c05621;font-weight:700';
+  return 'color:#c53030;font-weight:700';
+}
+function healthColorInv(val,thresholds) {
+  if(val==null) return 'color:#a0aec0';
+  if(val>=thresholds[0]) return 'color:#276749;font-weight:700';
+  if(val>=thresholds[1]) return 'color:#c05621;font-weight:700';
+  return 'color:#c53030;font-weight:700';
+}
+
+function renderCofTable() {
+  const ps=S.pageSize,start=S.cofPage*ps;
+  const rows=S.filtBanks.slice(start,start+ps);
+  const total=S.filtBanks.length,pages=Math.max(1,Math.ceil(total/ps));
+  const cofClass=r=>r>=3?'cof-hi':r>=1.5?'cof-mid':'cof-lo';
+  const sh=S.showHealth?'':'display:none';
+
+  qs('#cof-body').innerHTML=rows.map(b=>{
+    const cofCell=b.impliedRate!==null
+      ?`<span class="${cofClass(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><span class="cof-sub">FDIC ${b.finRepdte||''}</span>`
+      :`<span class="cof-na">—</span>`;
+    const pctCell=b.cofPctile!=null?`<span style="font-size:12px;font-weight:600;color:${b.cofPctile>=75?'#276749':b.cofPctile>=50?'#2b6cb0':'#a0aec0'}">${b.cofPctile}th</span>`:'<span style="color:#a0aec0">—</span>';
+    const intExp=b.eintexpM>0?`$${b.eintexpM<1?(b.eintexpM*1000).toFixed(0)+'K':b.eintexpM.toFixed(2)+'M'}`:'—';
+    const depCell=b.depM>0?`$${b.depM>=1000?(b.depM/1000).toFixed(2)+'B':b.depM.toFixed(0)+'M'}`:'—';
+    const link=b.websiteUrl
+      ?`<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" class="link-btn link-p">Visit Bank ↗</a>`
+      :`<a href="https://www.google.com/search?q=${encodeURIComponent(b.name+' '+b.city+' TX deposit rates')}" target="_blank" rel="noopener" class="link-btn link-s">Search ↗</a>`;
+    const dgCell=b.depGrowth!=null?`<span style="font-size:12px;${b.depGrowth>=0?'color:#276749':'color:#c53030'};font-weight:600">${b.depGrowth>=0?'+':''}${b.depGrowth}%</span>`:'—';
+    return`<tr>
+      <td><div class="bank-name" title="${esc(b.name)}">${esc(b.name)}</div></td>
+      <td>${b.city}</td>
+      <td style="font-size:11.5px;color:var(--muted)">${b.regionLabel}</td>
+      <td class="right">${cofCell}</td>
+      <td class="right">${pctCell}</td>
+      <td class="right" style="font-size:12px;color:var(--muted)">${intExp}</td>
+      <td class="right" style="font-size:12px;color:var(--muted)">${depCell}</td>
+      <td class="right" style="font-size:12px;color:var(--muted)">${fmtM(b.assetM)}</td>
+      <td class="right" style="font-size:12px;color:var(--muted)">${b.branchCount||'—'}</td>
+      <td class="right health-col" style="${sh}"><span style="${healthColor(b.ltd,[80,100])}">${b.ltd!=null?b.ltd+'%':'—'}</span></td>
+      <td class="right health-col" style="${sh}"><span style="${healthColorInv(b.roa,[0.8,0.3])}">${b.roa!=null?b.roa.toFixed(2)+'%':'—'}</span></td>
+      <td class="right health-col" style="${sh}"><span style="${healthColor(b.texasRatio,[20,50])}">${b.texasRatio!=null?b.texasRatio+'%':'—'}</span></td>
+      <td class="right health-col" style="${sh}"><span style="${healthColorInv(b.nim,[2.5,1.5])}">${b.nim!=null?b.nim+'%':'—'}</span></td>
+      <td class="right health-col" style="${sh}">${dgCell}</td>
+      <td><span class="pill-charter">${b.charterType.replace('Non-Member ','NM ').replace('Member ','M ')}</span></td>
+      <td>${link}</td>
+    </tr>`;
+  }).join('');
+  renderPag('cof',total,ps,pages,S.cofPage,p=>{S.cofPage=p;renderCofTable();});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CD MATRIX
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderCdCurve() {
+  if(S.charts.curve){S.charts.curve.destroy();delete S.charts.curve;}
+  const cdRows=S.filtScraped.filter(r=>r.productType==='cd'&&r.termMonths);
+  const terms=[3,6,9,12,18,24,36,48,60];
+  const avgs=terms.map(t=>{const i=cdRows.filter(r=>r.termMonths===t);return i.length?parseFloat((i.reduce((s,r)=>s+r.apy,0)/i.length).toFixed(2)):null;});
+  const bests=terms.map(t=>{const i=cdRows.filter(r=>r.termMonths===t);return i.length?parseFloat(Math.max(...i.map(r=>r.apy)).toFixed(2)):null;});
+  // National avg CD rates as benchmark
+  const natlAvgs=terms.map(t=>{
+    const k='cd'+t; return BENCHMARKS.nationalAvg[k]!=null?BENCHMARKS.nationalAvg[k]:null;
+  });
+  const datasets=[
+    {label:'Avg APY',data:avgs,borderColor:'#2b6cb0',backgroundColor:'rgba(43,108,176,.12)',pointBackgroundColor:'#2b6cb0',pointRadius:5,tension:.35,fill:true},
+    {label:'Best APY',data:bests,borderColor:'#276749',backgroundColor:'transparent',pointBackgroundColor:'#276749',pointRadius:4,borderDash:[5,3],tension:.35},
+    {label:'Natl Avg CD',data:natlAvgs,borderColor:'#a0aec0',backgroundColor:'transparent',pointBackgroundColor:'#a0aec0',pointRadius:3,borderDash:[3,3],tension:.35,borderWidth:2},
+  ];
+  // Add Ranger CD rate if set
+  if(S.ranger.cd12!=null){
+    const rData=terms.map(t=>t===12?S.ranger.cd12:null);
+    datasets.push({label:'Ranger Bank',data:rData,borderColor:'#C8A951',backgroundColor:'transparent',pointBackgroundColor:'#C8A951',pointRadius:8,pointStyle:'star',showLine:false});
+  }
+  S.charts.curve=new Chart(qs('#ch-curve'),{type:'line',data:{labels:terms.map(t=>t>=12&&t%12===0?`${t/12}yr`:`${t}mo`),datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>ctx.raw!=null?`${ctx.dataset.label}: ${ctx.raw.toFixed(2)}%`:'No data'}}},
+      scales:{y:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{color:'#f0f4f8'}}}}});
+}
+
+function renderCdMatrix() {
+  renderCdCurve();
+  const{banks,terms}=buildCdMatrix(S.filtScraped);
+  if(!terms.length){qs('#matrix-thead').innerHTML='<tr><th>No CD data in current filter</th></tr>';qs('#matrix-body').innerHTML='';return;}
+  const colStats=terms.map(t=>{const vals=banks.map(b=>b.terms[t]).filter(v=>v!=null);return{min:Math.min(...vals),max:Math.max(...vals)};});
+  const tl=t=>t>=12&&t%12===0?`${t/12}yr`:`${t}mo`;
+  let thead='<tr><th class="nosort">Bank</th><th class="nosort">Market</th>';
+  terms.forEach(t=>{thead+=`<th class="nosort">${tl(t)}</th>`;});
+  thead+='</tr>'; qs('#matrix-thead').innerHTML=thead;
+
+  qs('#matrix-body').innerHTML=banks.map(b=>{
+    const nameT=b.bankName.length>26?b.bankName.slice(0,24)+'…':b.bankName;
+    let cells=terms.map((t,i)=>{
+      const v=b.terms[t]; if(v==null)return'<td><span class="cell-na">—</span></td>';
+      const{min,max}=colStats[i];const range=max-min;
+      const cls=range<.01?'cell-mid':v>=min+range*.67?'cell-hi':v>=min+range*.33?'cell-mid':'cell-lo';
+      return`<td><span class="cell-apy ${cls}">${v.toFixed(2)}%</span></td>`;
+    }).join('');
+    const src=b.sourceUrl?`<a href="${esc(b.sourceUrl)}" target="_blank" rel="noopener" style="font-size:10px;color:#2b6cb0;font-weight:600">↗</a>`:'';
+    return`<tr><td><div style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600" title="${esc(b.bankName)}">${esc(nameT)} ${src}</div></td><td style="font-size:11.5px;color:var(--muted)">${esc(titleCase(b.city))}</td>${cells}</tr>`;
+  }).join('');
+}
+
+function renderCdMatrixByRegion() {
+  renderCdCurve();
+  const cdRows=S.filtScraped.filter(r=>r.productType==='cd'&&r.termMonths);
+  const terms=[...new Set(cdRows.map(r=>r.termMonths))].sort((a,b)=>a-b);
+  if(!terms.length){qs('#matrix-thead').innerHTML='<tr><th>No CD data</th></tr>';qs('#matrix-body').innerHTML='';return;}
+  const tl=t=>t>=12&&t%12===0?`${t/12}yr`:`${t}mo`;
+  let thead='<tr><th class="nosort">Region</th>';
+  terms.forEach(t=>{thead+=`<th class="nosort">${tl(t)}</th>`;});
+  thead+='</tr>'; qs('#matrix-thead').innerHTML=thead;
+  const colStats=terms.map(t=>{const v=Object.keys(REGION_LABELS).map(r=>{const i=cdRows.filter(c=>c.region===r&&c.termMonths===t);return i.length?i.reduce((s,c)=>s+c.apy,0)/i.length:null;}).filter(v=>v!=null);return{min:Math.min(...v),max:Math.max(...v)};});
+  qs('#matrix-body').innerHTML=Object.entries(REGION_LABELS).map(([r,label])=>{
+    let cells=terms.map((t,i)=>{
+      const items=cdRows.filter(c=>c.region===r&&c.termMonths===t);
+      if(!items.length)return'<td><span class="cell-na">—</span></td>';
+      const v=parseFloat((items.reduce((s,c)=>s+c.apy,0)/items.length).toFixed(2));
+      const{min,max}=colStats[i];const range=max-min;
+      const cls=range<.01?'cell-mid':v>=min+range*.67?'cell-hi':v>=min+range*.33?'cell-mid':'cell-lo';
+      return`<td><span class="cell-apy ${cls}">${v.toFixed(2)}%</span></td>`;
+    }).join('');
+    return`<tr><td style="font-weight:600">${esc(label)}</td>${cells}</tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════════════════════════
+function dc(k){if(S.charts[k]){S.charts[k].destroy();delete S.charts[k];}}
+
+function renderCharts() {
+  // 1. Top 30 scraped rates
+  dc('top');
+  if(S.filtScraped.length){
+    const top30=[...S.filtScraped].sort((a,b)=>b.apy-a.apy).slice(0,30);
+    S.charts.top=new Chart(qs('#ch-top'),{type:'bar',
+      data:{labels:top30.map(r=>{const n=r.bankName.length>20?r.bankName.slice(0,18)+'…':r.bankName;return n+(r.termMonths?` (${r.termMonths}mo)`:'');}),
+        datasets:[{label:'APY%',data:top30.map(r=>r.apy),backgroundColor:top30.map(r=>PRODUCT_COLORS[r.productType]||'#4a5568'),borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const r=top30[ctx.dataIndex];return[`APY: ${r.apy.toFixed(2)}%`,r.productName.slice(0,40),`${titleCase(r.city)}, TX`];}}}},
+        scales:{x:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  }
+
+  // 2. Top 30 COF
+  dc('cofTop');
+  const withRate=S.filtBanks.filter(b=>b.impliedRate!==null);
+  if(withRate.length){
+    const top30c=[...withRate].sort((a,b)=>b.impliedRate-a.impliedRate).slice(0,30);
+    S.charts.cofTop=new Chart(qs('#ch-cof-top'),{type:'bar',
+      data:{labels:top30c.map(b=>b.name.length>28?b.name.slice(0,26)+'…':b.name),
+        datasets:[{label:'COF%',data:top30c.map(b=>b.impliedRate),
+          backgroundColor:top30c.map(b=>b.impliedRate>=3?'#276749':b.impliedRate>=2?'#38a169':b.impliedRate>=1?'#68d391':'#d69e2e'),borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const b=top30c[ctx.dataIndex];return[`COF: ${b.impliedRate.toFixed(2)}%`,`${b.city}, TX`,`Assets: ${fmtM(b.assetM)}`];}}}},
+        scales:{x:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  }
+
+  // 3. Avg APY by product type
+  dc('type');
+  if(S.filtScraped.length){
+    const ptypes=['cd','savings','mmkt','ichk','ira'];
+    const ptAvgs=ptypes.map(t=>{const i=S.filtScraped.filter(r=>r.productType===t);return i.length?parseFloat((i.reduce((s,r)=>s+r.apy,0)/i.length).toFixed(2)):null;});
+    const ptCts=ptypes.map(t=>S.filtScraped.filter(r=>r.productType===t).length);
+    S.charts.type=new Chart(qs('#ch-type'),{type:'bar',
+      data:{labels:ptypes.map((t,i)=>`${PRODUCT_LABELS[t]} (${ptCts[i]})`),
+        datasets:[{data:ptAvgs,backgroundColor:ptypes.map(t=>PRODUCT_COLORS[t]),borderRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'% avg APY':'No data'}}},
+        scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
+  }
+
+  // 4. COF distribution
+  dc('cofDist');
+  if(withRate.length){
+    const bands=['< 0.5%','0.5–1%','1–1.5%','1.5–2%','2–2.5%','2.5–3%','≥ 3%'];
+    const counts=[0,0,0,0,0,0,0];
+    withRate.forEach(b=>{const r=b.impliedRate;if(r<.5)counts[0]++;else if(r<1)counts[1]++;else if(r<1.5)counts[2]++;else if(r<2)counts[3]++;else if(r<2.5)counts[4]++;else if(r<3)counts[5]++;else counts[6]++;});
+    S.charts.cofDist=new Chart(qs('#ch-cof-dist'),{type:'bar',
+      data:{labels:bands,datasets:[{data:counts,backgroundColor:'#63b3ed',borderColor:'#2b6cb0',borderWidth:1,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
+        scales:{y:{grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
+  }
+
+  // 5. Region radar
+  dc('region');
+  if(S.filtScraped.length){
+    const regKeys=Object.keys(REGION_LABELS).filter(k=>k!=='other');
+    const regAvgs=regKeys.map(r=>{const i=S.filtScraped.filter(b=>b.region===r);return i.length?parseFloat((i.reduce((s,b)=>s+b.apy,0)/i.length).toFixed(2)):null;});
+    S.charts.region=new Chart(qs('#ch-region'),{type:'radar',
+      data:{labels:regKeys.map(r=>REGION_LABELS[r].replace('/ ','/')),datasets:[{label:'Avg APY%',data:regAvgs,backgroundColor:'rgba(49,130,206,.15)',borderColor:'#3182ce',pointBackgroundColor:'#3182ce',pointRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{r:{beginAtZero:false,ticks:{callback:v=>v+'%',font:{size:9}},grid:{color:'#e2e8f0'},pointLabels:{font:{size:9}}}}}});
+  }
+
+  // 6. COF by asset size
+  dc('cofAsset');
+  if(withRate.length){
+    const buckets=['under100','100to500','500to1b','1bto3b'];
+    const bLabels=['< $100M','$100M–$500M','$500M–$1B','$1B–$3B'];
+    const bAvgs=buckets.map(bk=>{const items=withRate.filter(b=>b.assetBucket===bk);return items.length?parseFloat((items.reduce((s,b)=>s+b.impliedRate,0)/items.length).toFixed(2)):null;});
+    S.charts.cofAsset=new Chart(qs('#ch-cof-asset'),{type:'bar',
+      data:{labels:bLabels,datasets:[{data:bAvgs,backgroundColor:['#bee3f8','#90cdf4','#63b3ed','#3182ce'],borderRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'% avg COF':'No data'}}},
+        scales:{y:{beginAtZero:false,ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
+  }
+
+  // 7. Competitor count by market
+  dc('mktCount');
+  if(S.filtMarkets.length){
+    const mktSorted=[...S.filtMarkets].sort((a,b)=>b.bankCount-a.bankCount).slice(0,15);
+    S.charts.mktCount=new Chart(qs('#ch-mkt-count'),{type:'bar',
+      data:{labels:mktSorted.map(m=>titleCase(m.city)),datasets:[{data:mktSorted.map(m=>m.bankCount),backgroundColor:'#63b3ed',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{ticks:{stepSize:1},grid:{color:'#f0f4f8'}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  }
+
+  // 8. Charter breakdown
+  dc('charter');
+  const cgKeys=['state','national','savings'];
+  const cgLabels=['State Bank','National Bank','Savings Bank'];
+  const cgCounts=cgKeys.map(k=>S.filtBanks.filter(b=>b.charterGroup===k).length);
+  if(cgCounts.some(c=>c>0)){
+    S.charts.charter=new Chart(qs('#ch-charter'),{type:'doughnut',
+      data:{labels:cgLabels,datasets:[{data:cgCounts,backgroundColor:['#4299e1','#48bb78','#ed8936'],borderColor:'#fff',borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12}}}}});
+  }
+
+  // 9. LTD distribution
+  dc('ltdDist');
+  const ltdVals=S.filtBanks.map(b=>b.ltd).filter(v=>v!=null);
+  if(ltdVals.length){
+    const ltdBands=['<50%','50–65%','65–80%','80–90%','90–100%','>100%'];
+    const ltdCounts=[0,0,0,0,0,0];
+    ltdVals.forEach(v=>{if(v<50)ltdCounts[0]++;else if(v<65)ltdCounts[1]++;else if(v<80)ltdCounts[2]++;else if(v<90)ltdCounts[3]++;else if(v<100)ltdCounts[4]++;else ltdCounts[5]++;});
+    S.charts.ltdDist=new Chart(qs('#ch-ltd-dist'),{type:'bar',
+      data:{labels:ltdBands,datasets:[{data:ltdCounts,backgroundColor:['#c6f6d5','#9ae6b4','#68d391','#fefcbf','#fed7d7','#fc8181'],borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
+        scales:{y:{grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
+  }
+
+  // 10. ROA distribution
+  dc('roaDist');
+  const roaVals=S.filtBanks.map(b=>b.roa).filter(v=>v!=null&&v!==0);
+  if(roaVals.length){
+    const roaBands=['<0%','0–0.5%','0.5–1%','1–1.5%','1.5–2%','>2%'];
+    const roaCounts=[0,0,0,0,0,0];
+    roaVals.forEach(v=>{if(v<0)roaCounts[0]++;else if(v<.5)roaCounts[1]++;else if(v<1)roaCounts[2]++;else if(v<1.5)roaCounts[3]++;else if(v<2)roaCounts[4]++;else roaCounts[5]++;});
+    S.charts.roaDist=new Chart(qs('#ch-roa-dist'),{type:'bar',
+      data:{labels:roaBands,datasets:[{data:roaCounts,backgroundColor:['#fc8181','#fed7d7','#fefcbf','#9ae6b4','#68d391','#276749'],borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
+        scales:{y:{grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
+  }
+
+  // 11. Treasury rates
+  dc('treasury');
+  if(S.treasury?.rates){
+    const tLabels=Object.keys(S.treasury.rates);
+    const tValues=Object.values(S.treasury.rates).map(v=>v.rate);
+    S.charts.treasury=new Chart(qs('#ch-treasury'),{type:'bar',
+      data:{labels:tLabels.map(l=>l.replace('Treasury ','')),
+        datasets:[{label:'Avg Rate %',data:tValues,backgroundColor:tLabels.map((_,i)=>['#1B365D','#254a7a','#3182ce','#63b3ed','#C8A951','#d69e2e'][i%6]),borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw.toFixed(3)}% avg rate`}},
+          subtitle:{display:true,text:`Source: U.S. Treasury Fiscal Data API · ${S.treasury.date}`,font:{size:10},color:'#a0aec0'}},
+        scales:{y:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MAP
+// ═══════════════════════════════════════════════════════════════════════════════
+function cofColor(cof){if(cof===null)return'#a0aec0';if(cof>=3)return'#276749';if(cof>=2)return'#38a169';if(cof>=1)return'#68d391';return'#d69e2e';}
+
+function renderMap() {
+  if(!S.map)return;
+  S.cluster.clearLayers();
+  const scrapedByBank=new Map();
+  if(SCRAPED_RATES?.rates){
+    for(const [cert,bd] of Object.entries(SCRAPED_RATES.rates)){
+      const prods=(bd.products||[]).sort((a,b)=>b.apy-a.apy).slice(0,3);
+      if(prods.length)scrapedByBank.set(String(cert),{prods,ratesUrl:bd.rates_url||bd.website_url});
+    }
+  }
+  S.filtBanks.forEach(b=>{
+    if(!b.lat||!b.lng)return;
+    const sc=scrapedByBank.get(String(b.cert));
+    const radius=5+Math.min(b.assetM/150,9);
+    const fillColor=sc?'#C8A951':cofColor(b.impliedRate);
+    const marker=L.circleMarker([b.lat,b.lng],{radius,fillColor,color:'#fff',weight:1.5,fillOpacity:.88});
+
+    const cofRow=b.impliedRate!==null
+      ?`<div style="font-size:12px;margin-bottom:4px"><span style="color:var(--muted)">FDIC COF:</span> <strong style="color:#2b6cb0">${b.impliedRate.toFixed(2)}%</strong></div>`
+      :'';
+    const scrapedHtml=sc?sc.prods.map(p=>{
+      const term=p.term_months?` · ${p.term_months}mo`:'';
+      return`<div style="display:flex;justify-content:space-between;gap:6px;margin-bottom:2px;font-size:11.5px"><span style="color:${PRODUCT_COLORS[p.type]||'#4a5568'};font-weight:600">${esc(p.name||p.type)}${term}</span><span style="font-weight:700;color:#22543d">${p.apy.toFixed(2)}%</span></div>`;
+    }).join(''):'';
+    const link=b.websiteUrl?`<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" style="color:#2b6cb0;font-size:11.5px;font-weight:600;text-decoration:none">Visit Bank ↗</a>`:'';
+
+    marker.bindPopup(`<div style="min-width:230px;font-size:13px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(b.name)}</div>
+      <div style="color:#718096;font-size:11px;margin-bottom:6px">${b.city}, TX · ${fmtM(b.assetM)} assets</div>
+      ${cofRow}${scrapedHtml?'<div style="border-top:1px solid #e2e8f0;padding-top:5px;margin-top:4px">'+scrapedHtml+'</div>':''}
+      ${link?'<div style="border-top:1px solid #e2e8f0;padding-top:5px;margin-top:4px">'+link+'</div>':''}
+    </div>`,{maxWidth:300});
+    S.cluster.addLayer(marker);
+  });
+}
+
+function initMap() {
+  if(S.map)return;
+  S.map=L.map('map',{center:[31.0,-99.5],zoom:6,minZoom:5,maxZoom:15});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19,
+  }).addTo(S.map);
+  S.cluster=L.markerClusterGroup({chunkedLoading:true,maxClusterRadius:50,showCoverageOnHover:false});
+  S.map.addLayer(S.cluster);
+  renderMap();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TAB RENDERING HELPER
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderActiveTab() {
+  const active=qs('.tab-btn.active')?.dataset.tab;
+  if(active==='charts')renderCharts();
+  if(active==='cdmatrix')renderCdMatrix();
+  if(active==='map'){initMap();setTimeout(()=>S.map?.invalidateSize(),80);}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CSV EXPORT
+// ═══════════════════════════════════════════════════════════════════════════════
+function exportCsv() {
+  const active=qs('.tab-btn.active')?.dataset.tab;
+  let headers,rows;
+  if(active==='cof'){
+    headers=['Bank','City','Region','Cost of Funds %','COF Percentile','Int Expense ($M)','Deposits ($M)','Assets ($M)','Branches','LTD Ratio %','ROA %','Texas Ratio %','NIM Proxy %','Dep Growth %','Charter'];
+    rows=S.filtBanks.map(b=>[b.name,b.city,b.regionLabel,b.impliedRate??'',b.cofPctile??'',b.eintexpM.toFixed(2),b.depM.toFixed(0),b.assetM,b.branchCount,b.ltd??'',b.roa??'',b.texasRatio??'',b.nim??'',b.depGrowth??'',b.charterType]);
+  } else if(active==='scanner'){
+    headers=['Bank','City','Region','Product','Term (mo)','APY %','Min Balance','Assets ($M)'];
+    rows=S.filtScraped.map(r=>[r.bankName,r.city,r.regionLabel,r.productName,r.termMonths||'',r.apy,r.minBalance||'',r.assetM]);
+  } else {
+    headers=['Market','Region','Competitors','Avg 12mo CD','Avg Savings','Avg MMA','Best Rate','Avg All APY','Environment'];
+    rows=S.filtMarkets.map(m=>[titleCase(m.city),m.regionLabel,m.bankCount,m.avgCd12??'',m.avgSavings??'',m.avgMmkt??'',m.bestApy??'',m.avgApy??'',m.level]);
+  }
+  const csv=[headers.join(','),...rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`ranger-bank-${active}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  FILTER POPULATION + LISTENERS
+// ═══════════════════════════════════════════════════════════════════════════════
+function populateFilters() {
+  const rSel=qs('#f-region');
+  [...new Set(S.banks.map(b=>b.region))].filter(r=>r&&r!=='other')
+    .sort((a,b)=>(REGION_LABELS[a]||a).localeCompare(REGION_LABELS[b]||b))
+    .forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=REGION_LABELS[r]||r;rSel.appendChild(o);});
+
+  function fillCities(pool) {
+    const sel=qs('#f-city');sel.innerHTML='<option value="">All Cities</option>';
+    const cc={};pool.forEach(b=>{cc[b.city]=(cc[b.city]||0)+1;});
+    Object.entries(cc).sort((a,b)=>b[1]-a[1]).slice(0,80).map(([c])=>c).sort()
+      .forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=titleCase(c);sel.appendChild(o);});
+  }
+  fillCities(S.banks);
+  qs('#f-region').addEventListener('change',()=>{
+    const reg=qs('#f-region').value;
+    fillCities(reg?S.banks.filter(b=>b.region===reg):S.banks);
+  });
+
+  // CD terms from scraped data
+  const terms=[...new Set(S.allScraped.filter(r=>r.productType==='cd'&&r.termMonths).map(r=>r.termMonths))].sort((a,b)=>a-b);
+  const tSel=qs('#f-term');
+  terms.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t>=12&&t%12===0?`${t/12} year${t/12!==1?'s':''}`:`${t} months`;tSel.appendChild(o);});
+}
+
+function attachListeners() {
+  const read=()=>{
+    S.filters.region=qs('#f-region').value;
+    S.filters.city=qs('#f-city').value;
+    S.filters.type=qs('#f-type').value;
+    S.filters.term=qs('#f-term').value;
+    S.filters.asset=qs('#f-asset').value;
+    S.filters.charter=qs('#f-charter').value;
+    S.filters.data=qs('#f-data').value;
+    S.filters.minApy=parseFloat(qs('#f-apy').value)||0;
+    applyFilters();
+  };
+  ['#f-region','#f-city','#f-type','#f-term','#f-asset','#f-charter','#f-data'].forEach(id=>qs(id).addEventListener('change',read));
+  qs('#f-apy').addEventListener('input',()=>{qs('#f-apy-val').textContent=parseFloat(qs('#f-apy').value).toFixed(2)+'%';read();});
+  qs('#btn-reset').addEventListener('click',()=>{
+    ['#f-region','#f-city','#f-type','#f-term','#f-asset','#f-charter','#f-data'].forEach(id=>qs(id).value='');
+    qs('#f-apy').value=0;qs('#f-apy-val').textContent='0.00%';
+    qs('#global-search').value='';
+    S.filters={region:'',city:'',type:'',term:'',minApy:0,asset:'',charter:'',data:'',search:''};
+    applyFilters();
+  });
+
+  // Global search
+  let searchTimeout;
+  qs('#global-search').addEventListener('input',()=>{
+    clearTimeout(searchTimeout);
+    searchTimeout=setTimeout(()=>{S.filters.search=qs('#global-search').value;applyFilters();},200);
+  });
+
+  // Column sorts
+  function setupSort(tblId,sortObj,renderFn,pageProp) {
+    qs(`#tab-${tblId}`).querySelectorAll(`th[data-tbl="${tblId}"]`).forEach(th=>{
+      th.addEventListener('click',()=>{
+        const col=th.dataset.col;
+        sortObj.dir=sortObj.col===col?(sortObj.dir==='asc'?'desc':'asc'):'desc';
+        sortObj.col=col;
+        qs(`#tab-${tblId}`).querySelectorAll(`th[data-tbl="${tblId}"]`).forEach(t=>t.classList.remove('sort-asc','sort-desc'));
+        th.classList.add(sortObj.dir==='asc'?'sort-asc':'sort-desc');
+        S[pageProp]=0;applyFilters();
+      });
+    });
+  }
+  setupSort('markets',S.mktSort,renderMarkets,'mktPage');
+  setupSort('scanner',S.scanSort,renderScanner,'scanPage');
+  setupSort('cof',S.cofSort,renderCofTable,'cofPage');
+
+  // Page sizes
+  qs('#mkt-pg-size').addEventListener('change',()=>{S.pageSize=parseInt(qs('#mkt-pg-size').value);S.mktPage=0;renderMarkets();});
+  qs('#scan-pg-size').addEventListener('change',()=>{S.pageSize=parseInt(qs('#scan-pg-size').value);S.scanPage=0;renderScanner();});
+  qs('#cof-pg-size').addEventListener('change',()=>{S.pageSize=parseInt(qs('#cof-pg-size').value);S.cofPage=0;renderCofTable();});
+
+  // CD matrix view toggle
+  qs('#matrix-btn-all').addEventListener('click',()=>{
+    qs('#matrix-btn-all').style.cssText='background:var(--navy);color:#fff;border-color:var(--navy)';
+    qs('#matrix-btn-region').style.cssText='';renderCdMatrix();});
+  qs('#matrix-btn-region').addEventListener('click',()=>{
+    qs('#matrix-btn-region').style.cssText='background:var(--navy);color:#fff;border-color:var(--navy)';
+    qs('#matrix-btn-all').style.cssText='';renderCdMatrixByRegion();});
+
+  // Tabs
+  qsa('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      qsa('.tab-btn').forEach(b=>b.classList.remove('active'));
+      qsa('.tabcontent').forEach(c=>c.classList.remove('active'));
+      btn.classList.add('active');
+      qs('#tab-'+btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab==='map'){initMap();setTimeout(()=>S.map?.invalidateSize(),80);}
+      if(btn.dataset.tab==='charts')renderCharts();
+      if(btn.dataset.tab==='cdmatrix')renderCdMatrix();
+      updateFilterCount();
+    });
+  });
+
+  // CSV export
+  qs('#btn-csv').addEventListener('click',exportCsv);
+
+  // Health metrics toggle
+  qs('#btn-health-toggle').addEventListener('click',()=>{
+    S.showHealth=!S.showHealth;
+    qs('#btn-health-toggle').textContent=S.showHealth?'Hide Health Metrics':'Show Health Metrics';
+    qsa('.health-col').forEach(el=>el.style.display=S.showHealth?'':'none');
+    qs('#cof-health-legend').textContent=S.showHealth?'LTD: <80% green, >100% red · ROA: >0.8% green, <0.3% red · Texas Ratio: <20% green, >50% red':'';
+  });
+
+  // Hamburger toggle filters on mobile
+  qs('#hamburger').addEventListener('click',()=>qs('#fpanel').classList.toggle('collapsed'));
+
+  // Refresh button
+  qs('#btn-refresh').addEventListener('click',refreshData);
+
+  // Ranger modal
+  qs('#btn-ranger-open').addEventListener('click',()=>qs('#ranger-modal').classList.add('show'));
+  qs('#ranger-cancel').addEventListener('click',()=>qs('#ranger-modal').classList.remove('show'));
+  qs('#ranger-save').addEventListener('click',()=>{
+    S.ranger.cd12=parseFloat(qs('#rr-cd12').value)||null;
+    S.ranger.savings=parseFloat(qs('#rr-savings').value)||null;
+    S.ranger.mmkt=parseFloat(qs('#rr-mmkt').value)||null;
+    S.ranger.ichk=parseFloat(qs('#rr-ichk').value)||null;
+    S.ranger.threshold=parseFloat(qs('#rr-threshold').value)||5.0;
+    qs('#ranger-modal').classList.remove('show');
+    computeRangerPosition();
+    applyFilters();
+  });
+  qs('#ranger-modal').addEventListener('click',e=>{if(e.target===qs('#ranger-modal'))qs('#ranger-modal').classList.remove('show');});
+
+  // Back to top
+  const btt=qs('#btt');
+  window.addEventListener('scroll',()=>{btt.classList.toggle('show',window.scrollY>400);},{passive:true});
+  btt.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  RANGER BANK POSITIONING
+// ═══════════════════════════════════════════════════════════════════════════════
+function computeRangerPosition() {
+  const r=S.ranger;
+  const msgs=[];
+  function pctRank(arr,val){const s=arr.sort((a,b)=>a-b);const rank=s.filter(v=>v<=val).length;return Math.round(rank/s.length*100);}
+  function vsNatl(val,key){const n=BENCHMARKS.nationalAvg[key];if(n==null)return'';const d=((val-n)*100).toFixed(0);return ` (${d>=0?'+':''}${d}bp vs natl)`;}
+
+  if(r.cd12!=null){
+    const cd12s=S.allScraped.filter(x=>x.productType==='cd'&&x.termMonths===12).map(x=>x.apy);
+    if(cd12s.length){const pct=pctRank(cd12s,r.cd12);msgs.push(`12-mo CD ${r.cd12.toFixed(2)}% → ${pct}th pctile${vsNatl(r.cd12,'cd12')}`);}
+  }
+  if(r.savings!=null){
+    const savs=S.allScraped.filter(x=>x.productType==='savings').map(x=>x.apy);
+    if(savs.length){const pct=pctRank(savs,r.savings);msgs.push(`Savings ${r.savings.toFixed(2)}% → ${pct}th${vsNatl(r.savings,'savings')}`);}
+  }
+  if(r.mmkt!=null){
+    const mms=S.allScraped.filter(x=>x.productType==='mmkt').map(x=>x.apy);
+    if(mms.length){const pct=pctRank(mms,r.mmkt);msgs.push(`MMA ${r.mmkt.toFixed(2)}% → ${pct}th${vsNatl(r.mmkt,'mmkt')}`);}
+  }
+  // Pricing recommendation
+  let recommendation='';
+  if(r.cd12!=null&&S.allScraped.length){
+    const avgMkt=S.allScraped.filter(x=>x.productType==='cd'&&x.termMonths===12).reduce((s,x)=>({sum:s.sum+x.apy,n:s.n+1}),{sum:0,n:0});
+    if(avgMkt.n){
+      const mktAvg=avgMkt.sum/avgMkt.n;
+      recommendation=r.cd12>mktAvg*1.1?' · Pricing ABOVE market (aggressive)':r.cd12>=mktAvg*0.9?' · Pricing AT market':' · Pricing BELOW market (conservative)';
+    }
+  }
+  if(msgs.length){
+    qs('#ranger-prompt').innerHTML=`<div style="font-size:12px;color:var(--navy)">
+      <strong>Ranger Bank Position:</strong> ${msgs.join(' · ')}${recommendation}
+      <span class="ranger-indicator">RANGER</span>
+    </div>
+    <button class="btn-sm" style="background:var(--navy);color:var(--gold);border-color:var(--navy)" id="btn-ranger-open">Update Rates</button>`;
+    qs('#btn-ranger-open').addEventListener('click',()=>qs('#ranger-modal').classList.add('show'));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  REFRESH
+// ═══════════════════════════════════════════════════════════════════════════════
+async function refreshData() {
+  const btn=qs('#btn-refresh');
+  btn.classList.add('loading');
+  try {
+    const [raw, finResults, branchMap] = await Promise.all([
+      fetchAllInstitutions(), fetchFinancials(), fetchBranchCounts()
+    ]);
+    S.banks=raw.map(d=>normalizeBank(d,finResults,branchMap));
+    computeCofPercentiles(S.banks);
+    S.allScraped=buildScrapedRows(S.banks);
+    // Re-fetch treasury in background
+    fetchTreasuryRates().then(t=>{if(t)S.treasury=t;});
+    S.lastRefresh=new Date();
+    qs('#last-refresh').textContent=`Refreshed: ${S.lastRefresh.toLocaleTimeString()}`;
+    applyFilters();
+    updateNotice();
+    updateHeader();
+  } catch(e) {
+    alert('Refresh failed: '+e.message);
+  }
+  btn.classList.remove('loading');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  NOTICE + HEADER UPDATE
+// ═══════════════════════════════════════════════════════════════════════════════
+function updateNotice() {
+  const hasScraped=SCRAPED_RATES?.rates&&Object.keys(SCRAPED_RATES.rates).length>0;
+  const m=SCRAPED_RATES?.metadata;
+  if(hasScraped){
+    const d=new Date(m.scraped_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    qs('#notice-inner').innerHTML=`<span class="badge badge-green">● LIVE DATA</span>
+      FDIC data: <strong>${S.banks.length}</strong> TX banks.
+      Scraped rates from <strong>${m.banks_with_rates}</strong> banks (<strong>${m.product_rows}</strong> products) as of <strong>${d}</strong>.
+      ${S.lastRefresh?`FDIC refreshed: <strong>${S.lastRefresh.toLocaleTimeString()}</strong>`:''}`;
+  }
+}
+
+function updateHeader() {
+  const withCof=S.banks.filter(b=>b.impliedRate!==null).length;
+  const withWeb=S.banks.filter(b=>b.websiteUrl).length;
+  const scrBanks=SCRAPED_RATES?.metadata?.banks_with_rates||0;
+  const totalBranches=S.banks.reduce((s,b)=>s+b.branchCount,0);
+  qs('#hdr-meta').innerHTML=`<strong>${S.banks.length}</strong> banks · <strong>${withCof}</strong> COF · <strong>${scrBanks}</strong> scraped<br><span style="font-size:10px">${withWeb} websites · ${totalBranches.toLocaleString()} TX branches · Fed ${BENCHMARKS.fedFundsLow}–${BENCHMARKS.fedFundsHigh}%</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MAIN
+// ═══════════════════════════════════════════════════════════════════════════════
+async function main() {
+  try {
+    // Fetch institutions, financials, and branches in parallel
+    const [raw, finResults, branchMap] = await Promise.all([
+      fetchAllInstitutions(), fetchFinancials(), fetchBranchCounts()
+    ]);
+    S.banks = raw.map(d => normalizeBank(d, finResults, branchMap));
+    computeCofPercentiles(S.banks);
+    S.allScraped = buildScrapedRows(S.banks);
+    S.lastRefresh = new Date();
+
+    // Fetch treasury rates in background (non-blocking)
+    fetchTreasuryRates().then(t => {
+      if(t) { S.treasury = t; if(qs('.tab-btn.active')?.dataset.tab==='charts') renderCharts(); }
+    });
+
+    populateFilters();
+    attachListeners();
+    applyFilters();
+    updateNotice();
+    updateHeader();
+
+    qs('#last-refresh').textContent = `Refreshed: ${S.lastRefresh.toLocaleTimeString()}`;
+    qs('#loading').style.display = 'none';
+    qs('#app').style.display = 'block';
+
+  } catch(err) {
+    qs('#loading').innerHTML = `
+      <div style="text-align:center;padding:40px;color:#c53030">
+        <div style="font-size:36px;margin-bottom:12px">!</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px">Failed to load FDIC data</div>
+        <div style="color:#718096;margin-bottom:16px">${esc(err.message)}</div>
+        <button onclick="location.reload()" style="padding:8px 20px;background:#1B365D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">Retry</button>
+      </div>`;
+  }
+}
+
+main();
+</script>
+</body>
+</html>

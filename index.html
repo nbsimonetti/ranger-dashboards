@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranger Bank — Dashboard Suite</title>
+<style>
+  :root {
+    --navy: #0f2b46;
+    --navy2: #1a3f61;
+    --surface: #ffffff;
+    --bg: #f0f4f8;
+    --text: #1a202c;
+    --muted: #718096;
+    --border: #e2e8f0;
+    --blue: #3182ce;
+    --green: #38a169;
+    --teal: #319795;
+    --orange: #dd6b20;
+    --purple: #805ad5;
+    --red: #e53e3e;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+    color: #fff; padding: 48px 28px 44px; text-align: center;
+  }
+  .logo { font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+          color: #d4a44a; margin-bottom: 12px; }
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .subtitle { font-size: 15px; color: #a8c4e0; max-width: 600px; margin: 0 auto; }
+  .grid {
+    max-width: 1100px; margin: -40px auto 60px; padding: 0 20px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;
+  }
+  .card {
+    background: var(--surface); border-radius: 12px; padding: 28px 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-left: 5px solid var(--border);
+    text-decoration: none; color: var(--text); transition: transform 0.15s, box-shadow 0.15s;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+  .card.blue   { border-left-color: var(--blue); }
+  .card.green  { border-left-color: var(--green); }
+  .card.teal   { border-left-color: var(--teal); }
+  .card.orange { border-left-color: var(--orange); }
+  .card.purple { border-left-color: var(--purple); }
+  .card.red    { border-left-color: var(--red); }
+  .card-tag {
+    display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--muted); padding: 2px 8px; border-radius: 4px;
+    background: #f7fafc; width: fit-content;
+  }
+  .card-title { font-size: 18px; font-weight: 700; }
+  .card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .card-meta { font-size: 11px; color: #a0aec0; margin-top: auto; padding-top: 8px;
+               border-top: 1px solid var(--border); }
+  footer {
+    text-align: center; padding: 32px 20px; font-size: 12px; color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+    h1 { font-size: 24px; }
+    header { padding: 32px 20px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Ranger Bank</div>
+  <h1>Dashboard Suite</h1>
+  <p class="subtitle">Interactive banking intelligence dashboards — deposit analysis, CRE prospecting, physician business development, and M&A target screening.</p>
+</header>
+
+<div class="grid">
+
+  <a href="deposit/tx-deposit-dashboard.html" class="card blue">
+    <span class="card-tag">Deposits</span>
+    <div class="card-title">Texas Community Bank Deposit Dashboard</div>
+    <div class="card-desc">318 TX community banks with FDIC cost-of-funds data, scraped product rates, interactive charts, and market map. Live FDIC API data.</div>
+    <div class="card-meta">FDIC BankFind API &middot; Real-time &middot; 318 banks</div>
+  </a>
+
+  <a href="deposit/tx-deposit-competitive.html" class="card green">
+    <span class="card-tag">Competitive Intel</span>
+    <div class="card-title">Texas Deposit Market Intelligence</div>
+    <div class="card-desc">Competitive rate analysis across 46 markets — market intelligence, rate scanner, CD analysis, and geographic mapping of deposit competition.</div>
+    <div class="card-meta">Scraped rates &middot; 51 banks &middot; 113 products</div>
+  </a>
+
+  <a href="deposit/ranger-bank-deposit-intel.html" class="card teal">
+    <span class="card-tag">Ranger Bank</span>
+    <div class="card-title">Ranger Bank Deposit Market Intelligence</div>
+    <div class="card-desc">Ranger Bank-specific competitive positioning tool. Compare your rates against the market, identify opportunities, and track cost of funds across TX.</div>
+    <div class="card-meta">FDIC + scraped rates &middot; Opportunity scoring &middot; Fed Funds tracking</div>
+  </a>
+
+  <a href="cre/cre-dashboard-tx.html" class="card orange">
+    <span class="card-tag">CRE Prospecting</span>
+    <div class="card-title">CRE Prospecting Dashboard</div>
+    <div class="card-desc">162,000+ commercial real estate properties across 32 Texas counties. Real CAD data with opportunity scoring, owner lookup, pipeline management, and call sheets.</div>
+    <div class="card-meta">32 counties &middot; CAD 2025 data &middot; 162K properties</div>
+  </a>
+
+  <a href="physician/TX_Physician_Dashboard.html" class="card purple">
+    <span class="card-tag">Physician BD</span>
+    <div class="card-title">TX Physician Private Practice Dashboard</div>
+    <div class="card-desc">24,800+ Texas physicians in private practice. Multi-source CMS data with Medicare billing, specialty filtering, compliance screening, and call list generation.</div>
+    <div class="card-meta">NPPES + CMS DAC + Medicare Util + PECOS + OIG &middot; 24.8K physicians</div>
+  </a>
+
+  <a href="ma/ranger-ma-targets.html" class="card red">
+    <span class="card-tag">M&A</span>
+    <div class="card-title">M&A Target Dashboard</div>
+    <div class="card-desc">95 Texas community banks under $200M ranked for acquisition priority. Composite scoring with financial metrics, peer comparison, geographic fit, and outreach tracking.</div>
+    <div class="card-meta">FDIC data &middot; 5Y financials &middot; 95 targets scored</div>
+  </a>
+
+</div>
+
+<footer>
+  Ranger Bank Dashboard Suite &middot; Data sources: FDIC BankFind API, County Appraisal Districts, CMS/NPPES
+</footer>
+
+</body>
+</html>
