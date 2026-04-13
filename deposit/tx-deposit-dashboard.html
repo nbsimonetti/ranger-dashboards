@@ -483,6 +483,7 @@
       <button class="tab-btn" data-tab="cdrates" id="tab-btn-cdrates" style="display:none">
         CD Rates <span class="apy-badge" id="cd-tab-count" style="font-size:10px;padding:1px 6px">0</span>
       </button>
+      <button class="tab-btn" data-tab="methodology">Methodology</button>
     </div>
 
     <!-- TABLE tab -->
@@ -491,6 +492,7 @@
         <table>
           <thead id="thead-fdic">
             <tr>
+              <th data-col="compScore" data-mode="fdic">Score</th>
               <th data-col="name" data-mode="fdic">Bank</th>
               <th data-col="city" data-mode="fdic">City</th>
               <th data-col="regionLabel" data-mode="fdic">Region</th>
@@ -677,6 +679,106 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- METHODOLOGY tab -->
+    <div class="tabcontent" id="tab-methodology">
+      <div style="max-width:900px;margin:0 auto;padding:24px 20px">
+        <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Deposit Competitiveness Score Methodology</h2>
+        <p style="color:var(--c-muted);font-size:13px;margin-bottom:24px">How each bank's Competitiveness Score (0-100) is calculated to identify the most aggressive deposit competitors in the Texas community banking market.</p>
+
+        <div style="background:var(--c-surface);border-radius:8px;padding:16px 20px;margin-bottom:20px;border:1px solid var(--c-border);box-shadow:var(--shadow)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-muted);margin-bottom:10px">Score Interpretation</div>
+          <div style="display:flex;border-radius:6px;overflow:hidden;height:28px;font-size:11px;font-weight:700;color:#fff">
+            <div style="flex:35;background:#a0aec0;display:flex;align-items:center;justify-content:center">0-34 Low</div>
+            <div style="flex:25;background:#dd6b20;display:flex;align-items:center;justify-content:center">35-59 Moderate</div>
+            <div style="flex:20;background:#276749;display:flex;align-items:center;justify-content:center">60-79 Competitive</div>
+            <div style="flex:20;background:#22543d;display:flex;align-items:center;justify-content:center">80+ Aggressive</div>
+          </div>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-muted);margin-bottom:12px">Scoring Components (5 factors, 100 points max)</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+
+          <div style="background:var(--c-surface);border-radius:8px;padding:16px 20px;border:1px solid var(--c-border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Cost of Funds</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-35 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--c-muted);line-height:1.5">
+              <strong>What it measures:</strong> The bank's blended deposit cost from FDIC Call Report data (EINTEXP &divide; DEP).<br>
+              <strong>How it works:</strong> Higher cost of funds = higher score. A bank paying 3%+ in blended deposit costs scores 35/35. Linear scale from 0%.<br>
+              <strong>Why it matters:</strong> Banks with high cost of funds are paying depositors more — they're actively competing for deposits and will be Ranger Bank's primary competitors.
+            </div>
+          </div>
+
+          <div style="background:var(--c-surface);border-radius:8px;padding:16px 20px;border:1px solid var(--c-border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Deposit Growth Proxy</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-20 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--c-muted);line-height:1.5">
+              <strong>What it measures:</strong> Interest expense as a percentage of total assets — a proxy for deposit-gathering intensity.<br>
+              <strong>How it works:</strong> Higher ratio = more aggressive deposit pricing relative to bank size. Banks spending 3%+ of assets on interest expense score 20/20.<br>
+              <strong>Why it matters:</strong> This normalizes for bank size. A small bank spending a high share of its asset base on interest expense is especially aggressive.
+            </div>
+          </div>
+
+          <div style="background:var(--c-surface);border-radius:8px;padding:16px 20px;border:1px solid var(--c-border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Asset Size Fit</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-15 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--c-muted);line-height:1.5">
+              <strong>What it measures:</strong> Whether the bank falls in the $100M-$1B "sweet spot" for competitive deposit activity.<br>
+              <strong>How it works:</strong> $100M-$1B = 15pts, $1B-$3B = 12pts, under $100M = 10pts, other = 5pts.<br>
+              <strong>Why it matters:</strong> Mid-sized community banks are the most active competitors for local deposits — large enough to offer competitive products, small enough to need every deposit dollar.
+            </div>
+          </div>
+
+          <div style="background:var(--c-surface);border-radius:8px;padding:16px 20px;border:1px solid var(--c-border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Website Presence</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-10 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--c-muted);line-height:1.5">
+              <strong>What it measures:</strong> Whether the bank has a verified website on file with the FDIC.<br>
+              <strong>How it works:</strong> Website on file = 10pts, no website = 0pts.<br>
+              <strong>Why it matters:</strong> Banks with websites are digitally active and more likely to publish competitive rates, making them visible competitors for online-savvy depositors.
+            </div>
+          </div>
+
+          <div style="background:var(--c-surface);border-radius:8px;padding:16px 20px;border:1px solid var(--c-border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Scraped Rate Data</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-20 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--c-muted);line-height:1.5">
+              <strong>What it measures:</strong> Whether the bank has publicly advertised deposit rates that were successfully scraped.<br>
+              <strong>How it works:</strong> Has scraped product rates = 20pts, no scraped data = 0pts.<br>
+              <strong>Why it matters:</strong> Banks that prominently advertise rates are actively marketing their deposit products — the clearest signal of competitive intent.
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--c-surface);border-radius:8px;padding:16px 20px;margin-bottom:12px;border:1px solid var(--c-border);box-shadow:var(--shadow)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-muted);margin-bottom:8px">Data Sources</div>
+          <div style="font-size:12.5px;color:var(--c-muted);line-height:1.7">
+            <strong>FDIC BankFind API</strong> — Cost of funds, total deposits, total assets, interest expense, charter type, and website URLs for all active Texas community banks under $3B in assets.<br>
+            <strong>Scraped Bank Websites</strong> — Advertised deposit product rates collected from 19 bank websites as of the most recent scrape date.
+          </div>
+        </div>
+
+        <div style="background:var(--c-surface);border-radius:8px;padding:16px 20px;border:1px solid var(--c-border);box-shadow:var(--shadow)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-muted);margin-bottom:8px">Limitations</div>
+          <div style="font-size:12.5px;color:var(--c-muted);line-height:1.7">
+            &bull; FDIC cost-of-funds is a lagging indicator from quarterly Call Reports — does not reflect real-time rate changes<br>
+            &bull; Scraped rates cover only 19 of 318 banks — most banks receive 0/20 for this component by default<br>
+            &bull; The score measures observable competitiveness, not actual deposit growth or market share<br>
+            &bull; Banks without FDIC financial data receive 0 for the cost-of-funds and growth proxy components
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1111,7 +1213,8 @@ function renderTable() {
             target="_blank" rel="noopener noreferrer"
             class="link-btn link-secondary" title="No website on FDIC record">Search Rates ↗</a>`;
 
-    return `<tr>
+    return `<tr data-cert="${b.cert}">
+      <td style="position:relative">${compScoreBadge(b.compScore)}</td>
       <td><div class="bank-name" title="${esc(b.name)}">${esc(b.name)}</div></td>
       <td>${b.city}</td>
       <td style="font-size:12px;color:var(--c-muted)">${b.regionLabel}</td>
@@ -2038,6 +2141,64 @@ function exportCSV() {
   URL.revokeObjectURL(a.href);
 }
 
+// ── Deposit Competitiveness Score ─────────────────────────────────────────────
+function computeCompScore(b, scrapedCerts) {
+  const c = {};
+  // 1. Cost of Funds (0-35) — higher = more competitive
+  if (b.impliedRate !== null) c.cof = Math.min(Math.round(b.impliedRate / 3 * 35), 35);
+  else c.cof = 0;
+  // 2. Deposit growth proxy (0-20) — interest expense / assets ratio
+  if (b.eintexpM > 0 && b.assetM > 0) {
+    const ratio = (b.eintexpM / b.assetM) * 100;
+    c.growth = Math.min(Math.round(ratio / 3 * 20), 20);
+  } else c.growth = 0;
+  // 3. Asset size sweet spot (0-15)
+  const a = b.assetM;
+  c.assetFit = (a >= 100 && a <= 1000) ? 15 : (a > 1000 && a <= 3000) ? 12 : (a > 0 && a < 100) ? 10 : 5;
+  // 4. Website presence (0-10)
+  c.web = b.websiteUrl ? 10 : 0;
+  // 5. Scraped rate data available (0-20)
+  c.scraped = scrapedCerts.has(String(b.cert)) ? 20 : 0;
+  const total = c.cof + c.growth + c.assetFit + c.web + c.scraped;
+  b._compComponents = c;
+  b.compScore = Math.min(total, 100);
+  return b.compScore;
+}
+function compScoreBadge(s) {
+  const cls = s >= 60 ? 'background:#276749;color:#fff' : s >= 35 ? 'background:#dd6b20;color:#fff' : 'background:#a0aec0;color:#fff';
+  return `<span class="comp-score-badge" style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;${cls}" title="Click for breakdown">${s}</span>`;
+}
+
+// Score driver tooltip
+document.addEventListener('click', function(e) {
+  const badge = e.target.closest('.comp-score-badge');
+  if (badge) {
+    const existing = badge.parentElement.querySelector('.comp-driver-tip');
+    document.querySelectorAll('.comp-driver-tip').forEach(t => t.remove());
+    if (existing) return;
+    const cert = badge.closest('tr')?.dataset?.cert;
+    if (!cert) return;
+    const bank = S.filtered.find(b => String(b.cert) === cert);
+    if (!bank || !bank._compComponents) return;
+    const c = bank._compComponents;
+    const bars = [
+      ['Cost of Funds', c.cof, 35], ['Growth Proxy', c.growth, 20], ['Asset Fit', c.assetFit, 15],
+      ['Web Presence', c.web, 10], ['Scraped Rates', c.scraped, 20]
+    ];
+    const tip = document.createElement('div');
+    tip.className = 'comp-driver-tip';
+    tip.style.cssText = 'position:absolute;z-index:999;background:#1a202c;color:#e2e8f0;border-radius:8px;padding:12px 14px;font-size:11px;width:220px;box-shadow:0 8px 24px rgba(0,0,0,.3);left:50%;transform:translateX(-50%);top:100%;margin-top:4px';
+    tip.innerHTML = '<div style="font-weight:700;font-size:12px;margin-bottom:8px;color:#fff">Score: ' + bank.compScore + '/100</div>' +
+      bars.map(([name, val, max]) => {
+        const pct = Math.round(val / max * 100);
+        return '<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;margin-bottom:1px"><span>' + name + '</span><span style="font-weight:700">' + val + '/' + max + '</span></div>' +
+          '<div style="height:6px;background:#2d3748;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + (pct >= 70 ? '#38a169' : pct >= 40 ? '#dd6b20' : '#e53e3e') + ';border-radius:3px"></div></div></div>';
+      }).join('');
+    badge.parentElement.appendChild(tip);
+    e.stopPropagation();
+  } else { document.querySelectorAll('.comp-driver-tip').forEach(t => t.remove()); }
+});
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
   try {
@@ -2068,6 +2229,10 @@ async function main() {
       `<span style="font-size:11px">${withWeb} with website · Call Report: ${repdte}` +
       (scrapedBankCount ? ` &nbsp;·&nbsp; <span style="color:#68d391;font-weight:700">${scrapedBankCount} banks scraped</span>` : '') +
       `</span>`;
+
+    // Compute competitiveness scores
+    const scrapedCerts = new Set(SCRAPED_RATES?.rates ? Object.keys(SCRAPED_RATES.rates) : []);
+    S.banks.forEach(b => computeCompScore(b, scrapedCerts));
 
     populateFilters();
     attachListeners();

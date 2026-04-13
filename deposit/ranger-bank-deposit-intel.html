@@ -487,6 +487,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
       <button class="tab-btn" data-tab="cdmatrix" role="tab">CD Analysis</button>
       <button class="tab-btn" data-tab="charts" role="tab">Charts</button>
       <button class="tab-btn" data-tab="map" role="tab">Map</button>
+      <button class="tab-btn" data-tab="methodology" role="tab">Methodology</button>
     </div>
 
     <!-- MARKET INTELLIGENCE tab -->
@@ -687,6 +688,84 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
         </div>
         <div id="map"></div>
         <div class="map-note">Click markers for details. Size ∝ assets. Colored markers have COF or scraped data.</div>
+      </div>
+    </div>
+
+    <!-- METHODOLOGY tab -->
+    <div class="tabcontent" id="tab-methodology" role="tabpanel">
+      <div style="max-width:900px;margin:0 auto;padding:24px 20px">
+        <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Opportunity Score Methodology</h2>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:24px">How each market's Opportunity Score (0-100) is calculated to identify the best deposit-gathering targets for Ranger Bank.</p>
+
+        <div style="background:var(--surface);border-radius:8px;padding:16px 20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Score Interpretation</div>
+          <div style="display:flex;border-radius:6px;overflow:hidden;height:28px;font-size:11px;font-weight:700;color:#fff">
+            <div style="flex:3;background:#e53e3e;display:flex;align-items:center;justify-content:center">0-29 Low</div>
+            <div style="flex:3;background:#dd6b20;display:flex;align-items:center;justify-content:center">30-49 Moderate</div>
+            <div style="flex:2;background:#38a169;display:flex;align-items:center;justify-content:center">50-69 Good</div>
+            <div style="flex:2;background:#276749;display:flex;align-items:center;justify-content:center">70+ High</div>
+          </div>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:12px">Scoring Components (3 factors, 100 points max)</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+
+          <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Low Average APY (Ease of Entry)</span>
+              <span style="font-size:13px;font-weight:700;color:var(--gold)">0-40 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
+              <strong>What it measures:</strong> How low the average advertised rate is in the market.<br>
+              <strong>How it works:</strong> Formula: (1 - avgAPY/5) &times; 40. A market averaging 0% APY scores 40/40; a market averaging 5% scores 0/40.<br>
+              <strong>Why it matters:</strong> Markets with low existing rates are easiest for Ranger Bank to enter competitively — even a modest rate offer can be market-leading, attracting depositors without aggressive pricing.
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Market Size (Bank Count)</span>
+              <span style="font-size:13px;font-weight:700;color:var(--gold)">0-30 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
+              <strong>What it measures:</strong> How many banks with scraped rates operate in the market.<br>
+              <strong>How it works:</strong> Formula: min(bankCount/5, 1) &times; 30. Markets with 5+ banks score 30/30; fewer banks scale proportionally.<br>
+              <strong>Why it matters:</strong> Larger markets have more deposit volume available and more established demand. A market with many banks indicates healthy deposit activity worth competing for.
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Product Variety</span>
+              <span style="font-size:13px;font-weight:700;color:var(--gold)">0-30 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
+              <strong>What it measures:</strong> How many different deposit product types are offered in the market (CD, savings, money market, interest checking).<br>
+              <strong>How it works:</strong> Formula: min(productTypeCount/4, 1) &times; 30. Markets with all 4 product types score 30/30.<br>
+              <strong>Why it matters:</strong> Markets with diverse product offerings indicate mature deposit competition. These markets have customers who actively compare products — exactly the audience Ranger Bank can target.
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:8px;padding:16px 20px;margin-bottom:12px;border:1px solid var(--border);box-shadow:var(--shadow)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Data Sources</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
+            <strong>FDIC BankFind API</strong> — Cost of funds (EINTEXP &divide; DEP), total deposits, total assets, charter type, and branch locations for all Texas community banks under $3B in assets.<br>
+            <strong>Scraped Bank Websites</strong> — Advertised deposit product rates (CD, savings, money market, interest checking) collected from 19 bank websites. Refreshed periodically.<br>
+            <strong>Federal Reserve (FRED)</strong> — Federal Funds effective rate for benchmark comparison.
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Limitations</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
+            &bull; Scraped rates cover only 19 of 318 TX banks — market scores are based on available data, not the full competitive field<br>
+            &bull; FDIC cost-of-funds is a blended average from quarterly call reports, not current advertised rates<br>
+            &bull; Market boundaries are based on FDIC-recorded city, not MSA or trade area definitions<br>
+            &bull; The score does not account for branch proximity, brand strength, or customer switching costs<br>
+            &bull; Rates change frequently — scraped data reflects a point-in-time snapshot
+          </div>
+        </div>
       </div>
     </div>
 

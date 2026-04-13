@@ -405,6 +405,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
       <button class="tab-btn" data-tab="cdmatrix">CD Analysis</button>
       <button class="tab-btn" data-tab="charts">Charts</button>
       <button class="tab-btn" data-tab="map">Map</button>
+      <button class="tab-btn" data-tab="methodology">Methodology</button>
     </div>
 
     <!-- MARKET INTELLIGENCE tab -->
@@ -412,6 +413,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
       <div class="tbl-wrap">
         <table>
           <thead><tr>
+            <th data-col="oppScore">Opportunity</th>
             <th data-col="city">Market</th>
             <th data-col="region">Region</th>
             <th data-col="bankCount" class="nosort">Competitors</th>
@@ -547,6 +549,108 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
         <div class="map-note">
           Map shows TX-headquartered banks at their HQ locations. Colored = banks with scraped rate data; gray = no publicly available rate data.
           National / out-of-state banks with TX branches appear in tables and charts but are not pinned to this map.
+        </div>
+      </div>
+    </div>
+
+    <!-- METHODOLOGY tab -->
+    <div class="tabcontent" id="tab-methodology">
+      <div style="max-width:900px;margin:0 auto;padding:24px 20px">
+        <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Market Opportunity Score Methodology</h2>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:24px">How each market's Opportunity Score (0-100) is calculated to identify the best deposit-gathering targets.</p>
+
+        <div style="background:var(--surface);border-radius:8px;padding:16px 20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Score Interpretation</div>
+          <div style="display:flex;border-radius:6px;overflow:hidden;height:28px;font-size:11px;font-weight:700;color:#fff">
+            <div style="flex:35;background:#a0aec0;display:flex;align-items:center;justify-content:center">0-34 Low</div>
+            <div style="flex:25;background:#dd6b20;display:flex;align-items:center;justify-content:center">35-59 Moderate</div>
+            <div style="flex:20;background:#276749;display:flex;align-items:center;justify-content:center">60-79 Strong</div>
+            <div style="flex:20;background:#22543d;display:flex;align-items:center;justify-content:center">80+ Prime</div>
+          </div>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:12px">Scoring Components (5 factors, 100 points max)</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+
+          <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Rate Softness</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-30 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
+              <strong>What it measures:</strong> How low the average APY is in the market.<br>
+              <strong>How it works:</strong> Formula: (1 - avgAPY/5) &times; 30. Markets with lower average rates score higher.<br>
+              <strong>Why it matters:</strong> Softer rate environments mean Ranger Bank can enter with a competitive rate without aggressive pricing — even a modest offer can attract depositors.
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Market Depth</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-20 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
+              <strong>What it measures:</strong> Number of competing banks with scraped rate data in the market.<br>
+              <strong>How it works:</strong> 5+ banks = 20pts, scaling proportionally for fewer.<br>
+              <strong>Why it matters:</strong> More banks indicate an established deposit market with proven demand worth competing for.
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Product Gaps</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-20 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
+              <strong>What it measures:</strong> How few deposit product types are offered in the market (CD, savings, money market, checking).<br>
+              <strong>How it works:</strong> Fewer product types = higher score. Markets with only 1 product type score 15/20; markets with all 4 score 0/20.<br>
+              <strong>Why it matters:</strong> Product gaps represent immediate opportunity — if no bank offers money market accounts in a market, Ranger Bank can fill that void.
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Best Rate Headroom</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-15 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
+              <strong>What it measures:</strong> How far below the Fed Funds rate the market's best advertised rate is.<br>
+              <strong>How it works:</strong> If the best rate is well below the Fed Funds rate (~4.35%), there's headroom to offer a competitive rate. Higher gap = higher score.<br>
+              <strong>Why it matters:</strong> Markets where even the best rate is below national benchmarks have room for Ranger Bank to lead on rate without overpaying.
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-weight:700;font-size:14px">Geographic Fit</span>
+              <span style="font-size:13px;font-weight:700;color:#2b6cb0">0-15 pts</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
+              <strong>What it measures:</strong> What share of competitors in the market are Texas-headquartered banks.<br>
+              <strong>How it works:</strong> Higher percentage of TX-HQ banks = higher score. 100% TX banks = 15pts.<br>
+              <strong>Why it matters:</strong> Markets dominated by local TX banks are better geographic fits for Ranger Bank's community banking model than markets dominated by national players.
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:8px;padding:16px 20px;margin-bottom:12px;border:1px solid var(--border);box-shadow:var(--shadow)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Data Sources</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
+            <strong>FDIC BankFind API</strong> — Bank demographics, asset sizes, charter types, and branch locations.<br>
+            <strong>Scraped Bank Websites</strong> — Advertised deposit product rates (CD, savings, money market, interest checking) collected from bank websites.<br>
+            <strong>Federal Reserve (FRED)</strong> — Federal Funds effective rate used as a benchmark for headroom calculation.
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Limitations</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
+            &bull; Scraped rates cover a subset of banks — markets with few scraped rates may have incomplete competitive pictures<br>
+            &bull; Geographic fit uses origin classification (TX-HQ vs national/OOS) as a proxy, not actual branch proximity<br>
+            &bull; The Fed Funds rate used for headroom is a static benchmark and may not reflect current market conditions<br>
+            &bull; Market boundaries are city-level, not trade-area or MSA-based<br>
+            &bull; The score does not account for population, demographics, or deposit volume in the market
+          </div>
         </div>
       </div>
     </div>
@@ -783,12 +887,23 @@ function buildMarkets(rows) {
     const types = [...new Set(m.rows.map(r=>r.productType))];
     const avgAll = avg(all);
     const level  = avgAll===null ? 'unknown' : avgAll < 1.5 ? 'soft' : avgAll < 3 ? 'mod' : 'hot';
+    // Market Opportunity Score (0-100)
+    const sc = {};
+    sc.softness = avgAll !== null ? Math.round(Math.max(0, (1 - avgAll / 5)) * 30) : 30;
+    sc.depth = Math.min(Math.round(m.banks.size / 5 * 20), 20);
+    sc.gaps = Math.round(Math.max(0, (1 - types.length / 4)) * 20);
+    const fedRate = 4.35;
+    const bestAll = best(all);
+    sc.headroom = bestAll !== null ? Math.round(Math.max(0, (1 - bestAll / fedRate)) * 15) : 10;
+    const txBanks = m.rows.filter(r => r.origin !== 'national_oos').length;
+    sc.geoFit = Math.round((txBanks / Math.max(m.rows.length, 1)) * 15);
+    const oppScore = Math.min(sc.softness + sc.depth + sc.gaps + sc.headroom + sc.geoFit, 100);
     return {
       city: m.city, region: m.region, regionLabel: m.regionLabel,
       bankCount: m.banks.size, productCount: m.rows.length,
       avgApy: avgAll, bestApy: best(all),
       avgCd12: avg(cd12), avgSavings: avg(sav), avgMmkt: avg(mm),
-      products: types, level,
+      products: types, level, oppScore, _oppComponents: sc,
     };
   });
 }
@@ -905,7 +1020,9 @@ function renderMarkets() {
     const types = m.products.map(t =>
       `<span class="pp pp-${t}" title="${PRODUCT_LABELS[t]||t}">${PRODUCT_LABELS[t]||t}</span>`
     ).join(' ');
-    return `<tr>
+    const oppCls = m.oppScore >= 60 ? 'background:#276749;color:#fff' : m.oppScore >= 35 ? 'background:#dd6b20;color:#fff' : 'background:#a0aec0;color:#fff';
+    return `<tr data-city="${esc(m.city)}">
+      <td style="position:relative"><span class="opp-score-badge" style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;${oppCls}" title="Click for breakdown">${m.oppScore}</span></td>
       <td><strong>${esc(cityTitle)}</strong></td>
       <td style="font-size:12px;color:var(--muted)">${m.regionLabel}</td>
       <td class="right">${m.bankCount}</td>
@@ -1370,6 +1487,36 @@ function exportCSV() {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+// Score driver tooltip
+document.addEventListener('click', function(e) {
+  const badge = e.target.closest('.opp-score-badge');
+  if (badge) {
+    const existing = badge.parentElement.querySelector('.opp-driver-tip');
+    document.querySelectorAll('.opp-driver-tip').forEach(t => t.remove());
+    if (existing) return;
+    const city = badge.closest('tr')?.dataset?.city;
+    if (!city) return;
+    const mkt = S.markets.find(m => m.city === city);
+    if (!mkt || !mkt._oppComponents) return;
+    const c = mkt._oppComponents;
+    const bars = [
+      ['Rate Softness', c.softness, 30], ['Market Depth', c.depth, 20], ['Product Gaps', c.gaps, 20],
+      ['Rate Headroom', c.headroom, 15], ['Geographic Fit', c.geoFit, 15]
+    ];
+    const tip = document.createElement('div');
+    tip.className = 'opp-driver-tip';
+    tip.style.cssText = 'position:absolute;z-index:999;background:#1a202c;color:#e2e8f0;border-radius:8px;padding:12px 14px;font-size:11px;width:220px;box-shadow:0 8px 24px rgba(0,0,0,.3);left:50%;transform:translateX(-50%);top:100%;margin-top:4px';
+    tip.innerHTML = '<div style="font-weight:700;font-size:12px;margin-bottom:8px;color:#fff">Opportunity: ' + mkt.oppScore + '/100</div>' +
+      bars.map(function(b) {
+        var pct = Math.round(b[1] / b[2] * 100);
+        return '<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;margin-bottom:1px"><span>' + b[0] + '</span><span style="font-weight:700">' + b[1] + '/' + b[2] + '</span></div>' +
+          '<div style="height:6px;background:#2d3748;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + (pct >= 70 ? '#38a169' : pct >= 40 ? '#dd6b20' : '#e53e3e') + ';border-radius:3px"></div></div></div>';
+      }).join('');
+    badge.parentElement.appendChild(tip);
+    e.stopPropagation();
+  } else { document.querySelectorAll('.opp-driver-tip').forEach(t => t.remove()); }
+});
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
