@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-<title>Ranger Bank — Deposit Market Intelligence</title>
+<title>Ranger Bank — Deposit Intelligence Platform</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
@@ -317,8 +317,8 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
     <div class="hdr-left">
       <button class="hamburger" id="hamburger" aria-label="Toggle filters">☰</button>
       <div>
-        <div class="hdr-logo">Ranger <span>Bank</span> — Deposit Market Intelligence</div>
-        <div class="hdr-sub">TX community bank competitive analysis · FDIC + scraped advertised rates</div>
+        <div class="hdr-logo">Ranger <span>Bank</span> — Deposit Intelligence Platform</div>
+        <div class="hdr-sub">Unified competitive analysis · FDIC cost of funds + scraped rates · Set your rates to compare</div>
       </div>
     </div>
     <div class="hdr-right">
@@ -481,17 +481,57 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
 
     <!-- Tab bar -->
     <div class="tabbar" role="tablist">
-      <button class="tab-btn active" data-tab="markets" role="tab">Market Intel</button>
+      <button class="tab-btn active" data-tab="overview" role="tab">Overview</button>
+      <button class="tab-btn" data-tab="banks" role="tab">Bank Directory</button>
+      <button class="tab-btn" data-tab="markets" role="tab">Market Intel</button>
       <button class="tab-btn" data-tab="scanner" role="tab">Rate Scanner</button>
       <button class="tab-btn" data-tab="cof" role="tab">Cost of Funds</button>
       <button class="tab-btn" data-tab="cdmatrix" role="tab">CD Analysis</button>
-      <button class="tab-btn" data-tab="charts" role="tab">Charts</button>
-      <button class="tab-btn" data-tab="map" role="tab">Map</button>
+      <button class="tab-btn" data-tab="charts" role="tab">Charts & Map</button>
       <button class="tab-btn" data-tab="methodology" role="tab">Methodology</button>
     </div>
 
+    <!-- OVERVIEW tab -->
+    <div class="tabcontent active" id="tab-overview" role="tabpanel">
+      <div style="padding:20px">
+        <div id="overview-content">
+          <div style="text-align:center;padding:40px;color:var(--muted)">Loading overview...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BANK DIRECTORY tab -->
+    <div class="tabcontent" id="tab-banks" role="tabpanel">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th data-col="compScore" data-tbl="bank">Score</th>
+            <th data-col="name" data-tbl="bank">Bank</th>
+            <th data-col="city" data-tbl="bank">City</th>
+            <th data-col="regionLabel" data-tbl="bank">Region</th>
+            <th data-col="impliedRate" data-tbl="bank" class="sort-desc">Cost of Funds</th>
+            <th data-col="eintexpM" data-tbl="bank">Int. Expense</th>
+            <th data-col="depM" data-tbl="bank">Deposits</th>
+            <th data-col="assetM" data-tbl="bank">Assets</th>
+            <th data-col="charterType" data-tbl="bank">Charter</th>
+            <th data-col="established" data-tbl="bank">Est.</th>
+            <th class="nosort">Rates</th>
+          </tr></thead>
+          <tbody id="bank-body"></tbody>
+        </table>
+      </div>
+      <div class="tbl-note">
+        <strong>Competitiveness Score</strong>: Composite of cost of funds (35pts), deposit growth proxy (20pts), asset size fit (15pts), website presence (10pts), and scraped rate data (20pts). Higher = more aggressive deposit competitor. Click a score badge for full breakdown.
+      </div>
+      <div class="pgbar">
+        <div class="pgsize">Rows: <select id="bank-pg-size"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></div>
+        <div class="pginfo" id="bank-pg-info"></div>
+        <div class="pgbtns" id="bank-pg-btns"></div>
+      </div>
+    </div>
+
     <!-- MARKET INTELLIGENCE tab -->
-    <div class="tabcontent active" id="tab-markets" role="tabpanel">
+    <div class="tabcontent" id="tab-markets" role="tabpanel">
       <div class="tbl-wrap">
         <table>
           <thead><tr>
@@ -672,30 +712,47 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- MAP tab -->
-    <div class="tabcontent" id="tab-map" role="tabpanel">
-      <div class="map-wrap">
-        <div class="map-legend">
-          <strong style="font-size:11.5px;color:#4a5568">Color = Cost of Funds:</strong>
-          <div class="mleg"><div class="mdot" style="background:#d69e2e"></div>< 1%</div>
-          <div class="mleg"><div class="mdot" style="background:#68d391"></div>1–2%</div>
-          <div class="mleg"><div class="mdot" style="background:#38a169"></div>2–3%</div>
-          <div class="mleg"><div class="mdot" style="background:#276749"></div>3%+</div>
-          <div class="mleg"><div class="mdot" style="background:var(--gold)"></div>Scraped rates</div>
-          <div class="mleg"><div class="mdot" style="background:#a0aec0"></div>No data</div>
+      <!-- Map section (within Charts & Map tab) -->
+      <div style="padding:20px">
+        <div class="clabel" style="margin-bottom:12px">Geographic Distribution <span>Click markers for details · Size ∝ assets</span></div>
+        <div class="map-wrap" style="padding:0">
+          <div class="map-legend">
+            <strong style="font-size:11.5px;color:#4a5568">Color = Cost of Funds:</strong>
+            <div class="mleg"><div class="mdot" style="background:#d69e2e"></div>&lt; 1%</div>
+            <div class="mleg"><div class="mdot" style="background:#68d391"></div>1–2%</div>
+            <div class="mleg"><div class="mdot" style="background:#38a169"></div>2–3%</div>
+            <div class="mleg"><div class="mdot" style="background:#276749"></div>3%+</div>
+            <div class="mleg"><div class="mdot" style="background:var(--gold)"></div>Scraped rates</div>
+            <div class="mleg"><div class="mdot" style="background:#a0aec0"></div>No data</div>
+          </div>
+          <div id="map"></div>
         </div>
-        <div id="map"></div>
-        <div class="map-note">Click markers for details. Size ∝ assets. Colored markers have COF or scraped data.</div>
+      </div>
       </div>
     </div>
 
     <!-- METHODOLOGY tab -->
     <div class="tabcontent" id="tab-methodology" role="tabpanel">
       <div style="max-width:900px;margin:0 auto;padding:24px 20px">
-        <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Opportunity Score Methodology</h2>
-        <p style="color:var(--muted);font-size:13px;margin-bottom:24px">How each market's Opportunity Score (0-100) is calculated to identify the best deposit-gathering targets for Ranger Bank.</p>
+        <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Scoring & Methodology</h2>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:24px">This platform uses two complementary scoring systems — one at the bank level and one at the market level — to help Ranger Bank identify competitive threats and deposit-gathering opportunities.</p>
+
+        <!-- COMPETITIVENESS SCORE -->
+        <div style="background:var(--gold-lt);border:2px solid var(--gold);border-radius:8px;padding:16px 20px;margin-bottom:24px">
+          <h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px">Bank-Level: Deposit Competitiveness Score (0-100)</h3>
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Visible in the <strong>Bank Directory</strong> tab. Identifies which banks are most aggressively competing for deposits.</p>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;font-size:11px;text-align:center">
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">35</div>Cost of Funds<br><span style="color:var(--muted)">FDIC blended rate</span></div>
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">20</div>Growth Proxy<br><span style="color:var(--muted)">IntExp / Assets</span></div>
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">15</div>Asset Size Fit<br><span style="color:var(--muted)">$100M-$1B sweet spot</span></div>
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">10</div>Web Presence<br><span style="color:var(--muted)">Has FDIC website</span></div>
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">20</div>Scraped Rates<br><span style="color:var(--muted)">Advertises rates</span></div>
+          </div>
+        </div>
+
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:8px">Market-Level: Opportunity Score (0-100)</h3>
+        <p style="color:var(--muted);font-size:12.5px;margin-bottom:16px">Visible in the <strong>Market Intel</strong> tab. Identifies geographic markets where Ranger Bank has the greatest deposit-gathering opportunity.</p>
 
         <div style="background:var(--surface);border-radius:8px;padding:16px 20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow)">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Score Interpretation</div>
@@ -1785,9 +1842,10 @@ function attachListeners() {
       qsa('.tabcontent').forEach(c=>c.classList.remove('active'));
       btn.classList.add('active');
       qs('#tab-'+btn.dataset.tab).classList.add('active');
-      if(btn.dataset.tab==='map'){initMap();setTimeout(()=>S.map?.invalidateSize(),80);}
-      if(btn.dataset.tab==='charts')renderCharts();
+      if(btn.dataset.tab==='charts'){renderCharts();initMap();setTimeout(()=>S.map?.invalidateSize(),80);}
       if(btn.dataset.tab==='cdmatrix')renderCdMatrix();
+      if(btn.dataset.tab==='overview')renderOverview();
+      if(btn.dataset.tab==='banks')renderBankDirectory();
       updateFilterCount();
     });
   });
@@ -1882,6 +1940,7 @@ async function refreshData() {
     ]);
     S.banks=raw.map(d=>normalizeBank(d,finResults,branchMap));
     computeCofPercentiles(S.banks);
+    S.banks.forEach(computeCompScore);
     S.allScraped=buildScrapedRows(S.banks);
     // Re-fetch treasury in background
     fetchTreasuryRates().then(t=>{if(t)S.treasury=t;});
@@ -1920,6 +1979,203 @@ function updateHeader() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  COMPETITIVENESS SCORE (bank-level)
+// ═══════════════════════════════════════════════════════════════════════════════
+function computeCompScore(b) {
+  const c = {};
+  c.cof = b.impliedRate !== null ? Math.min(Math.round(b.impliedRate / 3 * 35), 35) : 0;
+  c.growth = (b.eintexpM > 0 && b.assetM > 0) ? Math.min(Math.round((b.eintexpM / b.assetM * 100) / 3 * 20), 20) : 0;
+  const a = b.assetM;
+  c.assetFit = (a >= 100 && a <= 1000) ? 15 : (a > 1000 && a <= 3000) ? 12 : (a > 0 && a < 100) ? 10 : 5;
+  c.web = b.websiteUrl ? 10 : 0;
+  c.scraped = b.hasScraped ? 20 : 0;
+  b._compComponents = c;
+  b.compScore = Math.min(c.cof + c.growth + c.assetFit + c.web + c.scraped, 100);
+}
+function compBadge(s) {
+  const bg = s >= 60 ? '#276749' : s >= 35 ? '#dd6b20' : '#a0aec0';
+  return `<span class="comp-badge" style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;background:${bg};color:#fff" title="Click for breakdown">${s}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BANK DIRECTORY
+// ═══════════════════════════════════════════════════════════════════════════════
+const BD = { page:0, pageSize:25, sort:{col:'compScore',dir:'desc'} };
+
+function renderBankDirectory() {
+  const banks = S.filtBanks || S.banks;
+  // Sort
+  const {col,dir} = BD.sort;
+  const d = dir==='asc'?1:-1;
+  const sorted = [...banks].sort((a,b)=>{
+    const av=a[col],bv=b[col];
+    if(av==null&&bv==null)return 0; if(av==null)return 1; if(bv==null)return -1;
+    return typeof av==='string'? d*av.localeCompare(bv): d*(av-bv);
+  });
+  const ps=BD.pageSize, start=BD.page*ps, rows=sorted.slice(start,start+ps);
+  const total=sorted.length, pages=Math.max(1,Math.ceil(total/ps));
+
+  const fmtM=v=>v>=1000?'$'+(v/1000).toFixed(1)+'B':v>0?'$'+v.toFixed(0)+'M':'—';
+  const cofC=r=>r>=3?'color:#22543d':r>=1.5?'color:#276749':'color:#4a5568';
+  const isRanger = S.ranger && S.ranger.cd12;
+
+  qs('#bank-body').innerHTML = rows.map(b => {
+    const cofCell = b.impliedRate!==null
+      ? `<span style="font-weight:700;font-size:14px;${cofC(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><br><span style="font-size:10px;color:var(--muted)">FDIC ${b.finRepdte||''}</span>`
+      : '<span style="color:#a0aec0">—</span>';
+    const rateLink = b.websiteUrl
+      ? `<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#ebf4ff;color:#2b6cb0;border:1px solid #bee3f8;text-decoration:none;white-space:nowrap">Visit ↗</a>`
+      : `<a href="https://www.google.com/search?q=${encodeURIComponent(b.name+' '+b.city+' TX rates')}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#f7fafc;color:#4a5568;border:1px solid #e2e8f0;text-decoration:none;white-space:nowrap">Search ↗</a>`;
+    return `<tr data-cert="${b.cert}">
+      <td style="position:relative">${compBadge(b.compScore)}</td>
+      <td><div style="font-weight:600;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(b.name)}">${esc(b.name)}</div></td>
+      <td>${b.city}</td>
+      <td style="font-size:12px;color:var(--muted)">${b.regionLabel}</td>
+      <td class="right">${cofCell}</td>
+      <td class="right" style="font-size:12px;color:var(--muted)">${b.eintexpM>0?(b.eintexpM<1?'$'+(b.eintexpM*1000).toFixed(0)+'K':'$'+b.eintexpM.toFixed(1)+'M'):'—'}</td>
+      <td class="right" style="font-size:12px;color:var(--muted)">${fmtM(b.depM)}</td>
+      <td class="right" style="font-size:12px;color:var(--muted)">${fmtM(b.assetM)}</td>
+      <td><span style="display:inline-block;padding:2px 7px;border-radius:12px;font-size:10.5px;font-weight:600;background:#f0f4f8;color:#4a5568">${(b.charterType||'').replace('Non-Member ','NM ').replace('Member ','M ')}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${b.established||'—'}</td>
+      <td>${rateLink}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const pgInfo=qs('#bank-pg-info'), pgBtns=qs('#bank-pg-btns');
+  pgInfo.textContent=`${start+1}–${Math.min(start+ps,total)} of ${total}`;
+  let btnsHtml='<button '+(BD.page<=0?'disabled':'')+' onclick="BD.page--;renderBankDirectory()">‹</button>';
+  const maxPg=Math.min(pages,7), startPg=Math.max(0,Math.min(BD.page-3,pages-maxPg));
+  for(let i=startPg;i<startPg+maxPg;i++) btnsHtml+=`<button class="${i===BD.page?'active':''}" onclick="BD.page=${i};renderBankDirectory()">${i+1}</button>`;
+  btnsHtml+='<button '+(BD.page>=pages-1?'disabled':'')+' onclick="BD.page++;renderBankDirectory()">›</button>';
+  pgBtns.innerHTML=btnsHtml;
+}
+
+// Bank Directory sort handler
+document.addEventListener('click',function(e){
+  const th=e.target.closest('th[data-tbl="bank"]');
+  if(th){
+    const col=th.dataset.col;
+    BD.sort.dir = BD.sort.col===col ? (BD.sort.dir==='asc'?'desc':'asc') : 'desc';
+    BD.sort.col=col; BD.page=0;
+    qs('#tab-banks').querySelectorAll('th[data-tbl="bank"]').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
+    th.classList.add(BD.sort.dir==='asc'?'sort-asc':'sort-desc');
+    renderBankDirectory();
+  }
+  // Comp score tooltip
+  const badge=e.target.closest('.comp-badge');
+  if(badge){
+    const existing=badge.parentElement.querySelector('.comp-driver-tip');
+    document.querySelectorAll('.comp-driver-tip').forEach(t=>t.remove());
+    if(existing)return;
+    const cert=badge.closest('tr')?.dataset?.cert;
+    if(!cert)return;
+    const bank=(S.filtBanks||S.banks).find(b=>String(b.cert)===cert);
+    if(!bank||!bank._compComponents)return;
+    const c=bank._compComponents;
+    const bars=[['Cost of Funds',c.cof,35],['Growth Proxy',c.growth,20],['Asset Fit',c.assetFit,15],['Web Presence',c.web,10],['Scraped Rates',c.scraped,20]];
+    const tip=document.createElement('div');
+    tip.className='comp-driver-tip';
+    tip.style.cssText='position:absolute;z-index:999;background:#1a202c;color:#e2e8f0;border-radius:8px;padding:12px 14px;font-size:11px;width:220px;box-shadow:0 8px 24px rgba(0,0,0,.3);left:50%;transform:translateX(-50%);top:100%;margin-top:4px';
+    tip.innerHTML='<div style="font-weight:700;font-size:12px;margin-bottom:8px;color:#fff">Score: '+bank.compScore+'/100</div>'+
+      bars.map(b=>{const pct=Math.round(b[1]/b[2]*100);return'<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;margin-bottom:1px"><span>'+b[0]+'</span><span style="font-weight:700">'+b[1]+'/'+b[2]+'</span></div><div style="height:6px;background:#2d3748;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+(pct>=70?'#38a169':pct>=40?'#dd6b20':'#e53e3e')+';border-radius:3px"></div></div></div>';}).join('');
+    badge.parentElement.appendChild(tip);
+    e.stopPropagation();return;
+  }
+  if(!e.target.closest('.comp-driver-tip'))document.querySelectorAll('.comp-driver-tip').forEach(t=>t.remove());
+});
+
+// Bank directory page size
+document.addEventListener('DOMContentLoaded',()=>{
+  const sel=qs('#bank-pg-size');
+  if(sel) sel.addEventListener('change',()=>{BD.pageSize=parseInt(sel.value);BD.page=0;renderBankDirectory();});
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  OVERVIEW TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderOverview() {
+  const banks = S.filtBanks || S.banks;
+  const markets = S.filtMarkets || S.markets;
+  const rows = S.filtRows || S.rows;
+  const withCof = banks.filter(b=>b.impliedRate!==null);
+  const avgCof = withCof.length ? (withCof.reduce((s,b)=>s+b.impliedRate,0)/withCof.length).toFixed(2) : '—';
+  const maxCof = withCof.length ? Math.max(...withCof.map(b=>b.impliedRate)).toFixed(2) : '—';
+  const scrapedBanks = banks.filter(b=>b.hasScraped).length;
+  const topMarket = markets.length ? [...markets].sort((a,b)=>(b.opportunity||0)-(a.opportunity||0))[0] : null;
+  const topComp = [...banks].sort((a,b)=>(b.compScore||0)-(a.compScore||0))[0];
+
+  // Ranger positioning
+  const r = S.ranger;
+  const hasRanger = r && (r.cd12 || r.savings || r.mmkt || r.ichk);
+  let rangerSection = '';
+  if (hasRanger) {
+    const cd12Rates = rows.filter(x=>x.productType==='cd'&&x.termMonths===12).map(x=>x.apy);
+    const savRates = rows.filter(x=>x.productType==='savings').map(x=>x.apy);
+    const mmRates = rows.filter(x=>x.productType==='mmkt').map(x=>x.apy);
+    const avgOf = arr => arr.length ? (arr.reduce((s,v)=>s+v,0)/arr.length) : null;
+    const pos = (rangerRate, mktRates, label) => {
+      if(!rangerRate) return '';
+      const avg = avgOf(mktRates);
+      const rank = mktRates.filter(v=>v>rangerRate).length+1;
+      const total = mktRates.length;
+      const vs = avg!==null ? (rangerRate>avg ? `<span style="color:#276749;font-weight:700">+${(rangerRate-avg).toFixed(2)}%</span> above avg` : `<span style="color:#c53030;font-weight:700">${(rangerRate-avg).toFixed(2)}%</span> below avg`) : 'no market data';
+      return `<div style="background:var(--surface);border-radius:8px;padding:14px 16px;border:1px solid var(--border);border-left:4px solid var(--gold)">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${label}</div>
+        <div style="font-size:22px;font-weight:700;margin:4px 0">${rangerRate.toFixed(2)}%</div>
+        <div style="font-size:12px;color:var(--muted)">Rank #${rank} of ${total} · ${vs}</div>
+      </div>`;
+    };
+    rangerSection = `
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gold);margin-bottom:10px">Ranger Bank Rate Positioning</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+          ${pos(r.cd12, cd12Rates, '12-Month CD')}
+          ${pos(r.savings, savRates, 'Savings')}
+          ${pos(r.mmkt, mmRates, 'Money Market')}
+        </div>
+      </div>`;
+  } else {
+    rangerSection = `
+      <div style="background:var(--gold-lt);border:2px solid var(--gold);border-radius:8px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-weight:700;color:var(--navy)">Set Ranger Bank Rates to See Your Competitive Position</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px">Enter your target rates to see how Ranger Bank ranks against every TX competitor.</div>
+        </div>
+        <button class="btn-sm btn-ranger" onclick="qs('#ranger-modal').style.display='flex'" style="white-space:nowrap">Set Ranger Rates</button>
+      </div>`;
+  }
+
+  qs('#overview-content').innerHTML = `
+    ${rangerSection}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px">
+      <div class="stat-card blue"><div class="stat-label">TX Banks</div><div class="stat-value">${banks.length}</div><div class="stat-note">Active community banks</div></div>
+      <div class="stat-card green"><div class="stat-label">Markets Covered</div><div class="stat-value">${markets.length}</div><div class="stat-note">Cities with scraped rates</div></div>
+      <div class="stat-card teal"><div class="stat-label">Avg Cost of Funds</div><div class="stat-value">${avgCof}%</div><div class="stat-note">Blended deposit cost (FDIC)</div></div>
+      <div class="stat-card orange"><div class="stat-label">Highest COF</div><div class="stat-value">${maxCof}%</div><div class="stat-note">Most aggressive competitor</div></div>
+      <div class="stat-card purple"><div class="stat-label">Banks Scraped</div><div class="stat-value">${scrapedBanks}</div><div class="stat-note">With advertised rates</div></div>
+      <div class="stat-card" style="border-left-color:var(--gold)"><div class="stat-label">Fed Funds Rate</div><div class="stat-value">${S.treasury?.fedFunds||'—'}</div><div class="stat-note">Current benchmark</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);box-shadow:var(--shadow)">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Top Opportunities (by Market Score)</div>
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Market</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Avg APY</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Score</th></tr>
+          ${[...markets].sort((a,b)=>(b.opportunity||0)-(a.opportunity||0)).slice(0,8).map(m=>`<tr style="border-bottom:1px solid #f7fafc"><td style="padding:5px 0;font-weight:600">${m.city.charAt(0)+m.city.slice(1).toLowerCase()}</td><td style="text-align:right;padding:5px 0;color:var(--muted)">${m.avgApy!=null?m.avgApy.toFixed(2)+'%':'—'}</td><td style="text-align:right;padding:5px 0"><span style="font-weight:700;color:${m.opportunity>=70?'#276749':m.opportunity>=40?'#c05621':'#a0aec0'}">${m.opportunity||'—'}</span></td></tr>`).join('')}
+        </table>
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);box-shadow:var(--shadow)">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Most Competitive Banks (by Competitiveness Score)</div>
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Bank</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">COF</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Score</th></tr>
+          ${[...banks].sort((a,b)=>(b.compScore||0)-(a.compScore||0)).slice(0,8).map(b=>`<tr style="border-bottom:1px solid #f7fafc"><td style="padding:5px 0;font-weight:600;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.name)}</td><td style="text-align:right;padding:5px 0;color:var(--muted)">${b.impliedRate!=null?b.impliedRate.toFixed(2)+'%':'—'}</td><td style="text-align:right;padding:5px 0">${compBadge(b.compScore)}</td></tr>`).join('')}
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  MAIN
 // ═══════════════════════════════════════════════════════════════════════════════
 async function main() {
@@ -1930,17 +2186,19 @@ async function main() {
     ]);
     S.banks = raw.map(d => normalizeBank(d, finResults, branchMap));
     computeCofPercentiles(S.banks);
+    S.banks.forEach(computeCompScore);
     S.allScraped = buildScrapedRows(S.banks);
     S.lastRefresh = new Date();
 
     // Fetch treasury rates in background (non-blocking)
     fetchTreasuryRates().then(t => {
-      if(t) { S.treasury = t; if(qs('.tab-btn.active')?.dataset.tab==='charts') renderCharts(); }
+      if(t) { S.treasury = t; if(qs('.tab-btn.active')?.dataset.tab==='overview') renderOverview(); if(qs('.tab-btn.active')?.dataset.tab==='charts') renderCharts(); }
     });
 
     populateFilters();
     attachListeners();
     applyFilters();
+    renderOverview();
     updateNotice();
     updateHeader();
 
