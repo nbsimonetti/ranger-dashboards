@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranger Bank — Physician Underwriting Benchmarks</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+:root {
+  --navy: #1B365D;
+  --navy2: #254a7a;
+  --gold: #C8A951;
+  --gold-lt: #f5ecd5;
+  --teal: #319795;
+  --teal-lt: #e6fffa;
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #1a202c;
+  --muted: #718096;
+  --green: #276749;
+  --orange: #c05621;
+  --red: #c53030;
+  --r: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,.09);
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       background:var(--bg); color:var(--text); font-size:14px; line-height:1.5; }
+
+/* Header */
+header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
+         color:#fff; padding:16px 24px 14px; position:sticky; top:0; z-index:100; }
+.hdr { max-width:1500px; margin:0 auto; display:flex; align-items:center;
+       justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.hdr-left { display:flex; align-items:center; gap:14px; min-width:0; }
+.hdr-logo { font-size:20px; font-weight:800; letter-spacing:-.3px; white-space:nowrap; }
+.hdr-logo span { color:var(--gold); }
+.hdr-sub { font-size:11.5px; color:rgba(255,255,255,.6); }
+.hdr-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.hdr-meta { font-size:11px; color:rgba(255,255,255,.55); text-align:right; white-space:nowrap; }
+.hdr-meta strong { color:rgba(255,255,255,.85); }
+
+/* Notice */
+.notice { padding:9px 24px; font-size:12px; background:var(--teal-lt);
+          border-bottom:2px solid var(--teal); color:#234e52; }
+.notice .inner { max-width:1500px; margin:0 auto; }
+.notice strong { color:#1a4040; }
+.badge { display:inline-flex; align-items:center; gap:3px; padding:1px 7px;
+         border-radius:12px; font-size:10.5px; font-weight:700; vertical-align:middle;
+         background:#b2f5ea; color:#234e52; }
+
+.main { max-width:1500px; margin:0 auto; padding:18px 20px 48px; }
+
+/* Stat cards */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; margin-bottom:18px; }
+.stat-card { background:var(--surface); border-radius:var(--r); padding:14px 16px;
+             box-shadow:var(--shadow); border-left:4px solid var(--border); }
+.stat-card.teal { border-left-color:var(--teal); }
+.stat-card.gold { border-left-color:var(--gold); }
+.stat-card.green { border-left-color:#38a169; }
+.stat-card.orange { border-left-color:#dd6b20; }
+.stat-card.purple { border-left-color:#805ad5; }
+.stat-card.blue { border-left-color:#3182ce; }
+.stat-label { font-size:10.5px; font-weight:700; color:var(--muted);
+              text-transform:uppercase; letter-spacing:.5px; }
+.stat-value { font-size:22px; font-weight:700; margin-top:4px; line-height:1.1; }
+.stat-note { font-size:11px; color:var(--muted); margin-top:4px; }
+
+/* Filter panel */
+.fpanel { background:var(--surface); border-radius:var(--r); padding:14px 18px;
+          box-shadow:var(--shadow); margin-bottom:16px; }
+.fpanel-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.fpanel-title { font-weight:700; font-size:13px; }
+.fgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.fi label { display:block; font-size:10.5px; font-weight:700; color:var(--muted);
+            text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+.fi select, .fi input { width:100%; border:1px solid var(--border); border-radius:6px;
+  padding:7px 10px; font-size:13px; background:#f8fafc; color:var(--text); }
+.fi select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center; padding-right:28px;
+  appearance:none; -webkit-appearance:none; }
+.fi input:focus, .fi select:focus { outline:2px solid var(--teal); outline-offset:1px; }
+.btn-reset { background:none; border:1px solid var(--border); border-radius:6px;
+             padding:5px 12px; font-size:12px; cursor:pointer; color:var(--muted); }
+.btn-reset:hover { background:#f7fafc; color:var(--text); }
+.btn-export { display:inline-flex; align-items:center; gap:5px; padding:6px 14px;
+              border:1px solid var(--border); border-radius:6px; font-size:12px;
+              font-weight:600; cursor:pointer; background:#f8fafc; color:var(--muted); }
+.btn-export:hover { background:var(--teal-lt); border-color:var(--teal); color:#234e52; }
+.btn-primary { background:var(--teal); color:#fff; border:none; padding:9px 20px;
+               border-radius:6px; font-weight:600; font-size:13px; cursor:pointer; }
+.btn-primary:hover { background:#2c7a7b; }
+
+/* Tabs */
+.tabbar { display:flex; gap:2px; background:var(--surface);
+          border-radius:var(--r) var(--r) 0 0; padding:0 4px;
+          border-bottom:2px solid var(--border); box-shadow:var(--shadow); }
+.tab-btn { padding:11px 18px; font-size:13px; font-weight:600; border:none;
+           background:none; cursor:pointer; color:var(--muted);
+           border-bottom:3px solid transparent; margin-bottom:-2px; }
+.tab-btn.active { color:var(--teal); border-bottom-color:var(--teal); }
+.tab-btn:hover:not(.active) { color:var(--text); }
+.tabcontent { display:none; background:var(--surface);
+              border-radius:0 0 var(--r) var(--r); box-shadow:var(--shadow); min-height:400px; }
+.tabcontent.active { display:block; }
+
+/* Table */
+.tbl-wrap { overflow:auto; max-height:75vh; }
+table { width:100%; border-collapse:collapse; }
+thead th { position:sticky; top:0; background:#f7fafc; z-index:2; padding:10px 12px;
+           font-size:10.5px; font-weight:700; text-transform:uppercase;
+           letter-spacing:.4px; color:var(--muted); text-align:left; white-space:nowrap;
+           cursor:pointer; user-select:none; box-shadow:0 1px 0 var(--border); }
+thead th:hover:not(.nosort) { color:var(--text); }
+thead th.nosort { cursor:default; }
+thead th.sort-asc::after { content:' ▲'; color:var(--teal); }
+thead th.sort-desc::after { content:' ▼'; color:var(--teal); }
+td { padding:9px 12px; border-bottom:1px solid #f0f4f8; vertical-align:middle; font-size:13px; }
+tr:hover td { background:#f7fafc; cursor:pointer; }
+td.right { text-align:right; font-variant-numeric:tabular-nums; }
+
+/* Score badges */
+.bops { display:inline-block; padding:2px 9px; border-radius:12px; font-size:12px;
+        font-weight:700; cursor:pointer; min-width:36px; text-align:center; }
+.bops-hi { background:#276749; color:#fff; }
+.bops-mid { background:#dd6b20; color:#fff; }
+.bops-lo { background:#a0aec0; color:#fff; }
+
+.payer-mix-bar { display:flex; height:18px; border-radius:9px; overflow:hidden;
+                 width:160px; min-width:160px; font-size:0; }
+.pm-medicare { background:#3182ce; }
+.pm-commercial { background:#38a169; }
+.pm-medicaid { background:#dd6b20; }
+.pm-self { background:#805ad5; }
+.pm-other { background:#a0aec0; }
+
+.pm-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; font-size:11px; color:var(--muted); }
+.pm-legend > div { display:flex; align-items:center; gap:4px; }
+.pm-legend .dot { width:10px; height:10px; border-radius:2px; }
+
+/* Tier badges */
+.tier { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px;
+        font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
+.tier-surg { background:#fed7d7; color:#9b2c2c; }
+.tier-med  { background:#bee3f8; color:#2b6cb0; }
+.tier-pcp  { background:#c6f6d5; color:#22543d; }
+.tier-hosp { background:#e9d8fd; color:#553c9a; }
+
+.capex { display:inline-block; padding:2px 7px; border-radius:4px; font-size:11px; font-weight:600; }
+.capex-h { background:#fed7d7; color:#9b2c2c; }
+.capex-m { background:#feebc8; color:#7b341e; }
+.capex-l { background:#c6f6d5; color:#22543d; }
+
+/* Detail view */
+.detail-section { padding:18px 20px; }
+.detail-h { font-size:18px; font-weight:700; margin-bottom:4px; }
+.detail-sub { font-size:13px; color:var(--muted); margin-bottom:16px; }
+.section-title { font-size:11px; font-weight:700; text-transform:uppercase;
+                 letter-spacing:.5px; color:var(--muted); margin-bottom:10px; }
+.metric-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+.mcard { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; }
+.mcard-l { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); }
+.mcard-v { font-size:18px; font-weight:700; margin-top:4px; }
+.mcard-n { font-size:11px; color:var(--muted); margin-top:3px; }
+
+/* Charts */
+.chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:18px 20px; }
+.ccard { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; }
+.ccard.wide { grid-column:1/-1; }
+.clabel { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;
+          letter-spacing:.4px; margin-bottom:10px; }
+.clabel span { font-weight:400; color:#a0aec0; margin-left:6px; text-transform:none; letter-spacing:0; }
+
+/* Borrower comparison form */
+.cmp-form { padding:20px; max-width:1200px; margin:0 auto; }
+.cmp-form-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+.cmp-section-h { font-size:13px; font-weight:700; color:var(--navy); margin:18px 0 8px;
+                 padding-bottom:6px; border-bottom:1px solid var(--border); }
+.cmp-section-h:first-child { margin-top:0; }
+.cmp-input label { display:block; font-size:10.5px; font-weight:700; color:var(--muted);
+                   text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+.cmp-input input, .cmp-input select { width:100%; border:1px solid var(--border); border-radius:6px;
+  padding:8px 10px; font-size:13px; background:#fff; color:var(--text); }
+.cmp-input input:focus, .cmp-input select:focus { outline:2px solid var(--teal); outline-offset:1px; }
+
+/* Comparison output */
+.cmp-output { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r); padding:18px 20px; margin-top:18px; }
+.cmp-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f0f4f8; }
+.cmp-row:last-child { border-bottom:none; }
+.cmp-label { flex:0 0 200px; font-weight:600; font-size:13px; }
+.cmp-val { flex:0 0 110px; font-weight:700; font-size:14px; font-variant-numeric:tabular-nums; }
+.cmp-bar-wrap { flex:1; position:relative; height:24px; background:#edf2f7; border-radius:4px; overflow:visible; }
+.cmp-bar-pctile { position:absolute; top:0; bottom:0; background:linear-gradient(to right,#bee3f8,#3182ce);
+                  border-radius:4px; }
+.cmp-bar-mark { position:absolute; top:-3px; bottom:-3px; width:3px; background:var(--gold);
+                box-shadow:0 0 0 2px rgba(200,169,81,.3); }
+.cmp-flag { flex:0 0 90px; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:600;
+            text-align:center; text-transform:uppercase; letter-spacing:.3px; }
+.flag-good { background:#c6f6d5; color:#22543d; }
+.flag-neutral { background:#feebc8; color:#7b341e; }
+.flag-bad { background:#fed7d7; color:#9b2c2c; }
+
+.summary-card { padding:14px 18px; border-radius:var(--r); margin-bottom:10px; }
+.summary-strengths { background:#f0fff4; border-left:4px solid #38a169; }
+.summary-concerns { background:#fff5f5; border-left:4px solid #c53030; }
+.summary-considerations { background:#ebf8ff; border-left:4px solid #3182ce; }
+.summary-h { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+.summary-list { font-size:13px; line-height:1.6; }
+.summary-list li { margin-bottom:4px; }
+
+/* Methodology */
+.method-card { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r);
+               padding:14px 18px; margin-bottom:12px; }
+.method-h { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:6px; }
+.method-h a { color:var(--teal); text-decoration:none; font-size:12px; font-weight:600; }
+.method-h a:hover { text-decoration:underline; }
+.method-body { font-size:12.5px; color:var(--text); line-height:1.6; }
+.method-body strong { color:var(--navy); }
+
+/* Map */
+#map { height:520px; border-radius:var(--r); }
+
+/* Print */
+@media print {
+  header, .notice, .fpanel, .tabbar, .btn-export, .btn-reset, .btn-primary, .cmp-form { display:none !important; }
+  .tabcontent { display:block !important; box-shadow:none; }
+  body { background:#fff; font-size:11px; }
+  .tbl-wrap { max-height:none; overflow:visible; }
+}
+
+@media (max-width:1000px) {
+  .fgrid, .cmp-form-grid, .chart-grid { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:640px) {
+  .fgrid, .cmp-form-grid, .chart-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <div class="hdr-left">
+      <div>
+        <div class="hdr-logo">Ranger <span>Bank</span> — Physician Underwriting Benchmarks</div>
+        <div class="hdr-sub">National specialty benchmarks for credit decisioning · Compare individual borrowers vs. specialty norms</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-meta" id="hdr-meta">
+        <strong>29</strong> specialties &nbsp;·&nbsp; <strong>2024</strong> data vintage<br>
+        <span style="font-size:10px">Sources: Medscape, Doximity, BLS, MedPAC, MGMA, CMS</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="notice">
+  <div class="inner">
+    <span class="badge">● PUBLIC DATA</span>&nbsp;
+    All benchmarks are sourced from publicly available, citable reports — Medscape Compensation Report 2024, Doximity 2024/2025 reports, BLS OEWS May 2024, MedPAC Data Book July 2024, MGMA published findings, CMS GPCI 2024.
+    See the <strong>Methodology</strong> tab for full citations and data vintage.
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Stat cards -->
+  <div class="stat-grid">
+    <div class="stat-card teal">
+      <div class="stat-label">Specialties Tracked</div>
+      <div class="stat-value">29</div>
+      <div class="stat-note">Top underwriting candidates</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">Avg Specialist Comp</div>
+      <div class="stat-value">$404K</div>
+      <div class="stat-note">Medscape 2024 (specialists)</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Avg PCP Comp</div>
+      <div class="stat-value">$287K</div>
+      <div class="stat-note">Medscape 2024 (primary care)</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">Industry AR Benchmark</div>
+      <div class="stat-value">&lt;40 days</div>
+      <div class="stat-note">MGMA best practice</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Practice Overhead Avg</div>
+      <div class="stat-value">60-70%</div>
+      <div class="stat-note">Of revenue (industry rule)</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Medicare CF 2024</div>
+      <div class="stat-value">$32.7442</div>
+      <div class="stat-note">CMS PFS conversion factor</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="fpanel">
+    <div class="fpanel-hdr">
+      <div class="fpanel-title">Filter & Sort</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-export" id="btn-csv">⬇ Export CSV</button>
+        <button class="btn-reset" id="btn-reset">Reset</button>
+      </div>
+    </div>
+    <div class="fgrid">
+      <div class="fi">
+        <label>Specialty Group</label>
+        <select id="f-tier">
+          <option value="">All Groups</option>
+          <option value="surg">Surgical</option>
+          <option value="med">Medical Specialty</option>
+          <option value="pcp">Primary Care</option>
+          <option value="hosp">Hospital-Based</option>
+        </select>
+      </div>
+      <div class="fi">
+        <label>Income Tier</label>
+        <select id="f-income">
+          <option value="">All</option>
+          <option value="hi">Above $500K</option>
+          <option value="mid">$300K–$500K</option>
+          <option value="lo">Below $300K</option>
+        </select>
+      </div>
+      <div class="fi">
+        <label>Capex Intensity</label>
+        <select id="f-capex">
+          <option value="">All</option>
+          <option value="H">High</option>
+          <option value="M">Medium</option>
+          <option value="L">Low</option>
+        </select>
+      </div>
+      <div class="fi">
+        <label>Search</label>
+        <input type="text" id="f-search" placeholder="Specialty name…">
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tabbar">
+    <button class="tab-btn active" data-tab="overview">Specialty Overview</button>
+    <button class="tab-btn" data-tab="detail">Specialty Detail</button>
+    <button class="tab-btn" data-tab="comparison">Borrower Comparison Tool</button>
+    <button class="tab-btn" data-tab="geo">Geographic View</button>
+    <button class="tab-btn" data-tab="methodology">Methodology</button>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div class="tabcontent active" id="tab-overview">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th data-col="bops" class="sort-desc">Bank Opp Score</th>
+          <th data-col="name">Specialty</th>
+          <th data-col="tier">Group</th>
+          <th data-col="medMean" class="right">Avg Comp (Medscape)</th>
+          <th data-col="doxMean" class="right">Avg Comp (Doximity)</th>
+          <th data-col="blsMean" class="right">BLS W-2 Mean</th>
+          <th class="nosort">Payer Mix</th>
+          <th data-col="payerScore" class="right">Payer Mix Score</th>
+          <th data-col="overhead" class="right">Overhead %</th>
+          <th data-col="capexLevel">Capex</th>
+          <th data-col="demandOutlook" class="right">10Y Demand</th>
+        </tr></thead>
+        <tbody id="tbl-body"></tbody>
+      </table>
+    </div>
+    <div style="padding:10px 16px;font-size:11.5px;color:var(--muted);background:#f9fbfd;border-top:1px solid var(--border);line-height:1.6">
+      <strong>Bank Opportunity Score</strong> (0–100): Composite of income (25), payer mix (20), income stability (15), capex/loan demand (15), demand outlook (10), overhead efficiency (10), default risk inverse (5).
+      <strong>Payer Mix Score</strong> (0–100): Higher commercial = higher score; higher Medicaid = lower score.
+      Click any row for specialty detail. Overhead figures are public industry estimates — request borrower P&L for actuals.
+    </div>
+  </div>
+
+  <!-- SPECIALTY DETAIL TAB -->
+  <div class="tabcontent" id="tab-detail">
+    <div id="detail-content" class="detail-section">
+      <p style="text-align:center;padding:40px;color:var(--muted)">Select a specialty from the Overview table to see detail.</p>
+    </div>
+  </div>
+
+  <!-- BORROWER COMPARISON TAB -->
+  <div class="tabcontent" id="tab-comparison">
+    <div class="cmp-form">
+      <div style="background:var(--gold-lt);border:2px solid var(--gold);border-radius:var(--r);padding:14px 18px;margin-bottom:18px">
+        <div style="font-weight:700;color:var(--navy);font-size:14px">Individual Borrower Evaluation</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:4px">Enter the borrower's specialty and financial metrics to see how they compare to national benchmarks for their specialty. Output is suitable for credit memo attachment.</div>
+      </div>
+
+      <div class="cmp-section-h">Practice Profile</div>
+      <div class="cmp-form-grid">
+        <div class="cmp-input"><label>Specialty</label>
+          <select id="b-specialty"></select>
+        </div>
+        <div class="cmp-input"><label>Sub-Specialty</label>
+          <select id="b-subspecialty"><option value="">N/A</option></select>
+        </div>
+        <div class="cmp-input"><label>Years in Practice</label>
+          <input type="number" id="b-years" min="0" max="60" placeholder="e.g. 12">
+        </div>
+        <div class="cmp-input"><label>State / Region</label>
+          <select id="b-state">
+            <option value="">National Avg</option>
+            <option value="hi-cost">High-cost metro (CA, NYC, Boston)</option>
+            <option value="mid-cost">Mid-cost metro (TX, FL, NC)</option>
+            <option value="low-cost">Low-cost rural / small metro</option>
+          </select>
+        </div>
+        <div class="cmp-input"><label>Practice Setting</label>
+          <select id="b-setting">
+            <option value="solo">Solo Practice</option>
+            <option value="small">Small Group (2-10)</option>
+            <option value="large">Large Group (10+)</option>
+            <option value="employed">Hospital Employed</option>
+          </select>
+        </div>
+        <div class="cmp-input"><label>Practice Ownership %</label>
+          <input type="number" id="b-ownership" min="0" max="100" placeholder="e.g. 50">
+        </div>
+      </div>
+
+      <div class="cmp-section-h">Income & Revenue</div>
+      <div class="cmp-form-grid">
+        <div class="cmp-input"><label>Annual Personal Compensation ($)</label>
+          <input type="number" id="b-comp" placeholder="e.g. 425000">
+        </div>
+        <div class="cmp-input"><label>Annual Practice Gross Revenue ($)</label>
+          <input type="number" id="b-revenue" placeholder="e.g. 1500000">
+        </div>
+        <div class="cmp-input"><label>Annual Net Income (Practice EBITDA) ($)</label>
+          <input type="number" id="b-netincome" placeholder="e.g. 600000">
+        </div>
+      </div>
+
+      <div class="cmp-section-h">Payer Mix (Practice %)</div>
+      <div class="cmp-form-grid">
+        <div class="cmp-input"><label>% Medicare</label>
+          <input type="number" id="b-medicare" min="0" max="100" placeholder="e.g. 45">
+        </div>
+        <div class="cmp-input"><label>% Commercial / Private</label>
+          <input type="number" id="b-commercial" min="0" max="100" placeholder="e.g. 40">
+        </div>
+        <div class="cmp-input"><label>% Medicaid</label>
+          <input type="number" id="b-medicaid" min="0" max="100" placeholder="e.g. 10">
+        </div>
+        <div class="cmp-input"><label>% Self-Pay / Cash</label>
+          <input type="number" id="b-selfpay" min="0" max="100" placeholder="e.g. 5">
+        </div>
+        <div class="cmp-input"><label>% Other (VA, WC, etc.)</label>
+          <input type="number" id="b-other" min="0" max="100" placeholder="e.g. 0">
+        </div>
+      </div>
+
+      <div class="cmp-section-h">Practice Operations</div>
+      <div class="cmp-form-grid">
+        <div class="cmp-input"><label>Overhead %</label>
+          <input type="number" id="b-overhead" min="0" max="100" placeholder="e.g. 58">
+        </div>
+        <div class="cmp-input"><label>Days in A/R</label>
+          <input type="number" id="b-dar" min="0" placeholder="e.g. 38">
+        </div>
+        <div class="cmp-input"><label>Charge-to-Collection %</label>
+          <input type="number" id="b-collection" min="0" max="100" placeholder="e.g. 95">
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:20px">
+        <button class="btn-primary" id="btn-evaluate">Run Borrower Comparison →</button>
+        <button class="btn-export" id="btn-print" style="margin-left:10px">⎙ Print / Save PDF</button>
+      </div>
+
+      <div id="cmp-output" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- GEOGRAPHIC TAB -->
+  <div class="tabcontent" id="tab-geo">
+    <div style="padding:18px 20px">
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+        <div class="fi" style="min-width:200px">
+          <label>Specialty (for income shading)</label>
+          <select id="geo-spec"></select>
+        </div>
+        <div style="font-size:12px;color:var(--muted);max-width:600px">
+          Top 10 highest- and lowest-paying metros from the Doximity 2025 Compensation Report. Numbers reflect average physician compensation across all specialties in each metro.
+        </div>
+      </div>
+      <div class="chart-grid">
+        <div class="ccard">
+          <div class="clabel">Top 10 Highest-Paying Metros <span>Doximity 2025 (CY2024 data)</span></div>
+          <table style="font-size:12px;width:100%">
+            <thead><tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">Rank</th>
+              <th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">Metro</th>
+              <th style="text-align:right;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">Avg Comp</th>
+            </tr></thead>
+            <tbody id="geo-top10"></tbody>
+          </table>
+        </div>
+        <div class="ccard">
+          <div class="clabel">Bottom 10 Metros <span>Lower physician compensation</span></div>
+          <table style="font-size:12px;width:100%">
+            <thead><tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">Rank</th>
+              <th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">Metro</th>
+              <th style="text-align:right;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">Avg Comp</th>
+            </tr></thead>
+            <tbody id="geo-bot10"></tbody>
+          </table>
+        </div>
+        <div class="ccard wide">
+          <div class="clabel">CMS Geographic Practice Cost Index 2024 <span>Major localities · Higher = Medicare pays more</span></div>
+          <table style="font-size:12px;width:100%">
+            <thead><tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">Locality</th>
+              <th style="text-align:right;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">Work GPCI</th>
+              <th style="text-align:right;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">PE GPCI</th>
+              <th style="text-align:right;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">MP GPCI</th>
+              <th style="text-align:right;padding:6px 4px;color:var(--muted);font-size:10px;text-transform:uppercase">Composite GAF</th>
+            </tr></thead>
+            <tbody id="geo-gpci"></tbody>
+          </table>
+          <div style="font-size:11px;color:var(--muted);margin-top:10px">
+            <strong>Composite GAF</strong> = Work × 0.5089 + PE × 0.4484 + MP × 0.0428. A GAF above 1.0 means Medicare pays above the national average for the same service in that locality.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- METHODOLOGY TAB -->
+  <div class="tabcontent" id="tab-methodology">
+    <div style="padding:24px;max-width:1000px;margin:0 auto">
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:6px">Methodology & Sources</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:20px">Every benchmark on this dashboard traces to a specific public source. Data vintage and citations below.</p>
+
+      <div class="method-card">
+        <div class="method-h">Bank Opportunity Score (0-100) <span style="color:var(--muted);font-weight:400">— proprietary composite</span></div>
+        <div class="method-body">
+          <strong>Components:</strong><br>
+          • Income level (25 pts) — based on Medscape average<br>
+          • Payer mix attractiveness (20 pts) — derived from estimated commercial vs. Medicare/Medicaid mix<br>
+          • Income stability (15 pts) — based on revenue volatility per specialty<br>
+          • Capex / loan demand (15 pts) — moderate is best; high capex = financing opportunity but more leverage risk<br>
+          • Demand outlook (10 pts) — BLS 10-year projected employment growth<br>
+          • Overhead efficiency (10 pts) — lower overhead = higher score<br>
+          • Default risk inverse (5 pts) — directional based on payer mix and industry data
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h">Payer Mix Attractiveness Score (0-100)</div>
+        <div class="method-body">
+          Based on national specialty norms: <strong>Score = (Commercial × 1.0) + (Medicare × 0.5) + (Self-pay × 0.4) + (Other × 0.4) + (Medicaid × 0.1)</strong>, rescaled to 100. Commercial pays ~150-200% of Medicare on average (Urban Institute 2017-2019). Medicaid typically pays 50-70% of Medicare. Self-pay carries collection risk but higher gross margin if collected.
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h"><a href="https://www.medscape.com/sites/public/physician-comp/2024" target="_blank" rel="noopener">Medscape Physician Compensation Report 2024 ↗</a></div>
+        <div class="method-body">
+          <strong>Vintage:</strong> Survey fielded Oct 2024 – Jan 2025; reflects calendar 2024 income.<br>
+          <strong>Sample:</strong> 7,300+ physicians across 29+ specialties.<br>
+          <strong>Caveat:</strong> Self-reported; full-time only; includes incentive bonuses.<br>
+          <strong>Used for:</strong> Average compensation column for all specialties.
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h"><a href="https://www.doximity.com/reports/physician-compensation-report/2025" target="_blank" rel="noopener">Doximity Physician Compensation Report 2025 ↗</a></div>
+        <div class="method-body">
+          <strong>Vintage:</strong> 2024 calendar-year compensation data; 37,000+ surveys Jan-Dec 2024.<br>
+          <strong>Caveat:</strong> Includes profit sharing, bonuses; clinically active full-time only. Reports higher specialty averages than Medscape because it covers more procedural specialties.<br>
+          <strong>Used for:</strong> Doximity comp column, top/bottom metro rankings.
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h"><a href="https://www.bls.gov/news.release/ocwage.t01.htm" target="_blank" rel="noopener">BLS OEWS May 2024 ↗</a></div>
+        <div class="method-body">
+          <strong>Vintage:</strong> May 2024 (released April 2025).<br>
+          <strong>Caveat:</strong> Covers W-2 employed physicians only; excludes self-employed practice owners. Wage = base + production bonus only (no equity/K-1 income). <strong>Best read as a floor</strong> for owner-physicians.<br>
+          <strong>Used for:</strong> BLS W-2 Mean column. SOC codes 29-1211 through 29-1248.
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h"><a href="https://www.medpac.gov/wp-content/uploads/2024/07/July2024_MedPAC_DataBook_SEC.pdf" target="_blank" rel="noopener">MedPAC July 2024 Data Book ↗</a></div>
+        <div class="method-body">
+          <strong>Vintage:</strong> 2022/2023 Medicare claims data.<br>
+          <strong>Used for:</strong> Medicare share inputs at the specialty group level. Note: precise per-specialty Medicare share requires aggregating the <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners" target="_blank" rel="noopener" style="color:var(--teal)">CMS PUF</a> directly.
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h"><a href="https://www.cms.gov/medicare/physician-fee-schedule" target="_blank" rel="noopener">CMS Geographic Practice Cost Index (GPCI) 2024 ↗</a></div>
+        <div class="method-body">
+          <strong>Vintage:</strong> CY 2024 (effective Jan 1, 2024). Conversion factor: $32.7442.<br>
+          <strong>Used for:</strong> Geographic adjustment factors in the Geographic View tab. Composite GAF = Work × 0.5089 + Practice Expense × 0.4484 + Malpractice × 0.0428.
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h"><a href="https://www.urban.org/research/publication/commercial-health-insurance-markups-over-medicare-prices-physician-services-vary-widely-specialty" target="_blank" rel="noopener">Urban Institute — Commercial Markups over Medicare ↗</a></div>
+        <div class="method-body">
+          <strong>Vintage:</strong> 2017-2019 (structurally stable since).<br>
+          <strong>Used for:</strong> Payer mix attractiveness calibration. Anesthesiology commercial rates ~330% of Medicare; orthopedics ~150%; family medicine ~110%; dermatology ~90% (lowest among major specialties).
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h"><a href="https://www.mgma.com/articles/foundational-benchmarks-and-kpis-for-medical-practice-operations-in-2023" target="_blank" rel="noopener">MGMA Public Benchmarks ↗</a></div>
+        <div class="method-body">
+          <strong>Vintage:</strong> 2023-2024.<br>
+          <strong>Caveat:</strong> Specialty-level overhead and Days-in-AR are paywalled in MGMA DataDive. Public benchmark: Days in A/R &lt;40 (best practice). Overhead 60-70% of revenue (industry rule of thumb). The <strong>per-specialty overhead figures shown</strong> on this dashboard are derived from public industry sources, trade publications, and a single MGMA-disclosed figure (Gastroenterology = 54.2%). <strong>Treat them as planning estimates with ±5pp uncertainty</strong>; request borrower P&L for actuals.
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h">Per-Specialty Payer Mix Estimates</div>
+        <div class="method-body">
+          <strong>Caveat:</strong> Public per-specialty payer-mix breakdowns are not freely published at this granularity. Estimates here are derived from (a) MedPAC age-group utilization curves, (b) AMA 2017 Patient-Mix Benchmark Survey, (c) Urban Institute markup analysis, and (d) practice-management trade publications.
+          <strong>Treat as planning estimates with ±10pp uncertainty.</strong> Always request actual borrower payer mix from the practice CFO/manager for credit decisions.
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h">Borrower Comparison — Threshold Logic</div>
+        <div class="method-body">
+          For each metric the borrower enters, the dashboard computes a percentile rank against the specialty distribution:<br>
+          • <strong>Income</strong>: Green if ≥ 50th percentile, Yellow if 25-50th, Red if &lt; 25th<br>
+          • <strong>Overhead %</strong>: Green if ≤ specialty median, Yellow if up to +5pp, Red if > +5pp<br>
+          • <strong>Days in A/R</strong>: Green if ≤ 40, Yellow if 40-55, Red if > 55<br>
+          • <strong>Collection rate</strong>: Green if ≥ 95%, Yellow 90-95%, Red &lt; 90%<br>
+          • <strong>Payer mix</strong>: Computed score vs. specialty average payer mix score
+        </div>
+      </div>
+
+      <div class="method-card">
+        <div class="method-h">Limitations & Caveats</div>
+        <div class="method-body">
+          • <strong>Data lag</strong>: Most physician compensation reports publish 12-18 months after the calendar year. Use as directional, not real-time.<br>
+          • <strong>Sub-specialty granularity</strong>: Where shown, sub-specialty figures often come from smaller survey samples (sometimes N&lt;100). Flag the warning in the UI.<br>
+          • <strong>Survey vs. administrative data</strong>: Medscape and Doximity are survey-based (self-reported); BLS is administrative (employer-reported). They differ structurally — neither is "right."<br>
+          • <strong>Equity / partnership distributions</strong>: Compensation figures generally do not include K-1 distributions, real estate income from medical office buildings, or equity from ASC ownership. Material for high earners.<br>
+          • <strong>Geographic adjustment</strong>: GPCI applies to Medicare only, not commercial. Use as directional proxy for cost-of-living adjustment.<br>
+          • <strong>Refresh schedule</strong>: Dashboard data is refreshed when source reports publish (annually for most). See <code>refresh_data.py</code> in the source repository.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const qs = sel => document.querySelector(sel);
+const qsa = sel => Array.from(document.querySelectorAll(sel));
+const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  BENCHMARK DATA (real, sourced)
+// ═════════════════════════════════════════════════════════════════════════════
+const SOURCES_VINTAGE = {
+  medscape: '2024 (Medscape Physician Compensation Report 2024)',
+  doximity: '2025 (Doximity Physician Compensation Report 2025, CY2024 data)',
+  bls: 'May 2024 (BLS OEWS, released April 2025)',
+  medpac: 'July 2024 (MedPAC Data Book)',
+  mgma: '2023-2024 (MGMA published benchmarks)',
+  cms: 'CY 2024 (CMS PFS / GPCI)',
+  urban: '2017-2019 (Urban Institute markup study)',
+  refresh: '2025-04-15'
+};
+
+// SPECIALTY BENCHMARK DATABASE
+// Compiled from: Medscape 2024, Doximity 2025, BLS OEWS May 2024, MedPAC, Urban Institute, MGMA public figures
+// Income figures: medMean (Medscape), doxMean (Doximity), blsMean (BLS W-2)
+// Payer mix: midpoint of public estimate ranges (see methodology for caveats)
+// Overhead: industry estimates, ±5pp uncertainty
+// Bank Opportunity Score: composite calculated below
+const SPECIALTIES = [
+  // SURGICAL SPECIALTIES (high revenue, high capex)
+  { name:'Orthopedic Surgery', tier:'surg', medMean:564000, doxMean:679517, blsMean:354760,
+    payer:{medicare:35, commercial:55, medicaid:7, selfpay:2, other:1},
+    subspec:['General Orthopedic','Sports Medicine','Spine','Joint Replacement','Hand','Foot & Ankle'],
+    overhead:52, daysAR:38, capexLevel:'H', demandOutlook:5,
+    incomeStability:'Med', valuationMultiple:'0.7-1.3x revenue',
+    notes:'High capex (surgical equipment, imaging). Strong commercial mix. Procedure-volume driven.' },
+
+  { name:'Plastic Surgery', tier:'surg', medMean:544000, doxMean:619812, blsMean:371280,
+    payer:{medicare:10, commercial:42, medicaid:3, selfpay:42, other:3},
+    subspec:['Cosmetic','Reconstructive','Craniofacial','Hand'],
+    overhead:55, daysAR:32, capexLevel:'M', demandOutlook:7,
+    incomeStability:'Med', valuationMultiple:'0.5-1.0x revenue (cash) / 1.0-1.5x (insurance)',
+    notes:'Heavy cash-pay component reduces collection risk but adds revenue volatility. Cosmetic demand cyclical.' },
+
+  { name:'Neurosurgery', tier:'surg', medMean:773201, doxMean:749140, blsMean:371280,
+    payer:{medicare:35, commercial:55, medicaid:8, selfpay:1, other:1},
+    subspec:['Spine','Cranial','Pediatric','Functional'],
+    overhead:50, daysAR:42, capexLevel:'H', demandOutlook:4,
+    incomeStability:'Med', valuationMultiple:'0.8-1.4x revenue',
+    notes:'Highest income specialty. High malpractice premiums. Strong hospital affiliation typical.' },
+
+  { name:'Thoracic Surgery', tier:'surg', medMean:621000, doxMean:689969, blsMean:371280,
+    payer:{medicare:55, commercial:35, medicaid:7, selfpay:2, other:1},
+    subspec:['Cardiac','General Thoracic'],
+    overhead:48, daysAR:42, capexLevel:'H', demandOutlook:3,
+    incomeStability:'High', valuationMultiple:'0.6-1.0x revenue',
+    notes:'Hospital-based predominantly. Stable Medicare-heavy mix. High demand for aging population.' },
+
+  { name:'Vascular Surgery', tier:'surg', medMean:498000, doxMean:565000, blsMean:371280,
+    payer:{medicare:55, commercial:35, medicaid:7, selfpay:2, other:1},
+    subspec:[],
+    overhead:50, daysAR:42, capexLevel:'M', demandOutlook:6,
+    incomeStability:'High', valuationMultiple:'0.7-1.2x revenue',
+    notes:'Aging-population demand. Mix of office-based and hospital procedures.' },
+
+  { name:'General Surgery', tier:'surg', medMean:434000, doxMean:475000, blsMean:371280,
+    payer:{medicare:40, commercial:48, medicaid:8, selfpay:3, other:1},
+    subspec:['General','Trauma','Surgical Oncology','Bariatric'],
+    overhead:52, daysAR:40, capexLevel:'M', demandOutlook:4,
+    incomeStability:'Med', valuationMultiple:'0.6-1.0x revenue',
+    notes:'Hospital-affiliated typical. Steady demand. ASC ownership common (additional income source).' },
+
+  { name:'Urology', tier:'surg', medMean:505000, doxMean:559474, blsMean:354760,
+    payer:{medicare:55, commercial:35, medicaid:6, selfpay:3, other:1},
+    subspec:['General','Oncology','Pediatric','Reconstructive'],
+    overhead:55, daysAR:38, capexLevel:'H', demandOutlook:6,
+    incomeStability:'High', valuationMultiple:'0.7-1.2x revenue',
+    notes:'High capex (lithotripsy, robotics). Strong aging-population demand. ASC ownership common.' },
+
+  { name:'Otolaryngology (ENT)', tier:'surg', medMean:484000, doxMean:548000, blsMean:354760,
+    payer:{medicare:35, commercial:55, medicaid:8, selfpay:2, other:0},
+    subspec:['General ENT','Head & Neck','Otology','Rhinology','Pediatric ENT','Facial Plastics'],
+    overhead:55, daysAR:38, capexLevel:'M', demandOutlook:5,
+    incomeStability:'High', valuationMultiple:'0.7-1.2x revenue',
+    notes:'Office-based procedures favorable. ASC and audiology side-businesses common.' },
+
+  { name:'Ophthalmology', tier:'surg', medMean:409000, doxMean:477232, blsMean:359820,
+    payer:{medicare:60, commercial:30, medicaid:5, selfpay:5, other:0},
+    subspec:['Cataract/Anterior','Retina','Cornea','Glaucoma','Pediatric','Oculoplastics'],
+    overhead:62, daysAR:35, capexLevel:'H', demandOutlook:8,
+    incomeStability:'High', valuationMultiple:'0.6-1.1x revenue',
+    notes:'Very high capex (lasers, OCT, surgical equipment). ASC ownership universal. Aging-driven demand growth.' },
+
+  { name:'OB/GYN', tier:'surg', medMean:372000, doxMean:425000, blsMean:281130,
+    payer:{medicare:8, commercial:65, medicaid:22, selfpay:4, other:1},
+    subspec:['General OB/GYN','Maternal-Fetal','Reproductive Endo','GYN Oncology','Urogynecology'],
+    overhead:60, daysAR:42, capexLevel:'M', demandOutlook:3,
+    incomeStability:'Med', valuationMultiple:'0.5-0.9x revenue',
+    notes:'Highest malpractice premiums. Medicaid exposure varies sharply by geography (high in TX/CA/NY).' },
+
+  // MEDICAL SPECIALTIES (procedural & non-procedural)
+  { name:'Cardiology', tier:'med', medMean:520000, doxMean:587360, blsMean:432490,
+    payer:{medicare:55, commercial:35, medicaid:6, selfpay:3, other:1},
+    subspec:['General/Non-invasive','Interventional','Electrophysiology','Heart Failure','Pediatric'],
+    overhead:55, daysAR:40, capexLevel:'H', demandOutlook:6,
+    incomeStability:'High', valuationMultiple:'0.7-1.3x revenue',
+    notes:'High capex (echo, cath lab, nuclear). Aging-population demand. Cath-lab joint ventures common.' },
+
+  { name:'Gastroenterology', tier:'med', medMean:513000, doxMean:537870, blsMean:354760,
+    payer:{medicare:45, commercial:45, medicaid:7, selfpay:2, other:1},
+    subspec:['General','Hepatology','IBD','Advanced Endoscopy'],
+    overhead:54, daysAR:38, capexLevel:'H', demandOutlook:7,
+    incomeStability:'High', valuationMultiple:'0.7-1.3x revenue',
+    notes:'ASC ownership universal (endoscopy suites = significant non-clinical income). Strong colon screening demand.' },
+
+  { name:'Radiology', tier:'med', medMean:526000, doxMean:571749, blsMean:359820,
+    payer:{medicare:40, commercial:50, medicaid:7, selfpay:2, other:1},
+    subspec:['Diagnostic','Interventional','Neuro','Breast','Pediatric','Nuclear'],
+    overhead:40, daysAR:42, capexLevel:'H', demandOutlook:5,
+    incomeStability:'High', valuationMultiple:'0.5-0.8x revenue',
+    notes:'Imaging center / teleradiology models. High capex if owning equipment. Reading-only contracts low capex.' },
+
+  { name:'Anesthesiology', tier:'med', medMean:501000, doxMean:548000, blsMean:336640,
+    payer:{medicare:35, commercial:55, medicaid:8, selfpay:1, other:1},
+    subspec:['General','Cardiac','Pain','Pediatric','OB','Critical Care'],
+    overhead:35, daysAR:45, capexLevel:'L', demandOutlook:5,
+    incomeStability:'High', valuationMultiple:'0.4-0.7x revenue (group)',
+    notes:'Lowest overhead among major specialties. Hospital/ASC contracts dominant. Highest commercial markup vs Medicare.' },
+
+  { name:'Oncology / Hematology', tier:'med', medMean:472000, doxMean:495000, blsMean:354760,
+    payer:{medicare:55, commercial:35, medicaid:7, selfpay:2, other:1},
+    subspec:['Medical Oncology','Radiation Oncology','Hematology','Surgical Oncology'],
+    overhead:78, daysAR:48, capexLevel:'H', demandOutlook:7,
+    incomeStability:'High', valuationMultiple:'0.4-0.8x revenue',
+    notes:'Highest overhead due to drug costs (50%+ of revenue passes through to chemo). Aging demand. CAR-T/biologics future tailwind.' },
+
+  { name:'Dermatology', tier:'med', medMean:454000, doxMean:508401, blsMean:241680,
+    payer:{medicare:32, commercial:58, medicaid:4, selfpay:6, other:0},
+    subspec:['Medical','Mohs/Surgical','Cosmetic','Pediatric','Dermatopathology'],
+    overhead:58, daysAR:32, capexLevel:'M', demandOutlook:8,
+    incomeStability:'High', valuationMultiple:'0.8-1.5x revenue',
+    notes:'Strong cash-pay (cosmetic) component. Low complexity, predictable cash flow. PE-backed roll-ups active.' },
+
+  { name:'Pulmonology', tier:'med', medMean:402000, doxMean:425000, blsMean:354760,
+    payer:{medicare:55, commercial:35, medicaid:8, selfpay:1, other:1},
+    subspec:['General','Critical Care','Sleep Medicine','Interventional'],
+    overhead:55, daysAR:42, capexLevel:'M', demandOutlook:6,
+    incomeStability:'High', valuationMultiple:'0.6-1.0x revenue',
+    notes:'Sleep medicine + DME ownership common (additional income). Aging demand for COPD/sleep apnea.' },
+
+  { name:'Critical Care', tier:'med', medMean:418000, doxMean:438000, blsMean:354760,
+    payer:{medicare:50, commercial:38, medicaid:9, selfpay:2, other:1},
+    subspec:['Medical ICU','Surgical ICU','Cardiac ICU','Pediatric'],
+    overhead:35, daysAR:45, capexLevel:'L', demandOutlook:5,
+    incomeStability:'High', valuationMultiple:'N/A (employed model)',
+    notes:'Predominantly hospital-employed. Stable W-2 income; lower banking opportunity for practice loans.' },
+
+  { name:'Nephrology', tier:'med', medMean:363000, doxMean:385000, blsMean:354760,
+    payer:{medicare:75, commercial:18, medicaid:5, selfpay:1, other:1},
+    subspec:['General','Transplant','Pediatric','Interventional'],
+    overhead:55, daysAR:45, capexLevel:'M', demandOutlook:5,
+    incomeStability:'High', valuationMultiple:'0.5-0.9x revenue',
+    notes:'Heaviest Medicare exposure (ESRD = automatic Medicare). Dialysis JV ownership = supplemental income.' },
+
+  { name:'Endocrinology', tier:'med', medMean:274000, doxMean:295000, blsMean:354760,
+    payer:{medicare:42, commercial:48, medicaid:8, selfpay:2, other:0},
+    subspec:['General','Diabetes','Reproductive','Pediatric'],
+    overhead:60, daysAR:38, capexLevel:'L', demandOutlook:6,
+    incomeStability:'High', valuationMultiple:'0.4-0.7x revenue',
+    notes:'Office-based, low capex. Lower income but stable. Diabetes prevalence growth is structural tailwind.' },
+
+  { name:'Rheumatology', tier:'med', medMean:284000, doxMean:312000, blsMean:354760,
+    payer:{medicare:45, commercial:45, medicaid:7, selfpay:2, other:1},
+    subspec:['Adult','Pediatric'],
+    overhead:62, daysAR:40, capexLevel:'M', demandOutlook:5,
+    incomeStability:'High', valuationMultiple:'0.4-0.7x revenue',
+    notes:'Infusion services = significant ancillary revenue (10-30% of practice income). Aging demand.' },
+
+  { name:'Neurology', tier:'med', medMean:332000, doxMean:355000, blsMean:286310,
+    payer:{medicare:50, commercial:38, medicaid:9, selfpay:2, other:1},
+    subspec:['General','Stroke','Epilepsy','Movement','Headache','Sleep','Neuromuscular'],
+    overhead:58, daysAR:42, capexLevel:'M', demandOutlook:5,
+    incomeStability:'High', valuationMultiple:'0.5-0.8x revenue',
+    notes:'EEG, EMG ancillaries. Aging-population demand strong (dementia, stroke).' },
+
+  { name:'Psychiatry', tier:'med', medMean:341000, doxMean:341977, blsMean:269120,
+    payer:{medicare:25, commercial:45, medicaid:18, selfpay:11, other:1},
+    subspec:['Adult','Child & Adolescent','Geriatric','Addiction','Forensic'],
+    overhead:32, daysAR:35, capexLevel:'L', demandOutlook:9,
+    incomeStability:'High', valuationMultiple:'0.5-1.0x revenue',
+    notes:'Highest demand growth specialty. Cash-pay common (esp. urban). Low overhead. Telehealth tailwind.' },
+
+  { name:'Allergy & Immunology', tier:'med', medMean:319000, doxMean:340000, blsMean:354760,
+    payer:{medicare:30, commercial:60, medicaid:7, selfpay:3, other:0},
+    subspec:['Adult','Pediatric'],
+    overhead:55, daysAR:35, capexLevel:'L', demandOutlook:5,
+    incomeStability:'High', valuationMultiple:'0.5-0.9x revenue',
+    notes:'Allergy serum = significant ancillary revenue. Office-based, low capex.' },
+
+  { name:'Infectious Diseases', tier:'med', medMean:277000, doxMean:295000, blsMean:354760,
+    payer:{medicare:40, commercial:45, medicaid:10, selfpay:4, other:1},
+    subspec:['Adult','HIV','Travel Medicine','Pediatric'],
+    overhead:50, daysAR:42, capexLevel:'L', demandOutlook:5,
+    incomeStability:'Med', valuationMultiple:'0.4-0.7x revenue',
+    notes:'Hospital-employed often. Lower income; less practice ownership.' },
+
+  // PRIMARY CARE
+  { name:'Family Medicine', tier:'pcp', medMean:281000, doxMean:295000, blsMean:256830,
+    payer:{medicare:30, commercial:50, medicaid:17, selfpay:3, other:0},
+    subspec:[],
+    overhead:62, daysAR:35, capexLevel:'L', demandOutlook:4,
+    incomeStability:'High', valuationMultiple:'0.3-0.6x revenue',
+    notes:'Lower income but stable. Capitation/value-based contracts increasing. PE roll-up activity.' },
+
+  { name:'Internal Medicine', tier:'pcp', medMean:294000, doxMean:308000, blsMean:236810,
+    payer:{medicare:42, commercial:42, medicaid:13, selfpay:3, other:0},
+    subspec:[],
+    overhead:60, daysAR:35, capexLevel:'L', demandOutlook:5,
+    incomeStability:'High', valuationMultiple:'0.3-0.6x revenue',
+    notes:'Higher Medicare than family medicine. Concierge models adding cash component.' },
+
+  { name:'Pediatrics', tier:'pcp', medMean:265000, doxMean:265000, blsMean:222340,
+    payer:{medicare:1, commercial:55, medicaid:40, selfpay:3, other:1},
+    subspec:[],
+    overhead:62, daysAR:38, capexLevel:'L', demandOutlook:2,
+    incomeStability:'Med', valuationMultiple:'0.3-0.5x revenue',
+    notes:'Heaviest Medicaid exposure of major specialties. Vaccines = ancillary. Birth-rate decline = headwind.' },
+
+  { name:'Geriatrics', tier:'pcp', medMean:246000, doxMean:265000, blsMean:236810,
+    payer:{medicare:88, commercial:8, medicaid:3, selfpay:1, other:0},
+    subspec:[],
+    overhead:55, daysAR:40, capexLevel:'L', demandOutlook:8,
+    incomeStability:'High', valuationMultiple:'0.4-0.7x revenue',
+    notes:'Near-pure Medicare exposure. Strongest demographic tailwind. House-call models gaining.' },
+
+  // HOSPITAL-BASED
+  { name:'Emergency Medicine', tier:'hosp', medMean:388000, doxMean:411133, blsMean:336640,
+    payer:{medicare:30, commercial:38, medicaid:25, selfpay:6, other:1},
+    subspec:['Adult','Pediatric'],
+    overhead:35, daysAR:55, capexLevel:'L', demandOutlook:4,
+    incomeStability:'Med', valuationMultiple:'0.3-0.6x revenue (group)',
+    notes:'Long days-in-AR (high uninsured, payer disputes). Group contracts dominant. No surprise billing law impact.' },
+
+  { name:'Hospitalist', tier:'hosp', medMean:317000, doxMean:332000, blsMean:236810,
+    payer:{medicare:55, commercial:30, medicaid:13, selfpay:1, other:1},
+    subspec:[],
+    overhead:30, daysAR:45, capexLevel:'L', demandOutlook:6,
+    incomeStability:'High', valuationMultiple:'N/A (employed)',
+    notes:'Hospital-employed predominantly. Stable W-2; lower practice-loan opportunity but good deposit candidate.' },
+
+  { name:'Pathology', tier:'hosp', medMean:388000, doxMean:410000, blsMean:266020,
+    payer:{medicare:40, commercial:50, medicaid:7, selfpay:2, other:1},
+    subspec:['Anatomic','Clinical','Surgical','Cytopathology'],
+    overhead:42, daysAR:42, capexLevel:'M', demandOutlook:3,
+    incomeStability:'High', valuationMultiple:'0.4-0.7x revenue',
+    notes:'Hospital contracts dominant. Independent labs face commodity pressure. AI disruption emerging.' },
+
+  { name:'Physical Med & Rehab', tier:'med', medMean:362000, doxMean:380000, blsMean:354760,
+    payer:{medicare:50, commercial:38, medicaid:10, selfpay:1, other:1},
+    subspec:['General PM&R','Pain Management','Sports','Spinal Cord Injury'],
+    overhead:55, daysAR:42, capexLevel:'M', demandOutlook:7,
+    incomeStability:'High', valuationMultiple:'0.5-0.9x revenue',
+    notes:'Pain management subspecialty has higher income but regulatory scrutiny. Aging-population demand.' }
+];
+
+// Compute payer mix score (0-100)
+function payerScore(p) {
+  // Weights: Commercial=1.0, Medicare=0.5, Self-pay=0.4, Other=0.4, Medicaid=0.1
+  const raw = p.commercial*1.0 + p.medicare*0.5 + p.selfpay*0.4 + p.other*0.4 + p.medicaid*0.1;
+  // Max possible if 100% commercial = 100. Min = 10 (100% medicaid). Rescale.
+  return Math.round(Math.max(0, Math.min(100, raw)));
+}
+
+// Compute Bank Opportunity Score
+function bankOppScore(s) {
+  // Income (25): Medscape avg, $250K → 0, $700K → 25
+  const incomeScore = Math.min(25, Math.max(0, ((s.medMean - 250000) / 450000) * 25));
+  // Payer mix (20): payerScore mapped 0-100 → 0-20
+  const pScore = payerScore(s.payer);
+  const payerComp = (pScore / 100) * 20;
+  // Income stability (15): High=15, Med=10, Low=5
+  const stabScore = s.incomeStability==='High' ? 15 : s.incomeStability==='Med' ? 10 : 5;
+  // Capex (15): M=15 (best), H=12 (loan demand but risk), L=8 (low loan opportunity)
+  const capexScore = s.capexLevel==='M' ? 15 : s.capexLevel==='H' ? 12 : 8;
+  // Demand outlook (10): per BLS-style 10-yr projection, scaled
+  const demandScore = Math.min(10, Math.max(0, (s.demandOutlook + 2) ));
+  // Overhead efficiency (10): lower overhead = higher score
+  const ovhScore = Math.min(10, Math.max(0, ((85 - s.overhead) / 55) * 10));
+  // Default risk inverse (5): payer-mix-driven
+  const defRiskScore = Math.min(5, (pScore / 100) * 5);
+  return Math.round(incomeScore + payerComp + stabScore + capexScore + demandScore + ovhScore + defRiskScore);
+}
+
+// Compute scores for each specialty
+SPECIALTIES.forEach(s => {
+  s.payerScore = payerScore(s.payer);
+  s.bops = bankOppScore(s);
+});
+
+// Geographic data (from Doximity 2025)
+const TOP_METROS = [
+  { rank:1, metro:'Rochester, MN', comp:495532 },
+  { rank:2, metro:'St. Louis, MO', comp:484883 },
+  { rank:3, metro:'Los Angeles, CA', comp:470198 },
+  { rank:4, metro:'San Jose, CA', comp:469878 },
+  { rank:5, metro:'Sacramento, CA', comp:460671 },
+  { rank:6, metro:'Phoenix, AZ', comp:459082 },
+  { rank:7, metro:'Riverside, CA', comp:455986 },
+  { rank:8, metro:'Minneapolis, MN', comp:452598 },
+  { rank:9, metro:'San Francisco, CA', comp:449830 },
+  { rank:10, metro:'Charlotte, NC', comp:448400 }
+];
+const BOTTOM_METROS = [
+  { rank:1, metro:'Durham–Chapel Hill, NC', comp:358782 },
+  { rank:2, metro:'Rochester, NY', comp:364160 },
+  { rank:3, metro:'Ann Arbor, MI', comp:373154 },
+  { rank:4, metro:'Charleston, SC', comp:384419 },
+  { rank:5, metro:'Washington, DC', comp:386731 },
+  { rank:6, metro:'Providence, RI', comp:386788 },
+  { rank:7, metro:'San Antonio, TX', comp:389495 },
+  { rank:8, metro:'Boston, MA', comp:390799 },
+  { rank:9, metro:'Baltimore, MD', comp:392507 },
+  { rank:10, metro:'Worcester, MA', comp:397188 }
+];
+
+// CMS GPCI 2024
+const GPCI_DATA = [
+  { locality:'Manhattan, NY', work:1.065, pe:1.166, mp:1.656 },
+  { locality:'San Francisco, CA', work:1.088, pe:1.419, mp:0.445 },
+  { locality:'Los Angeles, CA', work:1.042, pe:1.194, mp:0.690 },
+  { locality:'Chicago, IL', work:1.007, pe:1.023, mp:2.018 },
+  { locality:'Boston, MA', work:1.042, pe:1.197, mp:0.894 },
+  { locality:'Washington, DC', work:1.057, pe:1.192, mp:1.168 },
+  { locality:'Houston, TX', work:1.014, pe:1.003, mp:1.409 },
+  { locality:'Dallas, TX', work:1.011, pe:1.007, mp:0.877 },
+  { locality:'Miami, FL', work:1.000, pe:1.027, mp:2.500 },
+  { locality:'Seattle, WA', work:1.043, pe:1.220, mp:0.853 },
+  { locality:'Atlanta, GA', work:1.000, pe:0.997, mp:1.128 },
+  { locality:'Philadelphia, PA', work:1.024, pe:1.053, mp:1.177 }
+];
+
+// State multipliers (rough proxy for state-level adjustment)
+const STATE_ADJ = { 'hi-cost':1.10, 'mid-cost':1.00, 'low-cost':0.90 };
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═════════════════════════════════════════════════════════════════════════════
+const S = {
+  filtered: [...SPECIALTIES],
+  filters: { tier:'', income:'', capex:'', search:'' },
+  sort: { col:'bops', dir:'desc' },
+  selectedSpec: null
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  TIER LABELS / HELPERS
+// ═════════════════════════════════════════════════════════════════════════════
+const TIER_LABEL = { surg:'Surgical', med:'Medical', pcp:'Primary Care', hosp:'Hospital-Based' };
+const tierBadge = t => `<span class="tier tier-${t}">${TIER_LABEL[t]||t}</span>`;
+const capexBadge = c => `<span class="capex capex-${c.toLowerCase()}">${c==='H'?'High':c==='M'?'Medium':'Low'}</span>`;
+const fmtK = v => v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + (v/1000).toFixed(0) + 'K';
+const fmtPct = v => (v||0).toFixed(0) + '%';
+
+function bopsBadge(s) {
+  const cls = s>=70?'bops-hi':s>=50?'bops-mid':'bops-lo';
+  return `<span class="bops ${cls}">${s}</span>`;
+}
+function payerScoreBadge(s) {
+  const color = s>=65?'#276749':s>=50?'#dd6b20':'#a0aec0';
+  return `<span style="font-weight:700;color:${color}">${s}</span>`;
+}
+function payerBar(p) {
+  return `<div class="payer-mix-bar" title="Medicare ${p.medicare}% · Commercial ${p.commercial}% · Medicaid ${p.medicaid}% · Self-pay ${p.selfpay}% · Other ${p.other}%">
+    <div class="pm-medicare" style="width:${p.medicare}%"></div>
+    <div class="pm-commercial" style="width:${p.commercial}%"></div>
+    <div class="pm-medicaid" style="width:${p.medicaid}%"></div>
+    <div class="pm-self" style="width:${p.selfpay}%"></div>
+    <div class="pm-other" style="width:${p.other}%"></div>
+  </div>`;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  FILTER + SORT
+// ═════════════════════════════════════════════════════════════════════════════
+function applyFilters() {
+  const f = S.filters;
+  S.filtered = SPECIALTIES.filter(s => {
+    if (f.tier && s.tier !== f.tier) return false;
+    if (f.income==='hi' && s.medMean < 500000) return false;
+    if (f.income==='mid' && (s.medMean < 300000 || s.medMean >= 500000)) return false;
+    if (f.income==='lo' && s.medMean >= 300000) return false;
+    if (f.capex && s.capexLevel !== f.capex) return false;
+    if (f.search && !s.name.toLowerCase().includes(f.search.toLowerCase())) return false;
+    return true;
+  });
+  // Sort
+  const { col, dir } = S.sort;
+  const d = dir==='asc' ? 1 : -1;
+  S.filtered.sort((a,b) => {
+    const av = a[col], bv = b[col];
+    if (av==null && bv==null) return 0;
+    if (av==null) return 1;
+    if (bv==null) return -1;
+    return typeof av==='string' ? d*av.localeCompare(bv) : d*(av-bv);
+  });
+  renderTable();
+}
+
+function renderTable() {
+  $('tbl-body').innerHTML = S.filtered.map(s => `
+    <tr data-name="${esc(s.name)}">
+      <td>${bopsBadge(s.bops)}</td>
+      <td><strong>${esc(s.name)}</strong>${s.subspec.length ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${s.subspec.length} sub-specialties</div>` : ''}</td>
+      <td>${tierBadge(s.tier)}</td>
+      <td class="right">${fmtK(s.medMean)}</td>
+      <td class="right">${fmtK(s.doxMean)}</td>
+      <td class="right" style="color:var(--muted)">${fmtK(s.blsMean)}</td>
+      <td>${payerBar(s.payer)}</td>
+      <td class="right">${payerScoreBadge(s.payerScore)}</td>
+      <td class="right">${s.overhead}%</td>
+      <td>${capexBadge(s.capexLevel)}</td>
+      <td class="right">${s.demandOutlook>0?'+':''}${s.demandOutlook}%</td>
+    </tr>
+  `).join('');
+}
+
+// Row click → detail
+document.addEventListener('click', e => {
+  const tr = e.target.closest('#tbl-body tr');
+  if (tr) { selectSpecialty(tr.dataset.name); switchTab('detail'); }
+});
+
+// Sort headers
+document.addEventListener('click', e => {
+  const th = e.target.closest('#tab-overview th[data-col]');
+  if (!th || th.classList.contains('nosort')) return;
+  const col = th.dataset.col;
+  S.sort.dir = S.sort.col===col ? (S.sort.dir==='asc'?'desc':'asc') : 'desc';
+  S.sort.col = col;
+  qsa('#tab-overview th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
+  th.classList.add(S.sort.dir==='asc'?'sort-asc':'sort-desc');
+  applyFilters();
+});
+
+// Filter inputs
+$('f-tier').addEventListener('change', e => { S.filters.tier = e.target.value; applyFilters(); });
+$('f-income').addEventListener('change', e => { S.filters.income = e.target.value; applyFilters(); });
+$('f-capex').addEventListener('change', e => { S.filters.capex = e.target.value; applyFilters(); });
+let searchT;
+$('f-search').addEventListener('input', e => {
+  clearTimeout(searchT);
+  searchT = setTimeout(() => { S.filters.search = e.target.value; applyFilters(); }, 200);
+});
+$('btn-reset').addEventListener('click', () => {
+  ['f-tier','f-income','f-capex','f-search'].forEach(id => $(id).value = '');
+  S.filters = { tier:'', income:'', capex:'', search:'' };
+  applyFilters();
+});
+
+// Tab switching
+function switchTab(name) {
+  qsa('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===name));
+  qsa('.tabcontent').forEach(c => c.classList.toggle('active', c.id==='tab-'+name));
+}
+qsa('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  SPECIALTY DETAIL
+// ═════════════════════════════════════════════════════════════════════════════
+function selectSpecialty(name) {
+  const s = SPECIALTIES.find(x => x.name===name);
+  if (!s) return;
+  S.selectedSpec = s;
+  renderDetail(s);
+}
+
+function renderDetail(s) {
+  const subspecHtml = s.subspec.length
+    ? `<div class="section-title" style="margin-top:18px">Sub-Specialties</div>
+       <div style="font-size:13px;line-height:1.8">${s.subspec.map(ss=>`<span style="display:inline-block;background:#edf2f7;padding:3px 10px;border-radius:14px;margin:2px;font-size:12px">${esc(ss)}</span>`).join('')}</div>
+       <div style="font-size:11px;color:var(--muted);margin-top:6px">Sub-specialty income data not separately tracked at this dashboard's data granularity. Request narrowed comp data via specialty society reports.</div>`
+    : '';
+
+  $('detail-content').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:8px">
+      <div>
+        <div class="detail-h">${esc(s.name)} ${tierBadge(s.tier)}</div>
+        <div class="detail-sub">${esc(s.notes)}</div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center">
+        <div style="text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Bank Opp Score</div>
+          ${bopsBadge(s.bops)}
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Payer Mix Score</div>
+          <div style="font-size:18px;font-weight:700;color:${s.payerScore>=65?'#276749':s.payerScore>=50?'#dd6b20':'#a0aec0'}">${s.payerScore}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Income Benchmarks</div>
+    <div class="metric-grid" style="margin-bottom:18px">
+      <div class="mcard"><div class="mcard-l">Medscape Avg Comp</div><div class="mcard-v">${fmtK(s.medMean)}</div><div class="mcard-n">2024 survey</div></div>
+      <div class="mcard"><div class="mcard-l">Doximity Avg Comp</div><div class="mcard-v">${fmtK(s.doxMean)}</div><div class="mcard-n">2025 report (CY2024)</div></div>
+      <div class="mcard"><div class="mcard-l">BLS W-2 Mean</div><div class="mcard-v">${fmtK(s.blsMean)}</div><div class="mcard-n">May 2024 OEWS — employed only</div></div>
+      <div class="mcard" style="border-color:var(--gold);background:var(--gold-lt)">
+        <div class="mcard-l">Underwriting Range</div>
+        <div class="mcard-v">${fmtK(s.blsMean)} — ${fmtK(s.doxMean)}</div>
+        <div class="mcard-n">Use BLS as floor (W-2), Doximity as ceiling</div>
+      </div>
+    </div>
+
+    <div class="section-title">Payer Mix</div>
+    <div style="background:#f9fbfd;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:18px">
+      <div style="display:flex;height:32px;border-radius:6px;overflow:hidden;font-size:11px;font-weight:700;color:#fff">
+        <div class="pm-medicare" style="flex:${s.payer.medicare};display:flex;align-items:center;justify-content:center;${s.payer.medicare<8?'font-size:0':''}">Medicare ${s.payer.medicare}%</div>
+        <div class="pm-commercial" style="flex:${s.payer.commercial};display:flex;align-items:center;justify-content:center;${s.payer.commercial<8?'font-size:0':''}">Commercial ${s.payer.commercial}%</div>
+        <div class="pm-medicaid" style="flex:${s.payer.medicaid};display:flex;align-items:center;justify-content:center;${s.payer.medicaid<8?'font-size:0':''}">Medicaid ${s.payer.medicaid}%</div>
+        <div class="pm-self" style="flex:${s.payer.selfpay};display:flex;align-items:center;justify-content:center;${s.payer.selfpay<8?'font-size:0':''}">Self ${s.payer.selfpay}%</div>
+        <div class="pm-other" style="flex:${s.payer.other};display:flex;align-items:center;justify-content:center;${s.payer.other<8?'font-size:0':''}">Other ${s.payer.other}%</div>
+      </div>
+      <div class="pm-legend">
+        <div><div class="dot pm-medicare"></div>Medicare ${s.payer.medicare}%</div>
+        <div><div class="dot pm-commercial"></div>Commercial ${s.payer.commercial}%</div>
+        <div><div class="dot pm-medicaid"></div>Medicaid ${s.payer.medicaid}%</div>
+        <div><div class="dot pm-self"></div>Self-Pay ${s.payer.selfpay}%</div>
+        <div><div class="dot pm-other"></div>Other ${s.payer.other}%</div>
+      </div>
+    </div>
+
+    <div class="section-title">Practice Economics</div>
+    <div class="metric-grid" style="margin-bottom:18px">
+      <div class="mcard"><div class="mcard-l">Typical Overhead</div><div class="mcard-v">${s.overhead}%</div><div class="mcard-n">Of practice revenue</div></div>
+      <div class="mcard"><div class="mcard-l">Typical Days in A/R</div><div class="mcard-v">${s.daysAR}</div><div class="mcard-n">MGMA benchmark: <40</div></div>
+      <div class="mcard"><div class="mcard-l">Capex Intensity</div><div class="mcard-v">${capexBadge(s.capexLevel)}</div><div class="mcard-n">Equipment / facility needs</div></div>
+      <div class="mcard"><div class="mcard-l">Income Stability</div><div class="mcard-v">${s.incomeStability}</div><div class="mcard-n">Year-over-year variability</div></div>
+      <div class="mcard"><div class="mcard-l">10Y Demand Outlook</div><div class="mcard-v">${s.demandOutlook>0?'+':''}${s.demandOutlook}%</div><div class="mcard-n">Projected practice growth</div></div>
+      <div class="mcard"><div class="mcard-l">Practice Valuation</div><div class="mcard-v" style="font-size:14px">${esc(s.valuationMultiple)}</div><div class="mcard-n">Typical multiple range</div></div>
+    </div>
+
+    <div class="section-title">Bank Opportunity Score Components</div>
+    <div style="background:#f9fbfd;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:18px">
+      ${[
+        ['Income Level','25','#3182ce',Math.min(25,Math.max(0,((s.medMean-250000)/450000)*25))],
+        ['Payer Mix','20','#38a169',(s.payerScore/100)*20],
+        ['Income Stability','15','#319795',s.incomeStability==='High'?15:s.incomeStability==='Med'?10:5],
+        ['Capex / Loan Demand','15','#dd6b20',s.capexLevel==='M'?15:s.capexLevel==='H'?12:8],
+        ['Demand Outlook','10','#805ad5',Math.min(10,Math.max(0,(s.demandOutlook+2)))],
+        ['Overhead Efficiency','10','#d69e2e',Math.min(10,Math.max(0,((85-s.overhead)/55)*10))],
+        ['Default Risk Inverse','5','#9b2c2c',Math.min(5,(s.payerScore/100)*5)]
+      ].map(c => {
+        const v = Math.round(c[3]*10)/10;
+        const pct = (v / parseInt(c[1])) * 100;
+        return `<div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+            <span style="font-weight:600">${c[0]}</span>
+            <span style="font-weight:700">${v.toFixed(1)} / ${c[1]}</span>
+          </div>
+          <div style="height:8px;background:#edf2f7;border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${c[2]};border-radius:4px"></div>
+          </div>
+        </div>`;
+      }).join('')}
+      <div style="display:flex;justify-content:space-between;border-top:2px solid var(--border);margin-top:12px;padding-top:10px;font-size:13px;font-weight:700">
+        <span>Total Bank Opportunity Score</span>
+        <span style="color:${s.bops>=70?'#276749':s.bops>=50?'#dd6b20':'#a0aec0'}">${s.bops} / 100</span>
+      </div>
+    </div>
+
+    ${subspecHtml}
+
+    <div style="background:var(--teal-lt);border-left:4px solid var(--teal);border-radius:4px;padding:12px 16px;margin-top:18px;font-size:13px;line-height:1.6">
+      <strong>Underwriting Notes:</strong> ${esc(s.notes)}
+    </div>
+  `;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  BORROWER COMPARISON TOOL
+// ═════════════════════════════════════════════════════════════════════════════
+function populateSpecialtyDropdowns() {
+  const sortedSpec = [...SPECIALTIES].sort((a,b) => a.name.localeCompare(b.name));
+  const opts = sortedSpec.map(s => `<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+  $('b-specialty').innerHTML = '<option value="">Select specialty…</option>' + opts;
+  $('geo-spec').innerHTML = '<option value="">All Specialties (avg)</option>' + opts;
+}
+populateSpecialtyDropdowns();
+
+$('b-specialty').addEventListener('change', () => {
+  const spec = SPECIALTIES.find(s => s.name === $('b-specialty').value);
+  const subSel = $('b-subspecialty');
+  if (spec && spec.subspec.length) {
+    subSel.innerHTML = '<option value="">N/A</option>' + spec.subspec.map(ss => `<option value="${esc(ss)}">${esc(ss)}</option>`).join('');
+    subSel.disabled = false;
+  } else {
+    subSel.innerHTML = '<option value="">N/A</option>';
+    subSel.disabled = true;
+  }
+});
+
+$('btn-evaluate').addEventListener('click', runComparison);
+$('btn-print').addEventListener('click', () => window.print());
+
+function runComparison() {
+  const specName = $('b-specialty').value;
+  if (!specName) { alert('Please select a specialty.'); return; }
+  const spec = SPECIALTIES.find(s => s.name === specName);
+  if (!spec) return;
+
+  const stateAdj = STATE_ADJ[$('b-state').value] || 1.0;
+  const adjMedscape = spec.medMean * stateAdj;
+  const adjDoximity = spec.doxMean * stateAdj;
+
+  // Borrower inputs
+  const b = {
+    years: parseFloat($('b-years').value)||0,
+    state: $('b-state').value,
+    setting: $('b-setting').value,
+    ownership: parseFloat($('b-ownership').value)||0,
+    comp: parseFloat($('b-comp').value)||0,
+    revenue: parseFloat($('b-revenue').value)||0,
+    netincome: parseFloat($('b-netincome').value)||0,
+    medicare: parseFloat($('b-medicare').value)||0,
+    commercial: parseFloat($('b-commercial').value)||0,
+    medicaid: parseFloat($('b-medicaid').value)||0,
+    selfpay: parseFloat($('b-selfpay').value)||0,
+    other: parseFloat($('b-other').value)||0,
+    overhead: parseFloat($('b-overhead').value)||0,
+    dar: parseFloat($('b-dar').value)||0,
+    collection: parseFloat($('b-collection').value)||0
+  };
+
+  // Compute borrower payer mix score
+  const bPayerScore = b.medicare+b.commercial+b.medicaid+b.selfpay+b.other > 0
+    ? payerScore({medicare:b.medicare, commercial:b.commercial, medicaid:b.medicaid, selfpay:b.selfpay, other:b.other})
+    : null;
+
+  // Years-in-practice cohort comp adjustment (rough heuristics from Medscape data)
+  // Early-career (0-5): ~85% of mean; Mid (6-15): ~100%; Established (16+): ~110%
+  let yearsAdj = 1.0;
+  let yearsLabel = 'Mid-career (6-15 yrs)';
+  if (b.years > 0) {
+    if (b.years <= 5) { yearsAdj = 0.85; yearsLabel = 'Early-career (0-5 yrs)'; }
+    else if (b.years >= 16) { yearsAdj = 1.10; yearsLabel = 'Established (16+ yrs)'; }
+  }
+  const expectedComp = adjMedscape * yearsAdj;
+
+  // Comparison rows
+  const rows = [];
+
+  // Compensation
+  if (b.comp > 0) {
+    // Approximate distribution: assume normal with median = expected, std = 25% of median
+    const median = expectedComp;
+    const std = median * 0.25;
+    const z = (b.comp - median) / std;
+    const pctile = Math.min(99, Math.max(1, Math.round(50 + z*15))); // approximation
+    let flag, flagCls;
+    if (pctile >= 50) { flag='Strong'; flagCls='flag-good'; }
+    else if (pctile >= 25) { flag='Below avg'; flagCls='flag-neutral'; }
+    else { flag='Weak'; flagCls='flag-bad'; }
+    rows.push({label:'Personal Compensation', val:'$'+(b.comp/1000).toFixed(0)+'K', pctile, flag, flagCls,
+               note:`Specialty median (${yearsLabel}, ${$('b-state').value || 'national'}): ${fmtK(expectedComp)}`});
+  }
+
+  // Practice revenue
+  if (b.revenue > 0) {
+    // Industry rule: physician comp typically 40-50% of practice revenue (after overhead)
+    const expectedRevLow = b.comp ? b.comp / 0.45 : expectedComp / 0.40;
+    const expectedRevHi = b.comp ? b.comp / 0.30 : expectedComp / 0.30;
+    let flag, flagCls;
+    if (b.revenue >= expectedRevLow) { flag='In line'; flagCls='flag-good'; }
+    else { flag='Low'; flagCls='flag-neutral'; }
+    rows.push({label:'Practice Gross Revenue', val:'$'+(b.revenue/1000).toFixed(0)+'K',
+               pctile:50, flag, flagCls,
+               note:`Expected range for ${b.comp?'this comp':'specialty'}: ${fmtK(expectedRevLow)} – ${fmtK(expectedRevHi)}`});
+  }
+
+  // Overhead
+  if (b.overhead > 0) {
+    const diff = b.overhead - spec.overhead;
+    let flag, flagCls;
+    if (diff <= 0) { flag='Strong'; flagCls='flag-good'; }
+    else if (diff <= 5) { flag='In line'; flagCls='flag-neutral'; }
+    else { flag='High'; flagCls='flag-bad'; }
+    const pctile = Math.max(5, Math.min(95, 50 - diff*4));
+    rows.push({label:'Overhead %', val:b.overhead+'%', pctile, flag, flagCls,
+               note:`Specialty norm: ${spec.overhead}%. Difference: ${diff>=0?'+':''}${diff.toFixed(0)}pp`});
+  }
+
+  // Days in AR
+  if (b.dar > 0) {
+    let flag, flagCls;
+    if (b.dar <= 40) { flag='Strong'; flagCls='flag-good'; }
+    else if (b.dar <= 55) { flag='Watchlist'; flagCls='flag-neutral'; }
+    else { flag='Concern'; flagCls='flag-bad'; }
+    const pctile = Math.max(5, Math.min(95, 100 - b.dar*1.5));
+    rows.push({label:'Days in A/R', val:b.dar+' days', pctile, flag, flagCls,
+               note:`MGMA best practice: <40. Specialty typical: ~${spec.daysAR}.`});
+  }
+
+  // Collection rate
+  if (b.collection > 0) {
+    let flag, flagCls;
+    if (b.collection >= 95) { flag='Strong'; flagCls='flag-good'; }
+    else if (b.collection >= 90) { flag='In line'; flagCls='flag-neutral'; }
+    else { flag='Concern'; flagCls='flag-bad'; }
+    const pctile = Math.min(95, Math.max(5, b.collection - 60));
+    rows.push({label:'Collection Rate', val:b.collection+'%', pctile, flag, flagCls,
+               note:'Industry benchmark: 95%+ for clean claims.'});
+  }
+
+  // Payer mix
+  if (bPayerScore != null) {
+    const diff = bPayerScore - spec.payerScore;
+    let flag, flagCls;
+    if (diff >= -5) { flag='Favorable'; flagCls='flag-good'; }
+    else if (diff >= -15) { flag='Mixed'; flagCls='flag-neutral'; }
+    else { flag='Unfavorable'; flagCls='flag-bad'; }
+    const pctile = Math.max(5, Math.min(95, bPayerScore));
+    rows.push({label:'Payer Mix Score', val:bPayerScore.toString(), pctile, flag, flagCls,
+               note:`Specialty avg score: ${spec.payerScore}. Higher commercial = better.`});
+  }
+
+  // Build strengths and concerns
+  const strengths = [];
+  const concerns = [];
+  const considerations = [];
+
+  rows.forEach(r => {
+    if (r.flagCls === 'flag-good') strengths.push(`${r.label}: <strong>${r.val}</strong> (${r.flag.toLowerCase()})`);
+    else if (r.flagCls === 'flag-bad') concerns.push(`${r.label}: <strong>${r.val}</strong> — ${r.note.toLowerCase()}`);
+  });
+
+  // Auto-generated underwriting considerations
+  if (b.medicare > spec.payer.medicare + 10) {
+    considerations.push(`Medicare exposure (${b.medicare}%) is ${b.medicare - spec.payer.medicare}pp above specialty average — vulnerable to CMS rate cuts. Consider tighter DSCR covenants.`);
+  }
+  if (b.medicaid > spec.payer.medicaid + 8) {
+    considerations.push(`Medicaid exposure (${b.medicaid}%) is significantly above specialty norm — collection risk and rate volatility. Review aging schedule and bad-debt history.`);
+  }
+  if (b.selfpay > 25 && spec.tier !== 'surg') {
+    considerations.push(`Self-pay concentration (${b.selfpay}%) is unusual outside cash-heavy specialties — request 24-month collection trend and revenue-cycle review.`);
+  }
+  if (b.dar > 50) {
+    considerations.push(`Days in A/R of ${b.dar} is above industry benchmark — request a 12-month aging report and document collection process.`);
+  }
+  if (b.overhead > spec.overhead + 8) {
+    considerations.push(`Overhead ${b.overhead}% is well above specialty average (${spec.overhead}%) — investigate staffing model, lease economics, and ancillary cost management.`);
+  }
+  if (spec.tier === 'surg' && b.years < 3) {
+    considerations.push(`Surgeon with ${b.years} years in practice — early-career production ramp typical. Income may grow 30-50% over next 5 years if retention strong.`);
+  }
+  if (spec.capexLevel === 'H') {
+    considerations.push(`High-capex specialty — verify equipment age, depreciation schedule, and pending capex needs. Equipment financing may be preferable to working capital line.`);
+  }
+  if (b.setting === 'employed' && b.revenue > 0) {
+    considerations.push(`Hospital-employed physician — practice revenue/EBITDA may not be borrower's responsibility. Underwrite primarily on W-2 income and DTI.`);
+  }
+  if (b.ownership > 0 && b.ownership < 100 && b.netincome > 0) {
+    considerations.push(`Borrower owns ${b.ownership}% of practice — net income shown is borrower's pro-rata share. Verify partnership agreement, distribution policy, and capital call obligations.`);
+  }
+  if (specName === 'Oncology / Hematology' && b.overhead < 70) {
+    considerations.push(`Oncology overhead below 70% is unusual — verify whether figure includes drug pass-through costs. Drug margin can mask true profitability.`);
+  }
+
+  // Render output
+  const html = `
+    <div class="cmp-output">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:18px;font-weight:700">${esc(specName)} — Borrower Comparison</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">
+            ${b.years ? `${b.years} years in practice · ${yearsLabel}` : ''}
+            ${b.state ? ` · ${$('b-state').selectedOptions[0].textContent}` : ''}
+            ${b.setting ? ` · ${$('b-setting').selectedOptions[0].textContent}` : ''}
+          </div>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--muted)">
+          Generated: ${new Date().toLocaleDateString()}<br>
+          Benchmarks: Medscape 2024, Doximity 2025
+        </div>
+      </div>
+
+      ${rows.length === 0 ? '<div style="color:var(--muted);text-align:center;padding:20px">Enter borrower metrics above to see comparison.</div>' : `
+      <div class="section-title">Metric Comparison</div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 14px;margin-bottom:18px">
+        ${rows.map(r => `
+          <div class="cmp-row">
+            <div class="cmp-label">${r.label}</div>
+            <div class="cmp-val">${r.val}</div>
+            <div class="cmp-bar-wrap">
+              <div class="cmp-bar-pctile" style="width:${r.pctile}%"></div>
+              <div class="cmp-bar-mark" style="left:${r.pctile}%"></div>
+            </div>
+            <div class="cmp-flag ${r.flagCls}">${r.flag}</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin:-4px 0 6px 200px">${r.note}</div>
+        `).join('')}
+      </div>
+      `}
+
+      ${strengths.length ? `
+      <div class="summary-card summary-strengths">
+        <div class="summary-h">✓ Strengths</div>
+        <ul class="summary-list" style="padding-left:20px">${strengths.map(s=>`<li>${s}</li>`).join('')}</ul>
+      </div>` : ''}
+
+      ${concerns.length ? `
+      <div class="summary-card summary-concerns">
+        <div class="summary-h">⚠ Concerns</div>
+        <ul class="summary-list" style="padding-left:20px">${concerns.map(c=>`<li>${c}</li>`).join('')}</ul>
+      </div>` : ''}
+
+      ${considerations.length ? `
+      <div class="summary-card summary-considerations">
+        <div class="summary-h">→ Suggested Credit Considerations</div>
+        <ul class="summary-list" style="padding-left:20px">${considerations.map(c=>`<li>${c}</li>`).join('')}</ul>
+      </div>` : ''}
+
+      <div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:14px;line-height:1.6">
+        This comparison is for analytical reference only. Public benchmark data has known limitations (see Methodology tab). For credit decisions, validate all borrower-provided figures against tax returns, financial statements, and bank statements.
+      </div>
+    </div>
+  `;
+
+  $('cmp-output').innerHTML = html;
+  $('cmp-output').style.display = 'block';
+  $('cmp-output').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GEOGRAPHIC VIEW
+// ═════════════════════════════════════════════════════════════════════════════
+function renderGeo() {
+  $('geo-top10').innerHTML = TOP_METROS.map(m =>
+    `<tr><td style="padding:5px 4px">${m.rank}</td><td style="padding:5px 4px;font-weight:600">${esc(m.metro)}</td><td style="text-align:right;padding:5px 4px;font-weight:700;color:#276749">$${(m.comp/1000).toFixed(0)}K</td></tr>`
+  ).join('');
+  $('geo-bot10').innerHTML = BOTTOM_METROS.map(m =>
+    `<tr><td style="padding:5px 4px">${m.rank}</td><td style="padding:5px 4px;font-weight:600">${esc(m.metro)}</td><td style="text-align:right;padding:5px 4px;font-weight:700;color:#a0aec0">$${(m.comp/1000).toFixed(0)}K</td></tr>`
+  ).join('');
+  $('geo-gpci').innerHTML = GPCI_DATA.map(g => {
+    const gaf = (g.work*0.5089 + g.pe*0.4484 + g.mp*0.0428).toFixed(3);
+    return `<tr>
+      <td style="padding:5px 4px;font-weight:600">${esc(g.locality)}</td>
+      <td style="text-align:right;padding:5px 4px">${g.work.toFixed(3)}</td>
+      <td style="text-align:right;padding:5px 4px">${g.pe.toFixed(3)}</td>
+      <td style="text-align:right;padding:5px 4px">${g.mp.toFixed(3)}</td>
+      <td style="text-align:right;padding:5px 4px;font-weight:700;color:${parseFloat(gaf)>=1.05?'#276749':parseFloat(gaf)>=0.98?'#dd6b20':'#c53030'}">${gaf}</td>
+    </tr>`;
+  }).join('');
+}
+renderGeo();
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  CSV EXPORT
+// ═════════════════════════════════════════════════════════════════════════════
+$('btn-csv').addEventListener('click', () => {
+  const headers = ['Specialty','Group','Bank Opp Score','Medscape Avg ($)','Doximity Avg ($)','BLS W-2 Mean ($)',
+    '% Medicare','% Commercial','% Medicaid','% Self-pay','% Other','Payer Score',
+    'Overhead %','Days in AR','Capex Level','Demand Outlook %','Income Stability','Valuation Multiple'];
+  const rows = S.filtered.map(s => [
+    s.name, TIER_LABEL[s.tier], s.bops, s.medMean, s.doxMean, s.blsMean,
+    s.payer.medicare, s.payer.commercial, s.payer.medicaid, s.payer.selfpay, s.payer.other, s.payerScore,
+    s.overhead, s.daysAR, s.capexLevel, s.demandOutlook, s.incomeStability, s.valuationMultiple
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'physician-specialty-benchmarks.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  INIT
+// ═════════════════════════════════════════════════════════════════════════════
+applyFilters();
+
+</script>
+</body>
+</html>

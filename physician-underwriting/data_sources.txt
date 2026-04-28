@@ -1,0 +1,118 @@
+PHYSICIAN UNDERWRITING DASHBOARD — DATA SOURCES LOG
+Initial build: 2025-04-15
+====================================================================
+
+[MEDSCAPE] Medscape Physician Compensation Report
+  URL: https://www.medscape.com/sites/public/physician-comp/
+  Vintage: 2024 income (Survey Oct 2024 - Jan 2025)
+  Sample: 7,300+ physicians across 29+ specialties
+  Method: Manual review of public summary tables
+  Used for: Average compensation column for all specialties
+  Last pulled: 2025-04-15
+  Next expected: April 2026
+
+[DOXIMITY] Doximity Physician Compensation Report
+  URL: https://www.doximity.com/reports/physician-compensation-report/2025
+  PDF: https://assets.doxcdn.com/image/upload/pdfs/doximity-physician-compensation-report-2024.pdf
+  Vintage: 2025 report (CY2024 calendar-year data)
+  Sample: 37,000+ physician compensation surveys (Jan-Dec 2024)
+  Method: Manual review of public PDF
+  Used for: Doximity Avg column, top/bottom metro rankings, geographic adjustments
+  Last pulled: 2025-04-15
+  Next expected: April 2026
+
+[BLS] BLS Occupational Employment and Wage Statistics (OEWS)
+  URL: https://www.bls.gov/oes/current/oes_nat.htm
+  API: https://api.bls.gov/publicAPI/v2/timeseries/data/
+  Vintage: May 2024 (released April 2025)
+  Method: Programmatic API fetch by SOC code (29-1211 through 29-1248)
+  Used for: BLS W-2 Mean column (employed-only floor)
+  Caveat: Excludes self-employed practice owners; mean wage includes base + bonus only
+  Last pulled: 2025-04-15
+  Next expected: April 2026
+
+[CMS_GPCI] CMS Geographic Practice Cost Index (GPCI)
+  URL: https://www.cms.gov/medicare/physician-fee-schedule/search/documentation
+  Secondary (full tables): https://www.cgm.com/usa_en/articles/articles/2024-gpci-geographic-practice-cost-indices.html
+  Vintage: CY 2024 (effective Jan 1, 2024)
+  Conversion factor 2024: $32.7442
+  Method: Manual download of CMS PFS files
+  Used for: Geographic Adjustment Factor (GAF) in Geographic View tab
+  Formula: GAF = Work × 0.5089 + PE × 0.4484 + MP × 0.0428
+  Last pulled: 2025-04-15
+  Next expected: November 2025 (CY2025 finalized rule)
+
+[CMS_PUF] CMS Medicare Physician & Other Practitioners by Provider & Service
+  URL: https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners
+  API: https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners/medicare-physician-other-practitioners-by-provider-and-service/api
+  Vintage: CY2022 (latest released ~Q2 2024)
+  Method: Bulk download + aggregation by specialty
+  Used for: Specialty-level Medicare share, billing volumes (when aggregated)
+  Last pulled: 2025-04-15
+  Next expected: Q2 2025 (CY2023 release)
+
+[MEDPAC] MedPAC Data Book
+  URL: https://www.medpac.gov/wp-content/uploads/2024/07/July2024_MedPAC_DataBook_SEC.pdf
+  Section 10 (Physicians): https://www.medpac.gov/wp-content/uploads/2024/07/July2024_MedPAC_DataBook_Sec10_SEC.pdf
+  Vintage: July 2024 (CY2022/2023 claims)
+  Method: PDF extraction (manual)
+  Used for: Medicare share inputs at specialty group level
+  Caveat: Per-specialty Medicare share requires aggregating CMS PUF directly
+  Last pulled: 2025-04-15
+  Next expected: July 2025
+
+[URBAN] Urban Institute Commercial Markup Study
+  URL: https://www.urban.org/research/publication/commercial-health-insurance-markups-over-medicare-prices-physician-services-vary-widely-specialty
+  Vintage: 2017-2019 data (structurally stable since publication)
+  Method: Manual review of published markup tables
+  Used for: Payer mix attractiveness calibration
+  Key findings used: Anesthesiology ~330% Medicare; Orthopedics ~150%; Family Med ~110%; Dermatology ~90%
+  Last pulled: 2025-04-15
+  Next expected: Periodic (no fixed schedule)
+
+[MGMA] MGMA Published Benchmarks
+  URL: https://www.mgma.com/articles/foundational-benchmarks-and-kpis-for-medical-practice-operations-in-2023
+  KPI article: https://www.mgma.com/articles/foundational-benchmarks-and-kpis-for-medical-practice-operations-in-2023
+  Operating costs: https://www.mgma.com/mgma-stat/medical-practice-operating-costs-are-still-rising-in-2025-heres-how-to-control-them
+  Provider Comp Report (PDF): https://www.mgma.com/getkaiasset/252744ee-c63b-4a96-9211-8a5d6b908b39/MGMA-2024-Provider-Compensation-Data-Report.pdf
+  Vintage: 2023-2024 published figures
+  Method: Manual review of public articles + press releases
+  Used for: Days-in-AR benchmark (<40 best practice), overhead 60-70% rule of thumb
+  Caveat: Specialty-level overhead and AR data is paywalled in MGMA DataDive
+  Per-specialty overhead figures shown are derived from public industry sources with ±5pp uncertainty
+  Last pulled: 2025-04-15
+  Next expected: Ongoing (industry trade publications)
+
+[PAYER_MIX] Per-Specialty Payer Mix Estimates
+  Sources combined:
+    - AMA 2017 Patient-Mix Benchmark Survey: https://www.ama-assn.org/sites/ama-assn.org/files/corp/media-browser/public/health-policy/PRP-2017-physician-benchmark-survey-patient-mix.pdf
+    - PayerPrice industry blog: https://payerprice.com/blog/payer-mix
+    - Medical Economics: https://www.medicaleconomics.com/view/physicians-drive-the-health-care-economy-through-commercial-insurance-billing
+    - MedPAC age-group utilization curves
+  Caveat: Per-specialty payer mix at this granularity is NOT freely published in any single source.
+          Estimates here are derived from the above sources with ±10pp uncertainty.
+          Always validate against actual borrower payer mix from CFO/practice manager.
+  Last pulled: 2025-04-15
+
+[KFF] Kaiser Family Foundation - How Medicare Pays Physicians (reference)
+  URL: https://www.kff.org/medicare/what-to-know-about-how-medicare-pays-physicians/
+  Used for: Background on Medicare payment methodology
+
+====================================================================
+REFRESH SCHEDULE
+
+Annual sources (April-May):
+  - Medscape Compensation Report
+  - Doximity Compensation Report
+  - BLS OEWS
+
+Annual sources (other dates):
+  - CMS GPCI (November)
+  - CMS PUF (Q2)
+  - MedPAC Data Book (July)
+
+Periodic / event-driven:
+  - Urban Institute markup study
+  - MGMA articles (ongoing)
+
+To refresh: run `python refresh_data.py` (or `python refresh_data.py --update-html` to also update embedded data in the HTML).
