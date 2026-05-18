@@ -1,0 +1,857 @@
+{
+  "11181": {
+    "EQTOT": 8114,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 8114,
+    "ASSET_RPT": 137595,
+    "REPDTE": "20251231"
+  },
+  "11904": {
+    "EQTOT": 27709,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 27709,
+    "ASSET_RPT": 184266,
+    "REPDTE": "20251231"
+  },
+  "12315": {
+    "EQTOT": 19820,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 19820,
+    "ASSET_RPT": 153320,
+    "REPDTE": "20251231"
+  },
+  "14095": {
+    "EQTOT": 7711,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 7711,
+    "ASSET_RPT": 89932,
+    "REPDTE": "20251231"
+  },
+  "14399": {
+    "EQTOT": 8989,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 8989,
+    "ASSET_RPT": 74151,
+    "REPDTE": "20251231"
+  },
+  "15105": {
+    "EQTOT": 9038,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 9038,
+    "ASSET_RPT": 77833,
+    "REPDTE": "20251231"
+  },
+  "15346": {
+    "EQTOT": 8446,
+    "GOODWILL": 0,
+    "INTAN": 2575,
+    "OTHER_INTAN": 2575,
+    "TBVE": 5871,
+    "ASSET_RPT": 61415,
+    "REPDTE": "20251231"
+  },
+  "16643": {
+    "EQTOT": 5912,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 5912,
+    "ASSET_RPT": 61139,
+    "REPDTE": "20251231"
+  },
+  "17350": {
+    "EQTOT": 6528,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 6528,
+    "ASSET_RPT": 73718,
+    "REPDTE": "20251231"
+  },
+  "17913": {
+    "EQTOT": 15030,
+    "GOODWILL": 0,
+    "INTAN": 92,
+    "OTHER_INTAN": 92,
+    "TBVE": 14938,
+    "ASSET_RPT": 156853,
+    "REPDTE": "20251231"
+  },
+  "24064": {
+    "EQTOT": 10009,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 10009,
+    "ASSET_RPT": 88654,
+    "REPDTE": "20251231"
+  },
+  "29206": {
+    "EQTOT": 17268,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 17268,
+    "ASSET_RPT": 157105,
+    "REPDTE": "20251231"
+  },
+  "3109": {
+    "EQTOT": 13099,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 13099,
+    "ASSET_RPT": 163917,
+    "REPDTE": "20251231"
+  },
+  "3303": {
+    "EQTOT": 2695,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 2695,
+    "ASSET_RPT": 26509,
+    "REPDTE": "20251231"
+  },
+  "3320": {
+    "EQTOT": 23432,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 23432,
+    "ASSET_RPT": 169432,
+    "REPDTE": "20251231"
+  },
+  "34014": {
+    "EQTOT": 10262,
+    "GOODWILL": 0,
+    "INTAN": 697,
+    "OTHER_INTAN": 697,
+    "TBVE": 9565,
+    "ASSET_RPT": 139733,
+    "REPDTE": "20251231"
+  },
+  "34455": {
+    "EQTOT": 5463,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 5463,
+    "ASSET_RPT": 93872,
+    "REPDTE": "20251231"
+  },
+  "5518": {
+    "EQTOT": 9767,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 9767,
+    "ASSET_RPT": 81449,
+    "REPDTE": "20251231"
+  },
+  "5589": {
+    "EQTOT": 9350,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 9350,
+    "ASSET_RPT": 148449,
+    "REPDTE": "20251231"
+  },
+  "58450": {
+    "EQTOT": 21691,
+    "GOODWILL": 0,
+    "INTAN": 84,
+    "OTHER_INTAN": 84,
+    "TBVE": 21607,
+    "ASSET_RPT": 183763,
+    "REPDTE": "20251231"
+  },
+  "10330": {
+    "EQTOT": 12148,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 12148,
+    "ASSET_RPT": 120357,
+    "REPDTE": "20251231"
+  },
+  "10345": {
+    "EQTOT": 15077,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 15077,
+    "ASSET_RPT": 187410,
+    "REPDTE": "20251231"
+  },
+  "10704": {
+    "EQTOT": 8872,
+    "GOODWILL": 0,
+    "INTAN": 2173,
+    "OTHER_INTAN": 2173,
+    "TBVE": 6699,
+    "ASSET_RPT": 40610,
+    "REPDTE": "20251231"
+  },
+  "11932": {
+    "EQTOT": 9793,
+    "GOODWILL": 0,
+    "INTAN": 638,
+    "OTHER_INTAN": 638,
+    "TBVE": 9155,
+    "ASSET_RPT": 183892,
+    "REPDTE": "20251231"
+  },
+  "14864": {
+    "EQTOT": 11597,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 11597,
+    "ASSET_RPT": 124600,
+    "REPDTE": "20251231"
+  },
+  "15078": {
+    "EQTOT": 7997,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 7997,
+    "ASSET_RPT": 94552,
+    "REPDTE": "20251231"
+  },
+  "15501": {
+    "EQTOT": 12465,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 12465,
+    "ASSET_RPT": 107633,
+    "REPDTE": "20251231"
+  },
+  "16176": {
+    "EQTOT": 17765,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 17765,
+    "ASSET_RPT": 139859,
+    "REPDTE": "20251231"
+  },
+  "18892": {
+    "EQTOT": 6222,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 6222,
+    "ASSET_RPT": 60243,
+    "REPDTE": "20251231"
+  },
+  "19278": {
+    "EQTOT": 8507,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 8507,
+    "ASSET_RPT": 146527,
+    "REPDTE": "20251231"
+  },
+  "24085": {
+    "EQTOT": 11779,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 11779,
+    "ASSET_RPT": 103246,
+    "REPDTE": "20251231"
+  },
+  "29208": {
+    "EQTOT": 12524,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 12524,
+    "ASSET_RPT": 128836,
+    "REPDTE": "20251231"
+  },
+  "3079": {
+    "EQTOT": 5365,
+    "GOODWILL": 0,
+    "INTAN": 377,
+    "OTHER_INTAN": 377,
+    "TBVE": 4988,
+    "ASSET_RPT": 136924,
+    "REPDTE": "20251231"
+  },
+  "3133": {
+    "EQTOT": 6801,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 6801,
+    "ASSET_RPT": 83014,
+    "REPDTE": "20251231"
+  },
+  "3248": {
+    "EQTOT": 12738,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 12738,
+    "ASSET_RPT": 96582,
+    "REPDTE": "20251231"
+  },
+  "3336": {
+    "EQTOT": 7538,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 7538,
+    "ASSET_RPT": 86615,
+    "REPDTE": "20251231"
+  },
+  "3351": {
+    "EQTOT": 9487,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 9487,
+    "ASSET_RPT": 54409,
+    "REPDTE": "20251231"
+  },
+  "3368": {
+    "EQTOT": 19424,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 19424,
+    "ASSET_RPT": 158523,
+    "REPDTE": "20251231"
+  },
+  "3399": {
+    "EQTOT": 9429,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 9429,
+    "ASSET_RPT": 116310,
+    "REPDTE": "20251231"
+  },
+  "5559": {
+    "EQTOT": 6093,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 6093,
+    "ASSET_RPT": 97333,
+    "REPDTE": "20251231"
+  },
+  "10327": {
+    "EQTOT": 11582,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 11582,
+    "ASSET_RPT": 63133,
+    "REPDTE": "20251231"
+  },
+  "11891": {
+    "EQTOT": 10008,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 10008,
+    "ASSET_RPT": 50000,
+    "REPDTE": "20251231"
+  },
+  "13600": {
+    "EQTOT": 13453,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 13453,
+    "ASSET_RPT": 136894,
+    "REPDTE": "20251231"
+  },
+  "15355": {
+    "EQTOT": 16730,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 16730,
+    "ASSET_RPT": 146656,
+    "REPDTE": "20251231"
+  },
+  "15367": {
+    "EQTOT": 17450,
+    "GOODWILL": 0,
+    "INTAN": 254,
+    "OTHER_INTAN": 254,
+    "TBVE": 17196,
+    "ASSET_RPT": 180931,
+    "REPDTE": "20251231"
+  },
+  "15460": {
+    "EQTOT": 8983,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 8983,
+    "ASSET_RPT": 134716,
+    "REPDTE": "20251231"
+  },
+  "15939": {
+    "EQTOT": 13284,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 13284,
+    "ASSET_RPT": 147817,
+    "REPDTE": "20251231"
+  },
+  "17775": {
+    "EQTOT": 23728,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 23728,
+    "ASSET_RPT": 173690,
+    "REPDTE": "20251231"
+  },
+  "18454": {
+    "EQTOT": 12660,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 12660,
+    "ASSET_RPT": 85839,
+    "REPDTE": "20251231"
+  },
+  "18942": {
+    "EQTOT": 6631,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 6631,
+    "ASSET_RPT": 43479,
+    "REPDTE": "20251231"
+  },
+  "21455": {
+    "EQTOT": 24645,
+    "GOODWILL": 0,
+    "INTAN": 7804,
+    "OTHER_INTAN": 7804,
+    "TBVE": 16841,
+    "ASSET_RPT": 157048,
+    "REPDTE": "20251231"
+  },
+  "21807": {
+    "EQTOT": 6387,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 6387,
+    "ASSET_RPT": 55230,
+    "REPDTE": "20251231"
+  },
+  "26708": {
+    "EQTOT": 9936,
+    "GOODWILL": 0,
+    "INTAN": 2,
+    "OTHER_INTAN": 2,
+    "TBVE": 9934,
+    "ASSET_RPT": 115921,
+    "REPDTE": "20251231"
+  },
+  "27398": {
+    "EQTOT": 14990,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 14990,
+    "ASSET_RPT": 177267,
+    "REPDTE": "20251231"
+  },
+  "29241": {
+    "EQTOT": 29889,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 29889,
+    "ASSET_RPT": 116908,
+    "REPDTE": "20251231"
+  },
+  "3078": {
+    "EQTOT": 7740,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 7740,
+    "ASSET_RPT": 95877,
+    "REPDTE": "20251231"
+  },
+  "3179": {
+    "EQTOT": 18177,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 18177,
+    "ASSET_RPT": 169937,
+    "REPDTE": "20251231"
+  },
+  "32018": {
+    "EQTOT": 9345,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 9345,
+    "ASSET_RPT": 85899,
+    "REPDTE": "20251231"
+  },
+  "3232": {
+    "EQTOT": 5817,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 5817,
+    "ASSET_RPT": 52295,
+    "REPDTE": "20251231"
+  },
+  "5590": {
+    "EQTOT": 32184,
+    "GOODWILL": 0,
+    "INTAN": 436,
+    "OTHER_INTAN": 436,
+    "TBVE": 31748,
+    "ASSET_RPT": 155841,
+    "REPDTE": "20251231"
+  },
+  "10352": {
+    "EQTOT": 5682,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 5682,
+    "ASSET_RPT": 54503,
+    "REPDTE": "20251231"
+  },
+  "11905": {
+    "EQTOT": 20043,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 20043,
+    "ASSET_RPT": 187074,
+    "REPDTE": "20251231"
+  },
+  "18301": {
+    "EQTOT": 26191,
+    "GOODWILL": 0,
+    "INTAN": 2646,
+    "OTHER_INTAN": 2646,
+    "TBVE": 23545,
+    "ASSET_RPT": 146655,
+    "REPDTE": "20251231"
+  },
+  "18302": {
+    "EQTOT": 14057,
+    "GOODWILL": 0,
+    "INTAN": 3395,
+    "OTHER_INTAN": 3395,
+    "TBVE": 10662,
+    "ASSET_RPT": 53505,
+    "REPDTE": "20251231"
+  },
+  "19595": {
+    "EQTOT": 10292,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 10292,
+    "ASSET_RPT": 111546,
+    "REPDTE": "20251231"
+  },
+  "22942": {
+    "EQTOT": 14151,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 14151,
+    "ASSET_RPT": 141915,
+    "REPDTE": "20251231"
+  },
+  "24038": {
+    "EQTOT": 16220,
+    "GOODWILL": 0,
+    "INTAN": 1213,
+    "OTHER_INTAN": 1213,
+    "TBVE": 15007,
+    "ASSET_RPT": 31222,
+    "REPDTE": "20251231"
+  },
+  "24303": {
+    "EQTOT": 11907,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 11907,
+    "ASSET_RPT": 74340,
+    "REPDTE": "20251231"
+  },
+  "30291": {
+    "EQTOT": 11683,
+    "GOODWILL": 0,
+    "INTAN": 18,
+    "OTHER_INTAN": 18,
+    "TBVE": 11665,
+    "ASSET_RPT": 66056,
+    "REPDTE": "20251231"
+  },
+  "3149": {
+    "EQTOT": 7290,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 7290,
+    "ASSET_RPT": 55363,
+    "REPDTE": "20251231"
+  },
+  "31762": {
+    "EQTOT": 18527,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 18527,
+    "ASSET_RPT": 177118,
+    "REPDTE": "20251231"
+  },
+  "3190": {
+    "EQTOT": 17757,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 17757,
+    "ASSET_RPT": 187667,
+    "REPDTE": "20251231"
+  },
+  "3237": {
+    "EQTOT": 7160,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 7160,
+    "ASSET_RPT": 62268,
+    "REPDTE": "20251231"
+  },
+  "3327": {
+    "EQTOT": 23129,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 23129,
+    "ASSET_RPT": 144021,
+    "REPDTE": "20251231"
+  },
+  "3401": {
+    "EQTOT": 16793,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 16793,
+    "ASSET_RPT": 156456,
+    "REPDTE": "20251231"
+  },
+  "5557": {
+    "EQTOT": 18126,
+    "GOODWILL": 0,
+    "INTAN": 12,
+    "OTHER_INTAN": 12,
+    "TBVE": 18114,
+    "ASSET_RPT": 149656,
+    "REPDTE": "20251231"
+  },
+  "5564": {
+    "EQTOT": 22296,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 22296,
+    "ASSET_RPT": 188590,
+    "REPDTE": "20251231"
+  },
+  "58324": {
+    "EQTOT": 23690,
+    "GOODWILL": 0,
+    "INTAN": 44,
+    "OTHER_INTAN": 44,
+    "TBVE": 23646,
+    "ASSET_RPT": 191420,
+    "REPDTE": "20251231"
+  },
+  "58517": {
+    "EQTOT": 17864,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 17864,
+    "ASSET_RPT": 197951,
+    "REPDTE": "20251231"
+  },
+  "59239": {
+    "EQTOT": 29073,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 29073,
+    "ASSET_RPT": 130365,
+    "REPDTE": "20251231"
+  },
+  "11175": {
+    "EQTOT": 16184,
+    "GOODWILL": 0,
+    "INTAN": 604,
+    "OTHER_INTAN": 604,
+    "TBVE": 15580,
+    "ASSET_RPT": 127606,
+    "REPDTE": "20251231"
+  },
+  "11916": {
+    "EQTOT": 23733,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 23733,
+    "ASSET_RPT": 134613,
+    "REPDTE": "20251231"
+  },
+  "1218": {
+    "EQTOT": 22583,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 22583,
+    "ASSET_RPT": 179669,
+    "REPDTE": "20251231"
+  },
+  "12298": {
+    "EQTOT": 18523,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 18523,
+    "ASSET_RPT": 110930,
+    "REPDTE": "20251231"
+  },
+  "15731": {
+    "EQTOT": 20252,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 20252,
+    "ASSET_RPT": 164016,
+    "REPDTE": "20251231"
+  },
+  "16581": {
+    "EQTOT": 13291,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 13291,
+    "ASSET_RPT": 80434,
+    "REPDTE": "20251231"
+  },
+  "24367": {
+    "EQTOT": 8565,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 8565,
+    "ASSET_RPT": 65847,
+    "REPDTE": "20251231"
+  },
+  "24902": {
+    "EQTOT": 10760,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 10760,
+    "ASSET_RPT": 77847,
+    "REPDTE": "20251231"
+  },
+  "26228": {
+    "EQTOT": 16300,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 16300,
+    "ASSET_RPT": 133305,
+    "REPDTE": "20251231"
+  },
+  "26653": {
+    "EQTOT": 10361,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 10361,
+    "ASSET_RPT": 89097,
+    "REPDTE": "20251231"
+  },
+  "26658": {
+    "EQTOT": 10650,
+    "GOODWILL": 0,
+    "INTAN": 3007,
+    "OTHER_INTAN": 3007,
+    "TBVE": 7643,
+    "ASSET_RPT": 54940,
+    "REPDTE": "20251231"
+  },
+  "26727": {
+    "EQTOT": 30920,
+    "GOODWILL": 0,
+    "INTAN": 3480,
+    "OTHER_INTAN": 3480,
+    "TBVE": 27440,
+    "ASSET_RPT": 167747,
+    "REPDTE": "20251231"
+  },
+  "3158": {
+    "EQTOT": 12973,
+    "GOODWILL": 0,
+    "INTAN": 0,
+    "OTHER_INTAN": 0,
+    "TBVE": 12973,
+    "ASSET_RPT": 77236,
+    "REPDTE": "20251231"
+  },
+  "3184": {
+    "EQTOT": 16910,
+    "GOODWILL": 0,
+    "INTAN": 759,
+    "OTHER_INTAN": 759,
+    "TBVE": 16151,
+    "ASSET_RPT": 112051,
+    "REPDTE": "20251231"
+  },
+  "3335": {
+    "EQTOT": 24588,
+    "GOODWILL": 0,
+    "INTAN": 3614,
+    "OTHER_INTAN": 3614,
+    "TBVE": 20974,
+    "ASSET_RPT": 134356,
+    "REPDTE": "20251231"
+  }
+}
