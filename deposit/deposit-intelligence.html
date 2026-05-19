@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<link rel="stylesheet" href="../shared/score-weights.css"/>
+<script src="../shared/score-weights.js"></script>
 <style>
 :root {
   --navy:    #1B365D;
@@ -329,10 +331,12 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
         <span class="icon">↻</span><span class="spin"></span>
         <span class="label">Refresh Data</span>
       </button>
+      <span id="sw-trigger-mount"></span>
       <div class="hdr-meta" id="hdr-meta">Loading…</div>
     </div>
   </div>
 </header>
+<div id="sw-banner-mount"></div>
 
 <div class="notice" id="notice-bar">
   <div class="inner" id="notice-inner">
@@ -1182,7 +1186,11 @@ function buildScrapedRows(banks) {
   return rows;
 }
 
+// Market Opportunity Score weights (default; max pts per component)
+const MKT_OPP_DEFAULTS = { lowApy: 40, marketSize: 30, productVariety: 30 };
+const MKT_OPP_WEIGHTS = Object.assign({}, MKT_OPP_DEFAULTS);
 function buildMarkets(rows) {
+  const w = MKT_OPP_WEIGHTS;
   const map={};
   for(const r of rows){
     if(!map[r.city])map[r.city]={city:r.city,region:r.region,regionLabel:r.regionLabel,banks:new Set(),rows:[]};
@@ -1198,10 +1206,11 @@ function buildMarkets(rows) {
     const types=[...new Set(m.rows.map(r=>r.productType))];
     const avgAll=avg(all);
     const level=avgAll===null?'unknown':avgAll<1.5?'soft':avgAll<3?'mod':'hot';
-    // Opportunity score: low competition + more banks + higher deposit base = more attractive
-    // Score 0-100: lower avg APY = easier entry, more competitors = bigger market
-    const oppScore = avgAll!=null ? Math.round(Math.max(0,Math.min(100,
-      (1 - avgAll/5)*40 + Math.min(m.banks.size/5,1)*30 + Math.min(types.length/4,1)*30
+    // Opportunity score with adjustable weights
+    const oppScore = avgAll!=null ? Math.round(Math.max(0, Math.min(100,
+      (1 - avgAll/5) * w.lowApy +
+      Math.min(m.banks.size/5, 1) * w.marketSize +
+      Math.min(types.length/4, 1) * w.productVariety
     ))) : null;
     return{city:m.city,region:m.region,regionLabel:m.regionLabel,
       bankCount:m.banks.size,productCount:m.rows.length,
@@ -1991,14 +2000,24 @@ function updateHeader() {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  COMPETITIVENESS SCORE (bank-level)
 // ═══════════════════════════════════════════════════════════════════════════════
+// Default weights for the bank-level Competitiveness Score (also max pts per component)
+const COMP_DEFAULTS = { cof: 35, growth: 20, assetFit: 15, web: 10, scraped: 20 };
+const COMP_WEIGHTS = Object.assign({}, COMP_DEFAULTS);
 function computeCompScore(b) {
+  const w = COMP_WEIGHTS;
   const c = {};
-  c.cof = b.impliedRate !== null ? Math.min(Math.round(b.impliedRate / 3 * 35), 35) : 0;
-  c.growth = (b.eintexpM > 0 && b.assetM > 0) ? Math.min(Math.round((b.eintexpM / b.assetM * 100) / 3 * 20), 20) : 0;
+  c.cof = b.impliedRate !== null ? Math.min(Math.round(b.impliedRate / 3 * w.cof), w.cof) : 0;
+  c.growth = (b.eintexpM > 0 && b.assetM > 0) ? Math.min(Math.round((b.eintexpM / b.assetM * 100) / 3 * w.growth), w.growth) : 0;
   const a = b.assetM;
-  c.assetFit = (a >= 100 && a <= 1000) ? 15 : (a > 1000 && a <= 3000) ? 12 : (a > 0 && a < 100) ? 10 : 5;
-  c.web = b.websiteUrl ? 10 : 0;
-  c.scraped = b.hasScraped ? 20 : 0;
+  // Asset fit: full points in $100M-$1B sweet spot; 0.80x for $1B-$3B; 0.67x for <$100M; 0.33x otherwise
+  let fitFrac;
+  if (a >= 100 && a <= 1000) fitFrac = 1.0;
+  else if (a > 1000 && a <= 3000) fitFrac = 0.80;
+  else if (a > 0 && a < 100) fitFrac = 0.67;
+  else fitFrac = 0.33;
+  c.assetFit = Math.round(fitFrac * w.assetFit);
+  c.web = b.websiteUrl ? w.web : 0;
+  c.scraped = b.hasScraped ? w.scraped : 0;
   b._compComponents = c;
   b.compScore = Math.min(c.cof + c.growth + c.assetFit + c.web + c.scraped, 100);
 }
@@ -2228,6 +2247,55 @@ async function main() {
 }
 
 main();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SCORE WEIGHTS DRAWER
+// ═══════════════════════════════════════════════════════════════════════════════
+if (window.ScoreWeights) {
+  ScoreWeights.init({
+    dashboardId: 'deposit-intel',
+    title: 'Deposit Intelligence',
+    theme: 'light',
+    triggerSelector: '#sw-trigger-mount',
+    bannerSelector: '#sw-banner-mount',
+    scoringSystems: [
+      {
+        id: 'compScore',
+        label: 'Bank Competitiveness Score (max 100 pts)',
+        tabLabel: 'Bank Score',
+        normalizeTo: 100,
+        components: [
+          { key: 'cof',      label: 'Cost of Funds',        desc: 'Higher FDIC cost-of-funds = more competitive', default: 35, min: 0, max: 50 },
+          { key: 'growth',   label: 'Deposit Growth Proxy', desc: 'Interest expense / assets ratio',              default: 20, min: 0, max: 50 },
+          { key: 'assetFit', label: 'Asset Size Fit',       desc: '$100M-$1B = sweet spot',                       default: 15, min: 0, max: 50 },
+          { key: 'web',      label: 'Website Presence',     desc: 'Has FDIC website on file',                     default: 10, min: 0, max: 50 },
+          { key: 'scraped',  label: 'Scraped Rate Data',    desc: 'Actively advertises rates',                    default: 20, min: 0, max: 50 },
+        ],
+      },
+      {
+        id: 'mktOpp',
+        label: 'Market Opportunity Score (max 100 pts)',
+        tabLabel: 'Market Opp',
+        normalizeTo: 100,
+        components: [
+          { key: 'lowApy',         label: 'Low Avg APY (Ease of Entry)', desc: 'Lower existing rates = easier entry', default: 40, min: 0, max: 80 },
+          { key: 'marketSize',     label: 'Market Size (Bank Count)',    desc: 'More banks = bigger deposit market',  default: 30, min: 0, max: 80 },
+          { key: 'productVariety', label: 'Product Variety',             desc: 'More product types = mature market',  default: 30, min: 0, max: 80 },
+        ],
+      },
+    ],
+    onChange: function (allWeights) {
+      // Update global weight objects
+      if (allWeights.compScore) Object.assign(COMP_WEIGHTS, allWeights.compScore);
+      if (allWeights.mktOpp) Object.assign(MKT_OPP_WEIGHTS, allWeights.mktOpp);
+      // Recompute bank scores
+      if (S && S.banks) S.banks.forEach(computeCompScore);
+      // Re-render: applyFilters() will rebuild markets (which uses new opp weights) and tables
+      try { if (typeof applyFilters === 'function') applyFilters(); } catch (e) {}
+      try { if (typeof renderOverview === 'function' && qs('.tab-btn.active')?.dataset.tab === 'overview') renderOverview(); } catch (e) {}
+    },
+  });
+}
 </script>
 </body>
 </html>

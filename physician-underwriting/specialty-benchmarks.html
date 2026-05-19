@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ranger Bank — Physician Underwriting Benchmarks</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="../shared/score-weights.css"/>
+<script src="../shared/score-weights.js"></script>
 <style>
 :root {
   --navy: #1B365D;
@@ -248,6 +250,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
       </div>
     </div>
     <div class="hdr-right">
+      <span id="sw-trigger-mount"></span>
       <div class="hdr-meta" id="hdr-meta">
         <strong>29</strong> specialties &nbsp;·&nbsp; <strong>2024</strong> data vintage<br>
         <span style="font-size:10px">Sources: Medscape, Doximity, BLS, MedPAC, MGMA, CMS</span>
@@ -255,6 +258,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
     </div>
   </div>
 </header>
+<div id="sw-banner-mount"></div>
 
 <div class="notice">
   <div class="inner">
@@ -924,31 +928,39 @@ const SPECIALTIES = [
     notes:'Pain management subspecialty has higher income but regulatory scrutiny. Aging-population demand.' }
 ];
 
-// Compute payer mix score (0-100)
+// Default weights (max points per component; payer-mix is decimal weights)
+const BOPS_DEFAULTS = { income: 25, payer: 20, stability: 15, capex: 15, demand: 10, overhead: 10, defaultRisk: 5 };
+const BOPS_WEIGHTS = Object.assign({}, BOPS_DEFAULTS);
+const PMIX_DEFAULTS = { commercial: 1.0, medicare: 0.5, selfpay: 0.4, other: 0.4, medicaid: 0.1 };
+const PMIX_WEIGHTS = Object.assign({}, PMIX_DEFAULTS);
+
+// Compute payer mix score (0-100) with adjustable per-payer weights
 function payerScore(p) {
-  // Weights: Commercial=1.0, Medicare=0.5, Self-pay=0.4, Other=0.4, Medicaid=0.1
-  const raw = p.commercial*1.0 + p.medicare*0.5 + p.selfpay*0.4 + p.other*0.4 + p.medicaid*0.1;
-  // Max possible if 100% commercial = 100. Min = 10 (100% medicaid). Rescale.
+  const w = PMIX_WEIGHTS;
+  const raw = p.commercial*w.commercial + p.medicare*w.medicare + p.selfpay*w.selfpay + p.other*w.other + p.medicaid*w.medicaid;
   return Math.round(Math.max(0, Math.min(100, raw)));
 }
 
-// Compute Bank Opportunity Score
+// Compute Bank Opportunity Score with adjustable component weights
 function bankOppScore(s) {
-  // Income (25): Medscape avg, $250K → 0, $700K → 25
-  const incomeScore = Math.min(25, Math.max(0, ((s.medMean - 250000) / 450000) * 25));
-  // Payer mix (20): payerScore mapped 0-100 → 0-20
+  const w = BOPS_WEIGHTS;
+  // Income: $250K → 0, $700K → w.income (linear)
+  const incomeScore = Math.min(w.income, Math.max(0, ((s.medMean - 250000) / 450000) * w.income));
+  // Payer mix: payerScore 0-100 → 0-w.payer
   const pScore = payerScore(s.payer);
-  const payerComp = (pScore / 100) * 20;
-  // Income stability (15): High=15, Med=10, Low=5
-  const stabScore = s.incomeStability==='High' ? 15 : s.incomeStability==='Med' ? 10 : 5;
-  // Capex (15): M=15 (best), H=12 (loan demand but risk), L=8 (low loan opportunity)
-  const capexScore = s.capexLevel==='M' ? 15 : s.capexLevel==='H' ? 12 : 8;
-  // Demand outlook (10): per BLS-style 10-yr projection, scaled
-  const demandScore = Math.min(10, Math.max(0, (s.demandOutlook + 2) ));
-  // Overhead efficiency (10): lower overhead = higher score
-  const ovhScore = Math.min(10, Math.max(0, ((85 - s.overhead) / 55) * 10));
-  // Default risk inverse (5): payer-mix-driven
-  const defRiskScore = Math.min(5, (pScore / 100) * 5);
+  const payerComp = (pScore / 100) * w.payer;
+  // Income stability: High=1.0, Med=0.67, Low=0.33 of weight
+  const stabFrac = s.incomeStability==='High' ? 1.0 : s.incomeStability==='Med' ? 0.67 : 0.33;
+  const stabScore = stabFrac * w.stability;
+  // Capex: M=1.0, H=0.80, L=0.53 (M = sweet spot)
+  const capexFrac = s.capexLevel==='M' ? 1.0 : s.capexLevel==='H' ? 0.80 : 0.53;
+  const capexScore = capexFrac * w.capex;
+  // Demand outlook: scaled
+  const demandScore = Math.min(w.demand, Math.max(0, ((s.demandOutlook + 2) / 10) * w.demand));
+  // Overhead efficiency
+  const ovhScore = Math.min(w.overhead, Math.max(0, ((85 - s.overhead) / 55) * w.overhead));
+  // Default risk inverse
+  const defRiskScore = Math.min(w.defaultRisk, (pScore / 100) * w.defaultRisk);
   return Math.round(incomeScore + payerComp + stabScore + capexScore + demandScore + ovhScore + defRiskScore);
 }
 
@@ -1539,6 +1551,58 @@ $('btn-csv').addEventListener('click', () => {
 //  INIT
 // ═════════════════════════════════════════════════════════════════════════════
 applyFilters();
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  SCORE WEIGHTS DRAWER
+// ═════════════════════════════════════════════════════════════════════════════
+if (window.ScoreWeights) {
+  ScoreWeights.init({
+    dashboardId: 'physician-underwriting',
+    title: 'Physician Underwriting',
+    theme: 'light',
+    triggerSelector: '#sw-trigger-mount',
+    bannerSelector: '#sw-banner-mount',
+    scoringSystems: [
+      {
+        id: 'bops',
+        label: 'Bank Opportunity Score (max 100 pts)',
+        tabLabel: 'Bank Opp',
+        normalizeTo: 100,
+        components: [
+          { key: 'income',      label: 'Income Level',          desc: 'Specialty average compensation',          default: 25, min: 0, max: 40 },
+          { key: 'payer',       label: 'Payer Mix',              desc: 'Commercial-heavy is best',                default: 20, min: 0, max: 40 },
+          { key: 'stability',   label: 'Income Stability',       desc: 'Year-over-year variability',              default: 15, min: 0, max: 40 },
+          { key: 'capex',       label: 'Capex / Loan Demand',    desc: 'Medium capex = best (loan opportunity)',  default: 15, min: 0, max: 40 },
+          { key: 'demand',      label: 'Demand Outlook',         desc: '10Y projected practice growth',           default: 10, min: 0, max: 40 },
+          { key: 'overhead',    label: 'Overhead Efficiency',    desc: 'Lower overhead = higher score',           default: 10, min: 0, max: 40 },
+          { key: 'defaultRisk', label: 'Default Risk Inverse',   desc: 'Payer-mix-driven',                        default: 5,  min: 0, max: 40 },
+        ],
+      },
+      {
+        id: 'pmix',
+        label: 'Payer Mix Score weights (relative)',
+        tabLabel: 'Payer Mix',
+        components: [
+          { key: 'commercial', label: 'Commercial',  desc: 'Commercial reimburses 150-200% of Medicare',  default: 1.0, min: 0, max: 1.5, step: 0.05 },
+          { key: 'medicare',   label: 'Medicare',    desc: 'Government rate (baseline)',                  default: 0.5, min: 0, max: 1.5, step: 0.05 },
+          { key: 'selfpay',    label: 'Self-Pay',    desc: 'Higher gross but collection risk',            default: 0.4, min: 0, max: 1.5, step: 0.05 },
+          { key: 'other',      label: 'Other',       desc: 'VA, WC, etc.',                                default: 0.4, min: 0, max: 1.5, step: 0.05 },
+          { key: 'medicaid',   label: 'Medicaid',    desc: 'Typically pays 50-70% of Medicare',           default: 0.1, min: 0, max: 1.5, step: 0.05 },
+        ],
+      },
+    ],
+    onChange: function (allWeights) {
+      if (allWeights.bops) Object.assign(BOPS_WEIGHTS, allWeights.bops);
+      if (allWeights.pmix) Object.assign(PMIX_WEIGHTS, allWeights.pmix);
+      // Recompute scores for every specialty
+      SPECIALTIES.forEach(s => {
+        s.payerScore = payerScore(s.payer);
+        s.bops = bankOppScore(s);
+      });
+      try { applyFilters(); } catch(e) {}
+    },
+  });
+}
 
 </script>
 </body>
