@@ -8,7 +8,9 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="../shared/score-weights.css"/>
+<link rel="stylesheet" href="../shared/score-hover.css"/>
 <script src="../shared/score-weights.js"></script>
+<script src="../shared/score-hover.js"></script>
 <style>
   :root {
     --bg: #0b1220;
@@ -652,6 +654,37 @@ function shareholderBadge(r) {
   return '<span class="badge" style="background:#3f2e1e;color:#f0b97e" title="No holding company on file. Ownership requires direct disclosure during outreach.">No HC</span>';
 }
 
+// Build hover-tooltip data attributes for the composite_score badge
+function compositeHoverAttrs(r) {
+  // Top-level breakdown
+  const comps = [
+    { label: 'Quant',        value: r.quant_score || 0,    max: 100, color: '#5b8def' },
+    { label: 'Deal Econ',    value: r.deal_econ_score || 0, max: 100, color: '#c8a951' },
+    { label: 'Qualitative',  value: r.qual_score || 0,     max: 100, color: '#3ea676' },
+  ];
+  // Sub-group: deal econ components if available
+  let subgroups = [];
+  if (r.deal_econ_components) {
+    const dc = r.deal_econ_components;
+    subgroups.push({
+      groupLabel: 'Deal Econ Breakdown',
+      components: [
+        { label: 'Capital Efficiency', value: dc.capital_efficiency || 0, max: 100, color: '#5b8def' },
+        { label: 'Goodwill Burden',    value: dc.goodwill_burden || 0,    max: 100, color: '#38a169' },
+        { label: 'TBVE Size Fit',      value: dc.tbve_size_fit || 0,      max: 100, color: '#c8a951' },
+        { label: 'CoF Franchise',      value: dc.cof_franchise || 0,      max: 100, color: '#319795' },
+        { label: 'Credit Quality',     value: dc.credit_quality || 0,     max: 100, color: '#805ad5' },
+      ]
+    });
+  }
+  const compsJson = JSON.stringify(comps).replace(/"/g, '&quot;');
+  const subsJson  = JSON.stringify(subgroups).replace(/"/g, '&quot;');
+  return ' tabindex="0" '+
+    'data-shv-title="Composite Score" data-shv-total="'+(r.composite_score||0)+'" data-shv-max="100" data-shv-theme="dark" '+
+    'data-shv-components="'+compsJson+'" data-shv-subgroups="'+subsJson+'" '+
+    'data-shv-foot="Adjust Weights to retune the formula"';
+}
+
 const COLS = [
   { key: 'rank',            label: 'Rank',          fmt: (v, r) => `${v} ${rankDeltaBadge(r)}` },
   { key: 'NAME',            label: 'Bank',          fmt: (v, r) => {
@@ -745,8 +778,8 @@ function renderRankings() {
       const td = document.createElement('td');
       if (c.key === 'composite_score') {
         const v = r[c.key];
-        td.innerHTML = fmtNum(v) +
-          '<span class="composite-bar" style="width:' + (v||0) + 'px;"></span>';
+        td.innerHTML = '<span class="shv-trigger" style="cursor:help"' + compositeHoverAttrs(r) + '>' + fmtNum(v) +
+          '<span class="composite-bar" style="width:' + (v||0) + 'px;"></span></span>';
       } else if (HTML_COLS.has(c.key)) {
         td.innerHTML = c.fmt(r[c.key], r);
       } else {
@@ -1184,16 +1217,52 @@ function assetRadius(asset) {
 function buildMultiSelect(id, values) {
   const el = document.getElementById(id);
   el.innerHTML = '';
+  // Header bar: search + select-all / clear-all
+  const bar = document.createElement('div');
+  bar.className = 'ms-bar';
+  bar.style.cssText = 'position:sticky;top:0;background:var(--panel2);padding:4px 6px;display:flex;gap:4px;align-items:center;border-bottom:1px solid var(--panel2);z-index:1';
+  bar.innerHTML = `
+    <input type="text" class="ms-search" placeholder="Filter..." style="flex:1;background:var(--panel);color:var(--text);border:1px solid var(--panel2);border-radius:3px;padding:3px 6px;font-size:11px;min-width:0">
+    <button type="button" class="ms-all" style="background:var(--accent);color:#fff;border:none;border-radius:3px;padding:3px 7px;font-size:10px;cursor:pointer">All</button>
+    <button type="button" class="ms-none" style="background:var(--panel);color:var(--muted);border:1px solid var(--panel2);border-radius:3px;padding:3px 7px;font-size:10px;cursor:pointer">None</button>
+    <span class="ms-count" style="font-size:10px;color:var(--muted);min-width:50px;text-align:right"></span>
+  `;
+  el.appendChild(bar);
+  const list = document.createElement('div');
+  list.className = 'ms-list';
+  el.appendChild(list);
+
+  const labels = [];
   values.forEach(v => {
     const lab = document.createElement('label');
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.value = v;
     cb.checked = true;
-    cb.onchange = renderMapMarkers;
+    cb.onchange = () => { renderMapMarkers(); updateCount(); };
     lab.appendChild(cb);
     lab.appendChild(document.createTextNode(' ' + v));
-    el.appendChild(lab);
+    list.appendChild(lab);
+    labels.push({ lab, cb, text: v.toLowerCase() });
+  });
+
+  function updateCount() {
+    const checked = labels.filter(x => x.cb.checked).length;
+    bar.querySelector('.ms-count').textContent = `${checked}/${labels.length}`;
+  }
+  updateCount();
+
+  bar.querySelector('.ms-search').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    labels.forEach(x => { x.lab.style.display = (!q || x.text.includes(q)) ? '' : 'none'; });
+  });
+  bar.querySelector('.ms-all').addEventListener('click', () => {
+    labels.forEach(x => { if (x.lab.style.display !== 'none') x.cb.checked = true; });
+    renderMapMarkers(); updateCount();
+  });
+  bar.querySelector('.ms-none').addEventListener('click', () => {
+    labels.forEach(x => { if (x.lab.style.display !== 'none') x.cb.checked = false; });
+    renderMapMarkers(); updateCount();
   });
 }
 
@@ -1985,6 +2054,9 @@ if (window.ScoreWeights) {
     },
   });
 }
+
+// ----- Score hover ----------------------------------------------------------
+if (window.ScoreHover) ScoreHover.init();
 
 // ----- Initial render --------------------------------------------------------
 buildHead();

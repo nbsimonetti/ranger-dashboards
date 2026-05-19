@@ -6,7 +6,9 @@
 <title>Ranger Bank — Physician Underwriting Benchmarks</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="../shared/score-weights.css"/>
+<link rel="stylesheet" href="../shared/score-hover.css"/>
 <script src="../shared/score-weights.js"></script>
+<script src="../shared/score-hover.js"></script>
 <style>
 :root {
   --navy: #1B365D;
@@ -1034,13 +1036,52 @@ const capexBadge = c => `<span class="capex capex-${c.toLowerCase()}">${c==='H'?
 const fmtK = v => v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + (v/1000).toFixed(0) + 'K';
 const fmtPct = v => (v||0).toFixed(0) + '%';
 
-function bopsBadge(s) {
+function bopsBadge(s, spec) {
   const cls = s>=70?'bops-hi':s>=50?'bops-mid':'bops-lo';
-  return `<span class="bops ${cls}">${s}</span>`;
+  // Component breakdown using same logic as bankOppScore
+  let attrs = '';
+  if (spec) {
+    const w = BOPS_WEIGHTS;
+    const incomeVal = Math.min(w.income, Math.max(0, ((spec.medMean-250000)/450000)*w.income));
+    const payerVal = (spec.payerScore/100)*w.payer;
+    const stabFrac = spec.incomeStability==='High'?1.0:spec.incomeStability==='Med'?0.67:0.33;
+    const stabVal = stabFrac*w.stability;
+    const capexFrac = spec.capexLevel==='M'?1.0:spec.capexLevel==='H'?0.80:0.53;
+    const capexVal = capexFrac*w.capex;
+    const demandVal = Math.min(w.demand, Math.max(0, ((spec.demandOutlook+2)/10)*w.demand));
+    const ovhVal = Math.min(w.overhead, Math.max(0, ((85-spec.overhead)/55)*w.overhead));
+    const defRiskVal = Math.min(w.defaultRisk, (spec.payerScore/100)*w.defaultRisk);
+    const comps = [
+      {label:'Income Level',     value:+incomeVal.toFixed(1), max:w.income,      color:'#3182ce'},
+      {label:'Payer Mix',        value:+payerVal.toFixed(1),  max:w.payer,       color:'#38a169'},
+      {label:'Income Stability', value:+stabVal.toFixed(1),   max:w.stability,   color:'#319795'},
+      {label:'Capex / Loan',     value:+capexVal.toFixed(1),  max:w.capex,       color:'#dd6b20'},
+      {label:'Demand Outlook',   value:+demandVal.toFixed(1), max:w.demand,      color:'#805ad5'},
+      {label:'Overhead Eff.',    value:+ovhVal.toFixed(1),    max:w.overhead,    color:'#d69e2e'},
+      {label:'Default Risk Inv.',value:+defRiskVal.toFixed(1),max:w.defaultRisk, color:'#48bb78'},
+    ];
+    const json = JSON.stringify(comps).replace(/"/g,'&quot;');
+    attrs = ` tabindex="0" data-shv-title="Bank Opportunity Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light" data-shv-components="${json}" data-shv-foot="Hover any score for breakdown · Adjust Weights to retune"`;
+  }
+  return `<span class="bops shv-trigger ${cls}"${attrs}>${s}</span>`;
 }
-function payerScoreBadge(s) {
+function payerScoreBadge(s, spec) {
   const color = s>=65?'#276749':s>=50?'#dd6b20':'#a0aec0';
-  return `<span style="font-weight:700;color:${color}">${s}</span>`;
+  let attrs = '';
+  if (spec && spec.payer) {
+    const p = spec.payer, w = PMIX_WEIGHTS;
+    // Show each payer category's CONTRIBUTION (mix% * weight) so users see which payer is moving the score
+    const comps = [
+      {label:`Commercial (${p.commercial}%)`,value:+(p.commercial*w.commercial).toFixed(1), max:100, color:'#38a169'},
+      {label:`Medicare (${p.medicare}%)`,    value:+(p.medicare*w.medicare).toFixed(1),     max:50,  color:'#3182ce'},
+      {label:`Self-Pay (${p.selfpay}%)`,     value:+(p.selfpay*w.selfpay).toFixed(1),       max:40,  color:'#805ad5'},
+      {label:`Other (${p.other}%)`,          value:+(p.other*w.other).toFixed(1),           max:40,  color:'#a0aec0'},
+      {label:`Medicaid (${p.medicaid}%)`,    value:+(p.medicaid*w.medicaid).toFixed(1),     max:10,  color:'#dd6b20'},
+    ];
+    const json = JSON.stringify(comps).replace(/"/g,'&quot;');
+    attrs = ` tabindex="0" data-shv-title="Payer Mix Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light" data-shv-components="${json}" data-shv-foot="Each row is mix% × payer weight. Commercial weighted 1.0; Medicaid 0.1."`;
+  }
+  return `<span class="shv-trigger" style="font-weight:700;color:${color};cursor:help"${attrs}>${s}</span>`;
 }
 function payerBar(p) {
   return `<div class="payer-mix-bar" title="Medicare ${p.medicare}% · Commercial ${p.commercial}% · Medicaid ${p.medicaid}% · Self-pay ${p.selfpay}% · Other ${p.other}%">
@@ -1082,14 +1123,14 @@ function applyFilters() {
 function renderTable() {
   $('tbl-body').innerHTML = S.filtered.map(s => `
     <tr data-name="${esc(s.name)}">
-      <td>${bopsBadge(s.bops)}</td>
+      <td>${bopsBadge(s.bops, s)}</td>
       <td><strong>${esc(s.name)}</strong>${s.subspec.length ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${s.subspec.length} sub-specialties</div>` : ''}</td>
       <td>${tierBadge(s.tier)}</td>
       <td class="right">${fmtK(s.medMean)}</td>
       <td class="right">${fmtK(s.doxMean)}</td>
       <td class="right" style="color:var(--muted)">${fmtK(s.blsMean)}</td>
       <td>${payerBar(s.payer)}</td>
-      <td class="right">${payerScoreBadge(s.payerScore)}</td>
+      <td class="right">${payerScoreBadge(s.payerScore, s)}</td>
       <td class="right">${s.overhead}%</td>
       <td>${capexBadge(s.capexLevel)}</td>
       <td class="right">${s.demandOutlook>0?'+':''}${s.demandOutlook}%</td>
@@ -1163,7 +1204,7 @@ function renderDetail(s) {
       <div style="display:flex;gap:14px;align-items:center">
         <div style="text-align:center">
           <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Bank Opp Score</div>
-          ${bopsBadge(s.bops)}
+          ${bopsBadge(s.bops, s)}
         </div>
         <div style="text-align:center">
           <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Payer Mix Score</div>
@@ -1550,6 +1591,7 @@ $('btn-csv').addEventListener('click', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 //  INIT
 // ═════════════════════════════════════════════════════════════════════════════
+if (window.ScoreHover) ScoreHover.init();
 applyFilters();
 
 // ═════════════════════════════════════════════════════════════════════════════

@@ -8,7 +8,9 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <link rel="stylesheet" href="../shared/score-weights.css"/>
+<link rel="stylesheet" href="../shared/score-hover.css"/>
 <script src="../shared/score-weights.js"></script>
+<script src="../shared/score-hover.js"></script>
 <style>
 :root {
   --navy:    #1B365D;
@@ -1207,16 +1209,43 @@ function buildMarkets(rows) {
     const avgAll=avg(all);
     const level=avgAll===null?'unknown':avgAll<1.5?'soft':avgAll<3?'mod':'hot';
     // Opportunity score with adjustable weights
-    const oppScore = avgAll!=null ? Math.round(Math.max(0, Math.min(100,
-      (1 - avgAll/5) * w.lowApy +
-      Math.min(m.banks.size/5, 1) * w.marketSize +
-      Math.min(types.length/4, 1) * w.productVariety
-    ))) : null;
+    let oppComps = null, oppScore = null;
+    if (avgAll != null) {
+      const lowApy = (1 - avgAll/5) * w.lowApy;
+      const mktSize = Math.min(m.banks.size/5, 1) * w.marketSize;
+      const prodVar = Math.min(types.length/4, 1) * w.productVariety;
+      oppComps = {
+        lowApy: +lowApy.toFixed(1),
+        marketSize: +mktSize.toFixed(1),
+        productVariety: +prodVar.toFixed(1)
+      };
+      oppScore = Math.round(Math.max(0, Math.min(100, lowApy + mktSize + prodVar)));
+    }
     return{city:m.city,region:m.region,regionLabel:m.regionLabel,
       bankCount:m.banks.size,productCount:m.rows.length,
       avgApy:avgAll,bestApy:best(all),avgCd12:avg(cd12),avgSavings:avg(sav),avgMmkt:avg(mm),
-      products:types,level,opportunity:oppScore};
+      products:types,level,opportunity:oppScore,_oppComponents:oppComps};
   });
+}
+
+// Market Opportunity Score badge with hover
+function mktOppBadge(m) {
+  if (m.opportunity == null) return '<span style="color:#a0aec0">—</span>';
+  const s = m.opportunity;
+  const color = s>=70?'#276749':s>=40?'#c05621':'#a0aec0';
+  const c = m._oppComponents || {};
+  const w = MKT_OPP_WEIGHTS;
+  const comps = [
+    { label:'Low APY (Ease of Entry)', value: c.lowApy||0,         max: w.lowApy,         color: '#3182ce' },
+    { label:'Market Size',             value: c.marketSize||0,     max: w.marketSize,     color: '#38a169' },
+    { label:'Product Variety',         value: c.productVariety||0, max: w.productVariety, color: '#805ad5' },
+  ];
+  const compsJson = JSON.stringify(comps).replace(/"/g, '&quot;');
+  return `<span class="shv-trigger" tabindex="0" `+
+    `data-shv-title="Market Opportunity Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light" `+
+    `data-shv-components="${compsJson}" `+
+    `data-shv-foot="Hover any score for breakdown · Adjust Weights to retune" `+
+    `style="font-weight:700;color:${color};cursor:help">${s}</span>`;
 }
 
 function buildCdMatrix(rows) {
@@ -1362,7 +1391,7 @@ function renderMarkets() {
       <td class="right">${apyCell(m.avgApy)}</td>
       <td style="font-size:11px">${types}</td>
       <td>${levelBadge(m.level)}</td>
-      <td class="right"><span style="font-weight:700;color:${m.opportunity>=70?'#276749':m.opportunity>=40?'#c05621':'#a0aec0'}">${m.opportunity!=null?m.opportunity:'—'}</span></td>
+      <td class="right">${mktOppBadge(m)}</td>
     </tr>`;
   }).join('');
   renderPag('mkt',total,ps,pages,S.mktPage,p=>{S.mktPage=p;renderMarkets();});
@@ -2021,9 +2050,23 @@ function computeCompScore(b) {
   b._compComponents = c;
   b.compScore = Math.min(c.cof + c.growth + c.assetFit + c.web + c.scraped, 100);
 }
-function compBadge(s) {
+function compBadge(s, bank) {
   const bg = s >= 60 ? '#276749' : s >= 35 ? '#dd6b20' : '#a0aec0';
-  return `<span class="comp-badge" style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;background:${bg};color:#fff" title="Click for breakdown">${s}</span>`;
+  const c = (bank && bank._compComponents) || {};
+  const w = COMP_WEIGHTS;
+  const comps = [
+    { label: 'Cost of Funds',     value: c.cof||0,      max: w.cof,      color: '#3182ce' },
+    { label: 'Growth Proxy',      value: c.growth||0,   max: w.growth,   color: '#38a169' },
+    { label: 'Asset Size Fit',    value: c.assetFit||0, max: w.assetFit, color: '#319795' },
+    { label: 'Web Presence',      value: c.web||0,      max: w.web,      color: '#dd6b20' },
+    { label: 'Scraped Rates',     value: c.scraped||0,  max: w.scraped,  color: '#805ad5' },
+  ];
+  const compsJson = JSON.stringify(comps).replace(/"/g, '&quot;');
+  return `<span class="comp-badge shv-trigger" tabindex="0" `+
+    `data-shv-title="Competitiveness Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light" `+
+    `data-shv-components="${compsJson}" `+
+    `data-shv-foot="Hover any score for breakdown · Adjust Weights to retune" `+
+    `style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:700;cursor:help;background:${bg};color:#fff">${s}</span>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2056,7 +2099,7 @@ function renderBankDirectory() {
       ? `<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#ebf4ff;color:#2b6cb0;border:1px solid #bee3f8;text-decoration:none;white-space:nowrap">Visit ↗</a>`
       : `<a href="https://www.google.com/search?q=${encodeURIComponent(b.name+' '+b.city+' TX rates')}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#f7fafc;color:#4a5568;border:1px solid #e2e8f0;text-decoration:none;white-space:nowrap">Search ↗</a>`;
     return `<tr data-cert="${b.cert}">
-      <td style="position:relative">${compBadge(b.compScore)}</td>
+      <td style="position:relative">${compBadge(b.compScore, b)}</td>
       <td><div style="font-weight:600;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(b.name)}">${esc(b.name)}</div></td>
       <td>${b.city}</td>
       <td style="font-size:12px;color:var(--muted)">${b.regionLabel}</td>
@@ -2091,27 +2134,7 @@ document.addEventListener('click',function(e){
     th.classList.add(BD.sort.dir==='asc'?'sort-asc':'sort-desc');
     renderBankDirectory();
   }
-  // Comp score tooltip
-  const badge=e.target.closest('.comp-badge');
-  if(badge){
-    const existing=badge.parentElement.querySelector('.comp-driver-tip');
-    document.querySelectorAll('.comp-driver-tip').forEach(t=>t.remove());
-    if(existing)return;
-    const cert=badge.closest('tr')?.dataset?.cert;
-    if(!cert)return;
-    const bank=(S.filtBanks||S.banks).find(b=>String(b.cert)===cert);
-    if(!bank||!bank._compComponents)return;
-    const c=bank._compComponents;
-    const bars=[['Cost of Funds',c.cof,35],['Growth Proxy',c.growth,20],['Asset Fit',c.assetFit,15],['Web Presence',c.web,10],['Scraped Rates',c.scraped,20]];
-    const tip=document.createElement('div');
-    tip.className='comp-driver-tip';
-    tip.style.cssText='position:absolute;z-index:999;background:#1a202c;color:#e2e8f0;border-radius:8px;padding:12px 14px;font-size:11px;width:220px;box-shadow:0 8px 24px rgba(0,0,0,.3);left:50%;transform:translateX(-50%);top:100%;margin-top:4px';
-    tip.innerHTML='<div style="font-weight:700;font-size:12px;margin-bottom:8px;color:#fff">Score: '+bank.compScore+'/100</div>'+
-      bars.map(b=>{const pct=Math.round(b[1]/b[2]*100);return'<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;margin-bottom:1px"><span>'+b[0]+'</span><span style="font-weight:700">'+b[1]+'/'+b[2]+'</span></div><div style="height:6px;background:#2d3748;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+(pct>=70?'#38a169':pct>=40?'#dd6b20':'#e53e3e')+';border-radius:3px"></div></div></div>';}).join('');
-    badge.parentElement.appendChild(tip);
-    e.stopPropagation();return;
-  }
-  if(!e.target.closest('.comp-driver-tip'))document.querySelectorAll('.comp-driver-tip').forEach(t=>t.remove());
+  // Comp score click-tooltip removed; hover-tooltip handled by shared ScoreHover module
 });
 
 // Bank directory page size
@@ -2197,7 +2220,7 @@ function renderOverview() {
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Most Competitive Banks (by Competitiveness Score)</div>
         <table style="width:100%;font-size:12px;border-collapse:collapse">
           <tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Bank</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">COF</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Score</th></tr>
-          ${[...banks].sort((a,b)=>(b.compScore||0)-(a.compScore||0)).slice(0,8).map(b=>`<tr style="border-bottom:1px solid #f7fafc"><td style="padding:5px 0;font-weight:600;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.name)}</td><td style="text-align:right;padding:5px 0;color:var(--muted)">${b.impliedRate!=null?b.impliedRate.toFixed(2)+'%':'—'}</td><td style="text-align:right;padding:5px 0">${compBadge(b.compScore)}</td></tr>`).join('')}
+          ${[...banks].sort((a,b)=>(b.compScore||0)-(a.compScore||0)).slice(0,8).map(b=>`<tr style="border-bottom:1px solid #f7fafc"><td style="padding:5px 0;font-weight:600;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.name)}</td><td style="text-align:right;padding:5px 0;color:var(--muted)">${b.impliedRate!=null?b.impliedRate.toFixed(2)+'%':'—'}</td><td style="text-align:right;padding:5px 0">${compBadge(b.compScore, b)}</td></tr>`).join('')}
         </table>
       </div>
     </div>
@@ -2247,6 +2270,11 @@ async function main() {
 }
 
 main();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SCORE HOVER
+// ═══════════════════════════════════════════════════════════════════════════════
+if (window.ScoreHover) ScoreHover.init();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SCORE WEIGHTS DRAWER

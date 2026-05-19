@@ -1,0 +1,140 @@
+/* ============================================================
+   Ranger Dashboards — Shared Score Hover Tooltip
+   ============================================================ */
+
+.shv-tip {
+  position: fixed;
+  z-index: 9999;
+  background: #1a202c;
+  color: #e8eef9;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 11.5px;
+  width: 260px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.32);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s ease-out;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.4;
+}
+.shv-tip.shv-show {
+  opacity: 1;
+}
+.shv-tip.shv-light {
+  background: #ffffff;
+  color: #1a202c;
+  border: 1px solid #cbd5e0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.shv-tip-title {
+  font-weight: 700;
+  font-size: 12.5px;
+  margin-bottom: 8px;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+}
+.shv-tip.shv-light .shv-tip-title {
+  color: #1a202c;
+}
+.shv-tip-total {
+  font-weight: 700;
+  color: #c8a951;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.shv-tip.shv-light .shv-tip-total {
+  color: #b8860b;
+}
+
+.shv-tip-section-h {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: #8a99b5;
+  margin: 8px 0 4px 0;
+  padding-top: 6px;
+  border-top: 1px solid #2a3650;
+}
+.shv-tip.shv-light .shv-tip-section-h {
+  color: #718096;
+  border-top-color: #e2e8f0;
+}
+.shv-tip-section-h:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.shv-comp-row {
+  margin-bottom: 5px;
+}
+.shv-comp-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 2px;
+  gap: 6px;
+}
+.shv-comp-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shv-comp-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #fff;
+}
+.shv-tip.shv-light .shv-comp-val {
+  color: #1a202c;
+}
+.shv-comp-bar {
+  height: 5px;
+  background: #2d3748;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.shv-tip.shv-light .shv-comp-bar {
+  background: #edf2f7;
+}
+.shv-comp-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .15s;
+}
+
+.shv-tip-foot {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #2a3650;
+  font-size: 10.5px;
+  color: #8a99b5;
+  font-style: italic;
+}
+.shv-tip.shv-light .shv-tip-foot {
+  color: #718096;
+  border-top-color: #e2e8f0;
+}
+
+/* Score badge cursor + outline on focus */
+.shv-trigger {
+  cursor: help;
+  outline: none;
+}
+.shv-trigger:focus {
+  box-shadow: 0 0 0 2px rgba(200,169,81,0.5);
+  border-radius: 4px;
+}
+
+@media print {
+  .shv-tip { display: none !important; }
+}
