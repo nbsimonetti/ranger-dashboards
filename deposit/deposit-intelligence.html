@@ -55,16 +55,92 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 .search-wrap::before { content:'🔍'; position:absolute; left:8px; top:50%; transform:translateY(-50%);
   font-size:12px; pointer-events:none; }
 
-/* Refresh button */
+/* Refresh / Update button */
 .btn-refresh { display:inline-flex; align-items:center; gap:6px; padding:7px 14px;
   border-radius:6px; border:1px solid var(--gold); background:transparent;
   color:var(--gold); font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; white-space:nowrap; }
 .btn-refresh:hover { background:var(--gold); color:var(--navy); }
-.btn-refresh.loading { opacity:.7; pointer-events:none; }
+.btn-refresh.loading { opacity:.85; pointer-events:none; }
+.btn-refresh.success { background:#22543d; color:#fff; border-color:#22543d; }
+.btn-refresh.error   { background:#c53030; color:#fff; border-color:#c53030; }
 .btn-refresh .spin { display:none; width:14px; height:14px; border:2px solid rgba(200,169,81,.3);
   border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; }
 .btn-refresh.loading .spin { display:inline-block; }
 .btn-refresh.loading .icon { display:none; }
+.btn-rescrape { display:inline-flex; align-items:center; gap:6px; padding:7px 12px;
+  border-radius:6px; border:1px solid rgba(255,255,255,.35); background:transparent;
+  color:#fff; font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap; opacity:.85; }
+.btn-rescrape:hover { opacity:1; background:rgba(255,255,255,.08); }
+
+/* Freshness ribbon (3 pills below header) */
+.freshness-ribbon { background:var(--surface); border-bottom:1px solid #e2e8f0;
+  padding:8px 24px; font-size:12px; }
+.freshness-ribbon .fr-inner { max-width:1500px; margin:0 auto; display:flex; gap:10px;
+  align-items:center; flex-wrap:wrap; }
+.fr-pill { display:inline-flex; align-items:center; gap:8px; padding:5px 12px;
+  border-radius:14px; border:1px solid transparent; font-weight:600; line-height:1.2;
+  background:#edf2f7; color:#2d3748; }
+.fr-pill .fr-dot { width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.7; }
+.fr-pill .fr-label { font-weight:700; }
+.fr-pill .fr-detail { font-weight:400; color:inherit; opacity:.78; font-size:11px; }
+.fr-pill.fr-green  { background:#e6fffa; color:#22543d; border-color:#9ae6b4; }
+.fr-pill.fr-yellow { background:#fffbea; color:#7b341e; border-color:#f6ad55; }
+.fr-pill.fr-red    { background:#fed7d7; color:#742a2a; border-color:#fc8181; }
+.fr-pill.fr-gray   { background:#edf2f7; color:#4a5568; border-color:#cbd5e0; }
+.fr-why { background:none; border:none; color:inherit; text-decoration:underline;
+  font-size:11px; cursor:pointer; padding:0 0 0 4px; font-weight:500; }
+.fr-expand { background:none; border:none; color:var(--muted); font-size:11px;
+  cursor:pointer; padding:2px 6px; display:none; }
+@media (max-width:640px) {
+  .freshness-ribbon .fr-inner { flex-direction:column; align-items:flex-start; gap:4px; }
+  .fr-pill:not(.fr-primary) { display:none; }
+  .freshness-ribbon.expanded .fr-pill { display:inline-flex; }
+  .fr-expand { display:inline-block; }
+}
+
+/* Stale rates warning banner */
+.stale-rates-warn { background:#fffbea; border:1px solid #f6ad55; color:#7b341e;
+  padding:10px 16px; border-radius:8px; margin:0 0 12px 0; font-size:12.5px;
+  display:flex; align-items:center; gap:10px; }
+.stale-rates-warn strong { color:#742a2a; }
+.stale-rates-warn .srw-act { margin-left:auto; }
+.stale-rates-warn button { background:#7b341e; color:#fff; border:none;
+  padding:5px 11px; border-radius:5px; font-size:11.5px; font-weight:600; cursor:pointer; }
+
+/* Toast */
+.toast-stack { position:fixed; top:18px; right:18px; z-index:9999; display:flex;
+  flex-direction:column; gap:8px; pointer-events:none; }
+.toast { background:#2d3748; color:#fff; padding:10px 14px; border-radius:6px;
+  font-size:12.5px; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.18);
+  border-left:4px solid #4299e1; min-width:240px; max-width:380px;
+  pointer-events:auto; opacity:0; transform:translateY(-6px); transition:opacity .2s, transform .2s; }
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.toast-success { border-left-color:#48bb78; }
+.toast.toast-info    { border-left-color:#4299e1; }
+.toast.toast-error   { border-left-color:#f56565; }
+.toast .t-sub { font-weight:400; opacity:.78; font-size:11.5px; margin-top:2px; }
+
+/* Re-scrape modal */
+.rs-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:10000;
+  align-items:center; justify-content:center; padding:20px; }
+.rs-modal.show { display:flex; }
+.rs-modal .rs-card { background:#fff; max-width:620px; width:100%; border-radius:10px;
+  box-shadow:0 18px 48px rgba(0,0,0,.25); overflow:hidden; }
+.rs-modal .rs-head { background:var(--navy); color:#fff; padding:14px 18px;
+  display:flex; align-items:center; justify-content:space-between; }
+.rs-modal .rs-head h3 { margin:0; font-size:15px; }
+.rs-modal .rs-close { background:none; border:none; color:#fff; font-size:18px; cursor:pointer; }
+.rs-modal .rs-body { padding:18px; font-size:13px; line-height:1.5; color:var(--text); }
+.rs-modal .rs-age { display:inline-block; padding:4px 10px; border-radius:12px;
+  font-size:11.5px; font-weight:700; margin-bottom:10px; }
+.rs-modal pre { background:#1a202c; color:#e2e8f0; padding:12px 14px; border-radius:6px;
+  font-size:11.5px; font-family:Consolas,'Courier New',monospace; overflow-x:auto;
+  white-space:pre; line-height:1.45; }
+.rs-modal .rs-copy { float:right; background:var(--gold); color:var(--navy); border:none;
+  padding:4px 10px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; }
+.rs-modal .rs-copy.copied { background:#48bb78; color:#fff; }
+.rs-modal .rs-note { background:#fffbea; border-left:3px solid #f6ad55; padding:8px 12px;
+  font-size:12px; color:#7b341e; border-radius:0 4px 4px 0; margin-top:10px; }
 
 /* Hamburger */
 .hamburger { display:none; background:none; border:none; color:#fff; font-size:24px; cursor:pointer;
@@ -280,7 +356,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
 
 /* ── Print ───────────────────────────────────────────────── */
 @media print {
-  header,.fpanel,.tabbar,.pgbar,.btn-refresh,.btt,.notice,.search-wrap,.hamburger { display:none !important; }
+  header,.fpanel,.tabbar,.pgbar,.btn-refresh,.btn-rescrape,.btt,.notice,.search-wrap,.hamburger,.freshness-ribbon,.toast-stack,.rs-modal { display:none !important; }
   .tabcontent { display:block !important; page-break-inside:avoid; }
   .main { padding:0; }
   body { font-size:11px; }
@@ -331,9 +407,12 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
       <div class="search-wrap">
         <input type="text" id="global-search" placeholder="Search banks, cities…" aria-label="Search">
       </div>
-      <button class="btn-refresh" id="btn-refresh" title="Re-fetch FDIC data">
+      <button class="btn-refresh" id="btn-refresh" title="Check FDIC for newer call report filings and recompute Cost of Funds">
         <span class="icon">↻</span><span class="spin"></span>
-        <span class="label">Refresh Data</span>
+        <span class="label" id="btn-refresh-label">Update Data</span>
+      </button>
+      <button class="btn-rescrape" id="btn-rescrape" title="Re-run the advertised-rate scraper (Python pipeline)">
+        <span>⟲</span><span>Re-scrape rates…</span>
       </button>
       <span id="sw-trigger-mount"></span>
       <div class="hdr-meta" id="hdr-meta">Loading…</div>
@@ -342,6 +421,46 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
 </header>
 <div id="sw-banner-mount"></div>
 <div id="depChipMount" style="max-width:1400px;margin:0 auto;padding:0 24px;color:var(--text)"></div>
+
+<!-- ── Freshness ribbon (always visible: COF period · scrape date · session ──── -->
+<div class="freshness-ribbon" id="freshness-ribbon" aria-label="Data freshness">
+  <div class="fr-inner" id="fr-inner">
+    <span class="fr-pill fr-gray fr-primary" id="fr-pill-cof">
+      <span class="fr-dot"></span>
+      <span><span class="fr-label">FDIC COF:</span> <span class="fr-val">…</span></span>
+    </span>
+    <span class="fr-pill fr-gray" id="fr-pill-rates">
+      <span class="fr-dot"></span>
+      <span><span class="fr-label">Advertised rates:</span> <span class="fr-val">…</span></span>
+    </span>
+    <span class="fr-pill fr-gray" id="fr-pill-session">
+      <span class="fr-dot"></span>
+      <span><span class="fr-label">Session:</span> <span class="fr-val">not yet refreshed</span></span>
+    </span>
+    <button class="fr-expand" id="fr-expand" aria-label="Show all freshness pills">▾ more</button>
+  </div>
+</div>
+
+<!-- ── Toast stack ──────────────────────────────────────────────────────────── -->
+<div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+<!-- ── Re-scrape rates modal ───────────────────────────────────────────────── -->
+<div class="rs-modal" id="rs-modal" role="dialog" aria-labelledby="rs-title" aria-modal="true">
+  <div class="rs-card">
+    <div class="rs-head">
+      <h3 id="rs-title">Re-scrape advertised rates</h3>
+      <button class="rs-close" id="rs-close" aria-label="Close">×</button>
+    </div>
+    <div class="rs-body">
+      <p>Advertised rate data is collected by an offline Python pipeline. It does not run in the browser.</p>
+      <div id="rs-age-line"></div>
+      <p>Run these commands locally to refresh the rate data, then commit and push to redeploy:</p>
+      <button class="rs-copy" id="rs-copy">Copy</button>
+      <pre id="rs-cmd"></pre>
+      <div class="rs-note">Recommended cadence: re-scrape every 30 days. Rates older than 60 days trigger a stale-data warning on the Bank Comparison tab.</div>
+    </div>
+  </div>
+</div>
 
 <div class="notice" id="notice-bar">
   <div class="inner" id="notice-inner">
@@ -1018,12 +1137,144 @@ async function fetchAllInstitutions() {
   return raw;
 }
 
-async function fetchFinancials() {
+// ─── Freshness / repdte helpers ──────────────────────────────────────────────
+const REPDTE_CACHE_KEY = 'depint:latestRepdte';
+const REPDTE_CACHE_TTL = 24*60*60*1000;             // 24 hours
+const PROBE_MIN_BANKS  = 100;                       // candidate must return ≥100 TX banks
+const PROBE_MAX_TRIES  = 8;                         // last 8 quarter-ends
+const PROBE_SPACING_MS = 220;                       // ≥200ms between probes per prompt
+
+function rollingQuarterEnds(n=PROBE_MAX_TRIES){
+  // Return n most-recent quarter-end YYYYMMDD strings, newest first.
+  const out=[]; const today=new Date();
+  // Find the most recent past quarter-end relative to today.
+  let y=today.getUTCFullYear(), m=today.getUTCMonth(); // 0-indexed
+  // Quarter ends are at months 2,5,8,11 (Mar/Jun/Sep/Dec). Last day of those months.
+  const qMonthIdx=[2,5,8,11];
+  // Walk backward in quarters
+  let qi=qMonthIdx.slice().reverse().findIndex(qm=>qm<=m);
+  if(qi===-1){ y-=1; qi=0; } // shouldn't happen; safety
+  let order=qMonthIdx.slice().reverse(); // [11,8,5,2]
+  let curIdx=qi;
+  for(let i=0;i<n;i++){
+    const qm=order[curIdx];
+    const lastDay=new Date(Date.UTC(y, qm+1, 0)).getUTCDate(); // last day of qm
+    const dd=String(lastDay).padStart(2,'0');
+    const mm=String(qm+1).padStart(2,'0');
+    out.push(`${y}${mm}${dd}`);
+    curIdx++;
+    if(curIdx>=order.length){ curIdx=0; y-=1; }
+  }
+  return out;
+}
+
+function readCachedRepdte(){
+  try{
+    const raw=localStorage.getItem(REPDTE_CACHE_KEY);
+    if(!raw) return null;
+    const o=JSON.parse(raw);
+    if(!o.repdte||!o.ts) return null;
+    if(Date.now()-o.ts>REPDTE_CACHE_TTL) return null;
+    return o.repdte;
+  }catch(e){ return null; }
+}
+function writeCachedRepdte(repdte){
+  try{ localStorage.setItem(REPDTE_CACHE_KEY,JSON.stringify({repdte,ts:Date.now()})); }catch(e){}
+}
+function clearCachedRepdte(){ try{ localStorage.removeItem(REPDTE_CACHE_KEY); }catch(e){} }
+
+/** Probe FDIC for the most recent reporting period that has ≥PROBE_MIN_BANKS TX banks.
+ * Cached for 24h in localStorage. Returns YYYYMMDD or null. */
+async function discoverLatestRepdte(opts={}){
+  const force = !!opts.force;
+  if(!force){
+    const cached = readCachedRepdte();
+    if(cached){ console.log('repdte: using cached',cached); return cached; }
+  }
+  const candidates = rollingQuarterEnds(PROBE_MAX_TRIES);
+  for(const repdte of candidates){
+    try{
+      const url=`${BASE}/financials?`+new URLSearchParams({
+        filters:`STALP:TX AND REPDTE:${repdte}`,
+        fields:'CERT', limit:'1', output:'json',
+      });
+      const r=await fetch(url);
+      if(r.ok){
+        const j=await r.json();
+        const tot = j.meta?.total ?? (j.data?.length||0);
+        if(tot>=PROBE_MIN_BANKS){
+          writeCachedRepdte(repdte);
+          console.log(`repdte: discovered ${repdte} (${tot} TX banks)`);
+          return repdte;
+        }
+      }
+    }catch(e){ console.warn('repdte probe failed',repdte,e); }
+    await new Promise(r=>setTimeout(r,PROBE_SPACING_MS));
+  }
+  return null;
+}
+
+/** Format YYYYMMDD → "Q3 2025". Empty/invalid → ''. */
+function formatRepdte(repdte){
+  if(!repdte || repdte.length<8) return '';
+  const y=repdte.slice(0,4), m=repdte.slice(4,6);
+  const q = m==='03'?'Q1':m==='06'?'Q2':m==='09'?'Q3':m==='12'?'Q4':'';
+  return q?`${q} ${y}`:`${y}-${m}-${repdte.slice(6,8)}`;
+}
+function repdteToDate(repdte){
+  if(!repdte || repdte.length<8) return null;
+  const y=+repdte.slice(0,4), m=+repdte.slice(4,6)-1, d=+repdte.slice(6,8);
+  return new Date(Date.UTC(y,m,d));
+}
+function daysAgo(date){
+  if(!date) return null;
+  const d = (date instanceof Date) ? date : new Date(date);
+  if(isNaN(d.getTime())) return null;
+  return Math.floor((Date.now()-d.getTime())/(24*60*60*1000));
+}
+
+/** Color bucket: green ≤90d, yellow 91-180d, red >180d, gray unknown. */
+function freshnessClass(days){
+  if(days==null) return 'fr-gray';
+  if(days<=90)  return 'fr-green';
+  if(days<=180) return 'fr-yellow';
+  return 'fr-red';
+}
+
+// ─── Toast helpers ───────────────────────────────────────────────────────────
+function toast(msg, opts={}){
+  const stack = document.getElementById('toast-stack');
+  if(!stack) return;
+  const kind = opts.kind || 'info';
+  const sub = opts.sub || '';
+  const dur = opts.duration || 4200;
+  const el = document.createElement('div');
+  el.className = `toast toast-${kind}`;
+  el.innerHTML = `<div>${msg}</div>${sub?`<div class="t-sub">${sub}</div>`:''}`;
+  stack.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{
+    el.classList.remove('show');
+    setTimeout(()=>el.remove(), 250);
+  }, dur);
+}
+
+async function fetchFinancials(opts={}) {
   const results = { current: new Map(), prior: new Map(), currentRepdte: null, priorRepdte: null };
-  const quarters = ['20251231','20250930','20250630','20241231','20240930'];
+  // Build candidate quarter list: prefer the discovered/cached current period,
+  // then walk backward for prior. If no discovery available, fall back to a rolling list.
+  let quarters;
+  if(opts.currentRepdte){
+    // Start with the discovered period, then prior quarters going back.
+    const rolling = rollingQuarterEnds(PROBE_MAX_TRIES);
+    const idx = rolling.indexOf(opts.currentRepdte);
+    quarters = idx>=0 ? rolling.slice(idx) : [opts.currentRepdte, ...rolling];
+  } else {
+    quarters = rollingQuarterEnds(PROBE_MAX_TRIES);
+  }
   let foundFirst = false;
   for(const repdte of quarters) {
-    setLoad('Fetching FDIC financial data…',`Trying period ${repdte}`);
+    setLoad('Fetching FDIC financial data…',`Trying period ${formatRepdte(repdte)||repdte}`);
     try {
       const url=`${BASE}/financials?`+new URLSearchParams({
         filters:`REPDTE:${repdte}`,fields:FIN_FIELDS,
@@ -1283,8 +1534,10 @@ const S = {
   ranger:{cd12:null,savings:null,mmkt:null,ichk:null,threshold:5.0},
   // treasury + benchmarks
   treasury:null, showHealth:false,
-  // timestamp
+  // timestamp + freshness
   lastRefresh:null,
+  currentRepdte:null,   // YYYYMMDD of the FDIC reporting period currently displayed
+  priorRepdte:null,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1463,7 +1716,7 @@ function renderCofTable() {
 
   qs('#cof-body').innerHTML=rows.map(b=>{
     const cofCell=b.impliedRate!==null
-      ?`<span class="${cofClass(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><span class="cof-sub">FDIC ${b.finRepdte||''}</span>`
+      ?`<span class="${cofClass(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><span class="cof-sub" title="FDIC ${b.finRepdte||''}">${b.finRepdte?formatRepdte(b.finRepdte):''}</span>`
       :`<span class="cof-na">—</span>`;
     const pctCell=b.cofPctile!=null?`<span style="font-size:12px;font-weight:600;color:${b.cofPctile>=75?'#276749':b.cofPctile>=50?'#2b6cb0':'#a0aec0'}">${b.cofPctile}th</span>`:'<span style="color:#a0aec0">—</span>';
     const intExp=b.eintexpM>0?`$${b.eintexpM<1?(b.eintexpM*1000).toFixed(0)+'K':b.eintexpM.toFixed(2)+'M'}`:'—';
@@ -1915,8 +2168,34 @@ function attachListeners() {
   // Hamburger toggle filters on mobile
   qs('#hamburger').addEventListener('click',()=>qs('#fpanel').classList.toggle('collapsed'));
 
-  // Refresh button
-  qs('#btn-refresh').addEventListener('click',refreshData);
+  // Update Data button — force a fresh probe (bypass 24h cache) on explicit click
+  qs('#btn-refresh').addEventListener('click',()=>updateData({forceProbe:true}));
+
+  // Re-scrape rates modal
+  const rsBtn=qs('#btn-rescrape'), rsModal=qs('#rs-modal'),
+        rsClose=qs('#rs-close'), rsCopy=qs('#rs-copy');
+  if(rsBtn){
+    rsBtn.addEventListener('click',()=>{
+      populateRescrapeModal();
+      rsModal.classList.add('show');
+    });
+    rsClose.addEventListener('click',()=>rsModal.classList.remove('show'));
+    rsModal.addEventListener('click',e=>{if(e.target===rsModal)rsModal.classList.remove('show');});
+    rsCopy.addEventListener('click',()=>{
+      const cmd=qs('#rs-cmd').textContent;
+      navigator.clipboard?.writeText(cmd).then(()=>{
+        rsCopy.classList.add('copied'); rsCopy.textContent='Copied!';
+        setTimeout(()=>{rsCopy.classList.remove('copied');rsCopy.textContent='Copy';},1600);
+      });
+    });
+  }
+  // Freshness ribbon — mobile expand toggle
+  const frExp=qs('#fr-expand');
+  if(frExp){ frExp.addEventListener('click',()=>{
+    const r=qs('#freshness-ribbon');
+    r.classList.toggle('expanded');
+    frExp.textContent = r.classList.contains('expanded') ? '▴ less' : '▾ more';
+  }); }
 
   // Ranger modal
   qs('#btn-ranger-open').addEventListener('click',()=>qs('#ranger-modal').classList.add('show'));
@@ -1980,30 +2259,177 @@ function computeRangerPosition() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  REFRESH
+//  UPDATE DATA  (Steps A–E per FRESHNESS_DESIGN.md)
 // ═══════════════════════════════════════════════════════════════════════════════
-async function refreshData() {
+function setUpdateBtnLabel(text){
+  const el=document.getElementById('btn-refresh-label');
+  if(el) el.textContent=text;
+}
+async function updateData(opts={}) {
   const btn=qs('#btn-refresh');
+  const labelEl=qs('#btn-refresh-label');
+  const origLabel = labelEl ? labelEl.textContent : 'Update Data';
+  const previousRepdte = S.currentRepdte;
+  btn.classList.remove('success','error');
   btn.classList.add('loading');
   try {
+    // Step A — discover the latest reporting period (force re-probe if user clicked Update Data)
+    setUpdateBtnLabel('Checking for newer filings…');
+    const discovered = await discoverLatestRepdte({force:!!opts.forceProbe});
+
+    // Step B — fetch institutions + financials (for the discovered period) + branches in parallel
+    setUpdateBtnLabel(discovered ? `Loading ${formatRepdte(discovered)}…` : 'Loading FDIC data…');
     const [raw, finResults, branchMap] = await Promise.all([
-      fetchAllInstitutions(), fetchFinancials(), fetchBranchCounts()
+      fetchAllInstitutions(),
+      fetchFinancials({currentRepdte: discovered || undefined}),
+      fetchBranchCounts(),
     ]);
+
+    // Step C — recompute
+    setUpdateBtnLabel('Recomputing…');
     S.banks=raw.map(d=>normalizeBank(d,finResults,branchMap));
     computeCofPercentiles(S.banks);
     S.banks.forEach(computeCompScore);
     S.allScraped=buildScrapedRows(S.banks);
+    S.currentRepdte = finResults.currentRepdte || discovered || null;
+    S.priorRepdte   = finResults.priorRepdte || null;
     // Re-fetch treasury in background
     fetchTreasuryRates().then(t=>{if(t)S.treasury=t;});
     S.lastRefresh=new Date();
+
+    // Step D — re-render all panels
     qs('#last-refresh').textContent=`Refreshed: ${S.lastRefresh.toLocaleTimeString()}`;
     applyFilters();
     updateNotice();
     updateHeader();
+    renderFreshnessRibbon();
+
+    // Step E — toast the discovered period
+    if(previousRepdte && S.currentRepdte && previousRepdte !== S.currentRepdte){
+      toast(`New FDIC filings detected`, {
+        kind:'success',
+        sub:`${formatRepdte(previousRepdte)} → ${formatRepdte(S.currentRepdte)}`,
+      });
+    } else if(S.currentRepdte){
+      toast(`FDIC data current as of ${formatRepdte(S.currentRepdte)}`, {
+        kind:'info', sub:'No newer filings yet.',
+      });
+    } else {
+      toast('FDIC data refreshed', {kind:'info'});
+    }
+    btn.classList.add('success');
+    setUpdateBtnLabel('✓ Updated');
+    setTimeout(()=>{ btn.classList.remove('success'); setUpdateBtnLabel(origLabel||'Update Data'); }, 1800);
   } catch(e) {
-    alert('Refresh failed: '+e.message);
+    console.error('Update failed',e);
+    btn.classList.add('error');
+    setUpdateBtnLabel('Update failed');
+    toast('Update failed — see console', {kind:'error', sub:String(e.message||e)});
+    setTimeout(()=>{ btn.classList.remove('error'); setUpdateBtnLabel(origLabel||'Update Data'); }, 3200);
   }
   btn.classList.remove('loading');
+}
+// Backwards-compat alias (in case anything still calls refreshData)
+const refreshData = updateData;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  FRESHNESS RIBBON  (3 pills: COF · Rates · Session)
+// ═══════════════════════════════════════════════════════════════════════════════
+const STALE_RATES_WARN_DAYS = 60;     // Banner warning threshold for advertised rates
+
+function setPill(id, cls, label, val, detail){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.className = 'fr-pill ' + cls + (id==='fr-pill-cof' ? ' fr-primary' : '');
+  const lbl=el.querySelector('.fr-label'); if(lbl) lbl.textContent=label;
+  const vEl=el.querySelector('.fr-val');
+  if(vEl) vEl.innerHTML = `${val}${detail?` <span class="fr-detail">${detail}</span>`:''}`;
+}
+
+function renderFreshnessRibbon(){
+  // COF pill
+  const repdte = S.currentRepdte;
+  const cofDate = repdteToDate(repdte);
+  const cofDays = daysAgo(cofDate);
+  const cofCls  = freshnessClass(cofDays);
+  const cofLabel = repdte ? formatRepdte(repdte) : '—';
+  const cofFiled = cofDate
+    ? `filed ${cofDate.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}${cofDays!=null?` · ${cofDays}d ago`:''}`
+    : 'no FDIC data';
+  setPill('fr-pill-cof', cofCls, 'FDIC COF:', cofLabel, cofFiled);
+
+  // Rates pill
+  const m = (typeof SCRAPED_RATES!=='undefined' && SCRAPED_RATES) ? SCRAPED_RATES.metadata : null;
+  const scrapedAt = m?.scraped_at ? new Date(m.scraped_at) : null;
+  const rateDays  = daysAgo(scrapedAt);
+  const rateCls   = freshnessClass(rateDays);
+  const rateLabel = scrapedAt
+    ? scrapedAt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+    : '—';
+  const rateDetail = m
+    ? `${m.banks_with_rates||0} banks, ${m.product_rows||0} products${rateDays!=null?` · ${rateDays}d ago`:''}`
+    : '';
+  setPill('fr-pill-rates', rateCls, 'Advertised rates:', rateLabel, rateDetail);
+
+  // Session pill
+  const sess = S.lastRefresh
+    ? S.lastRefresh.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})
+    : 'not yet refreshed';
+  setPill('fr-pill-session', S.lastRefresh?'fr-green':'fr-gray', 'Session:', sess, '');
+
+  // Stale rates warning above the Bank Comparison table
+  renderStaleRatesWarning(rateDays);
+}
+
+function renderStaleRatesWarning(rateDays){
+  const host = document.querySelector('[data-tab-pane="banks"], #banks-pane, #pane-banks');
+  // The dashboard doesn't have a dedicated #banks-pane id; insert above the bank table instead.
+  const bankTable = document.getElementById('bank-body')?.closest('table');
+  if(!bankTable) return;
+  let warn = document.getElementById('stale-rates-warn');
+  const shouldShow = rateDays!=null && rateDays>STALE_RATES_WARN_DAYS;
+  if(shouldShow){
+    if(!warn){
+      warn = document.createElement('div');
+      warn.id = 'stale-rates-warn';
+      warn.className = 'stale-rates-warn';
+      bankTable.parentNode.insertBefore(warn, bankTable);
+    }
+    warn.innerHTML = `<span>⚠</span>
+      <div><strong>Advertised rates are ${rateDays} days old.</strong>
+      Recommended cadence is 30 days. Click <em>Re-scrape rates…</em> for the refresh command.</div>
+      <div class="srw-act"><button id="srw-open">Re-scrape rates…</button></div>`;
+    warn.querySelector('#srw-open').addEventListener('click',()=>{
+      populateRescrapeModal();
+      document.getElementById('rs-modal').classList.add('show');
+    });
+  } else if(warn){
+    warn.remove();
+  }
+}
+
+// Populate the Re-scrape modal with current scrape age + commands
+function populateRescrapeModal(){
+  const m = (typeof SCRAPED_RATES!=='undefined' && SCRAPED_RATES) ? SCRAPED_RATES.metadata : null;
+  const scrapedAt = m?.scraped_at ? new Date(m.scraped_at) : null;
+  const days = daysAgo(scrapedAt);
+  const cls  = freshnessClass(days);
+  const colorBg = cls==='fr-green'?'#e6fffa':cls==='fr-yellow'?'#fffbea':cls==='fr-red'?'#fed7d7':'#edf2f7';
+  const colorFg = cls==='fr-green'?'#22543d':cls==='fr-yellow'?'#7b341e':cls==='fr-red'?'#742a2a':'#4a5568';
+  const ageLine = scrapedAt
+    ? `<div class="rs-age" style="background:${colorBg};color:${colorFg}">Last scraped: ${scrapedAt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})} · ${days} days ago · ${m?.banks_with_rates||0} banks, ${m?.product_rows||0} products</div>`
+    : `<div class="rs-age" style="background:#edf2f7;color:#4a5568">No rate-scrape metadata recorded</div>`;
+  const ageHost = document.getElementById('rs-age-line');
+  if(ageHost) ageHost.innerHTML = ageLine;
+  const cmd =
+`cd "Deposit Dashboard/rate-coverage-investigation"
+python scrape_depositaccounts.py --all
+python merge_into_dashboard.py
+git add ../../dashboards/deposit/deposit-intelligence.html
+git commit -m "Refresh deposit rates"
+git push`;
+  const pre = document.getElementById('rs-cmd');
+  if(pre) pre.textContent = cmd;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2096,7 +2522,7 @@ function renderBankDirectory() {
 
   qs('#bank-body').innerHTML = rows.map(b => {
     const cofCell = b.impliedRate!==null
-      ? `<span style="font-weight:700;font-size:14px;${cofC(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><br><span style="font-size:10px;color:var(--muted)">FDIC ${b.finRepdte||''}</span>`
+      ? `<span style="font-weight:700;font-size:14px;${cofC(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><br><span style="font-size:10px;color:var(--muted)" title="FDIC ${b.finRepdte||''}">${b.finRepdte?formatRepdte(b.finRepdte):''}</span>`
       : '<span style="color:#a0aec0">—</span>';
     const rateLink = b.websiteUrl
       ? `<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#ebf4ff;color:#2b6cb0;border:1px solid #bee3f8;text-decoration:none;white-space:nowrap">Visit ↗</a>`
@@ -2235,15 +2661,23 @@ function renderOverview() {
 // ═══════════════════════════════════════════════════════════════════════════════
 async function main() {
   try {
+    // Discover the latest reporting period first (cached 24h in localStorage).
+    // On first page load this fires a small probe; on subsequent loads it's instant.
+    const discovered = await discoverLatestRepdte();
+
     // Fetch institutions, financials, and branches in parallel
     const [raw, finResults, branchMap] = await Promise.all([
-      fetchAllInstitutions(), fetchFinancials(), fetchBranchCounts()
+      fetchAllInstitutions(),
+      fetchFinancials({currentRepdte: discovered || undefined}),
+      fetchBranchCounts(),
     ]);
     S.banks = raw.map(d => normalizeBank(d, finResults, branchMap));
     computeCofPercentiles(S.banks);
     S.banks.forEach(computeCompScore);
     S.allScraped = buildScrapedRows(S.banks);
     S.lastRefresh = new Date();
+    S.currentRepdte = finResults.currentRepdte || discovered || null;
+    S.priorRepdte   = finResults.priorRepdte || null;
 
     // Fetch treasury rates in background (non-blocking)
     fetchTreasuryRates().then(t => {
@@ -2256,6 +2690,7 @@ async function main() {
     renderOverview();
     updateNotice();
     updateHeader();
+    renderFreshnessRibbon();
 
     qs('#last-refresh').textContent = `Refreshed: ${S.lastRefresh.toLocaleTimeString()}`;
     qs('#loading').style.display = 'none';
