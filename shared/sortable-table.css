@@ -1,0 +1,49 @@
+/* ============================================================
+   Ranger Dashboards — Shared Sortable Table styles
+
+   These styles only apply to <th> elements decorated by
+   shared/sortable-table.js (which adds the .sortable-th class).
+
+   Dashboards that already declared their own .sort-asc / .sort-desc
+   ::after rules will keep working — this file only adds:
+     - cursor + hover cue on .sortable-th
+     - a faint resting indicator (·) so users discover the headers
+       are sortable before they hover
+     - asc/desc arrows where the host dashboard hasn't defined them
+   ============================================================ */
+
+th.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background-color .12s ease;
+}
+th.sortable-th:hover {
+  background-color: rgba(200, 169, 81, 0.08);
+}
+th.sortable-th:focus-visible {
+  outline: 2px solid #C8A951;
+  outline-offset: -2px;
+}
+
+/* Default visual cue (gray dot) when no direction is active.
+   Dashboards that already render their own arrows via .sort-asc /
+   .sort-desc rules will override the latter two below at higher
+   specificity. */
+th.sortable-th::after {
+  content: ' ⇅';
+  color: #cbd5e0;
+  font-size: 0.85em;
+  margin-left: 2px;
+  letter-spacing: -1px;
+}
+th.sortable-th.sort-asc::after,
+th.sortable-th.sort-desc::after {
+  color: #c8a951;
+}
+th.sortable-th.sort-asc::after  { content: ' ▲'; }
+th.sortable-th.sort-desc::after { content: ' ▼'; }
+
+@media print {
+  th.sortable-th::after { content: '' !important; }
+}
