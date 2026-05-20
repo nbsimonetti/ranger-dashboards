@@ -1,0 +1,34 @@
+/* ============================================================
+   Ranger Dashboards — Shared Resizable Column Headers
+   Add class .resizable-cols to a <table> to enable drag-resize on
+   every <th>. State persists per (dashboardId, columnKey) in
+   localStorage via resizable-cols.js.
+   ============================================================ */
+
+table.resizable-cols { table-layout: fixed; }
+table.resizable-cols th {
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+table.resizable-cols th::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  user-select: none;
+  z-index: 5;
+}
+table.resizable-cols th:hover::after {
+  background: linear-gradient(to right, transparent 0%, rgba(200,169,81,0.4) 100%);
+}
+table.resizable-cols th.rc-resizing::after {
+  background: linear-gradient(to right, transparent 0%, rgba(200,169,81,0.7) 100%);
+}
+table.resizable-cols.rc-dragging { cursor: col-resize; user-select: none; }
+table.resizable-cols.rc-dragging * { user-select: none; cursor: col-resize !important; }

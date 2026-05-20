@@ -9,8 +9,10 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <link rel="stylesheet" href="../shared/score-weights.css"/>
 <link rel="stylesheet" href="../shared/score-hover.css"/>
+<link rel="stylesheet" href="../shared/filter-chips.css"/>
 <script src="../shared/score-weights.js"></script>
 <script src="../shared/score-hover.js"></script>
+<script src="../shared/filter-chips.js"></script>
 <style>
 :root {
   --navy:    #1B365D;
@@ -339,6 +341,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
   </div>
 </header>
 <div id="sw-banner-mount"></div>
+<div id="depChipMount" style="max-width:1400px;margin:0 auto;padding:0 24px;color:var(--text)"></div>
 
 <div class="notice" id="notice-bar">
   <div class="inner" id="notice-inner">
@@ -2275,6 +2278,43 @@ main();
 //  SCORE HOVER
 // ═══════════════════════════════════════════════════════════════════════════════
 if (window.ScoreHover) ScoreHover.init();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  FILTER CHIPS
+// ═══════════════════════════════════════════════════════════════════════════════
+let depChips = null;
+if (window.FilterChips) {
+  depChips = FilterChips.create({
+    mount: document.getElementById('depChipMount'),
+    getChips: () => {
+      const chips = [];
+      const f = S.filters || {};
+      if (f.search) chips.push({key:'search', label:'Search', value:'"'+f.search+'"',
+        onRemove: () => { f.search=''; qs('#global-search').value=''; applyFilters(); }});
+      if (f.region) chips.push({key:'region', label:'Region', value: f.region,
+        onRemove: () => { f.region=''; qs('#f-region').value=''; applyFilters(); }});
+      if (f.city) chips.push({key:'city', label:'City', value: f.city,
+        onRemove: () => { f.city=''; qs('#f-city').value=''; applyFilters(); }});
+      if (f.type) chips.push({key:'type', label:'Product', value: f.type,
+        onRemove: () => { f.type=''; qs('#f-type').value=''; applyFilters(); }});
+      if (f.term) chips.push({key:'term', label:'Term', value: f.term+'mo',
+        onRemove: () => { f.term=''; qs('#f-term').value=''; applyFilters(); }});
+      if (f.minApy > 0) chips.push({key:'minApy', label:'Min APY', value: f.minApy.toFixed(2)+'%',
+        onRemove: () => { f.minApy=0; qs('#f-apy').value=0; qs('#f-apy-val').textContent='0.00%'; applyFilters(); }});
+      if (f.asset) chips.push({key:'asset', label:'Assets', value: f.asset,
+        onRemove: () => { f.asset=''; qs('#f-asset').value=''; applyFilters(); }});
+      if (f.charter) chips.push({key:'charter', label:'Charter', value: f.charter,
+        onRemove: () => { f.charter=''; qs('#f-charter').value=''; applyFilters(); }});
+      if (f.data) chips.push({key:'data', label:'Data', value: f.data,
+        onRemove: () => { f.data=''; qs('#f-data').value=''; applyFilters(); }});
+      return chips;
+    },
+    onClearAll: () => { qs('#btn-reset').click(); }
+  });
+  // Hook into applyFilters to refresh chips
+  const origApply = applyFilters;
+  applyFilters = function() { origApply.apply(this, arguments); if (depChips) depChips.refresh(); };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SCORE WEIGHTS DRAWER

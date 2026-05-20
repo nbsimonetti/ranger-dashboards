@@ -9,8 +9,16 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="../shared/score-weights.css"/>
 <link rel="stylesheet" href="../shared/score-hover.css"/>
+<link rel="stylesheet" href="../shared/dual-range.css"/>
+<link rel="stylesheet" href="../shared/filter-chips.css"/>
+<link rel="stylesheet" href="../shared/column-picker.css"/>
+<link rel="stylesheet" href="../shared/resizable-cols.css"/>
 <script src="../shared/score-weights.js"></script>
 <script src="../shared/score-hover.js"></script>
+<script src="../shared/dual-range.js"></script>
+<script src="../shared/filter-chips.js"></script>
+<script src="../shared/column-picker.js"></script>
+<script src="../shared/resizable-cols.js"></script>
 <style>
   :root {
     --bg: #0b1220;
@@ -49,7 +57,7 @@
   .view { display: none; }
   .view.active { display: block; }
 
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
   .kpi {
     background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
     padding: 14px 16px;
@@ -83,7 +91,12 @@
   table.data thead th.sort-asc::after { content: " ▲"; }
   table.data thead th.sort-desc::after { content: " ▼"; }
   table.data tbody tr:hover { background: rgba(255,255,255,.03); }
-  .table-wrap { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .table-wrap { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 10px; max-width: 100%; }
+  .table-wrap table { min-width: 100%; }
+  /* Ensure tbody scrollbar appears even when table is wider than viewport */
+  @media (max-width: 1280px) {
+    .table-wrap { max-height: 75vh; }
+  }
 
   .composite-bar {
     display: inline-block; height: 8px; background: var(--accent);
@@ -299,13 +312,14 @@
   </div>
   <div class="controls">
     <label>Search<br><input type="text" id="search" placeholder="bank or county"></label>
-    <label>Min assets ($M)<br><input type="range" id="minAssets" min="0" max="200" value="0"> <span id="minAssetsVal">0</span></label>
-    <label>Max assets ($M)<br><input type="range" id="maxAssets" min="0" max="200" value="200"> <span id="maxAssetsVal">200</span></label>
+    <div style="min-width:240px"><div id="rankingsAssetSlider"></div></div>
     <label>Min geo fit (1-5)<br><input type="range" id="minGeo" min="1" max="5" value="1"> <span id="minGeoVal">1</span></label>
     <button class="btn" id="exportCsv">Export CSV</button>
   </div>
+  <div id="rankingsChipMount" style="padding:0 24px;color:var(--text)"></div>
   <div class="table-wrap">
-    <table class="data" id="rankTable">
+    <div style="display:flex;justify-content:flex-end;padding:8px 24px 4px"><span id="cp-trigger-mount"></span></div>
+    <table class="data resizable-cols" id="rankTable">
       <thead><tr id="rankHead"></tr></thead>
       <tbody id="rankBody"></tbody>
     </table>
@@ -438,10 +452,7 @@
       <label>Search<br><input type="text" id="mSearch" placeholder="bank or county"></label>
       <label>Min composite score: <span id="mScoreVal">0</span><br>
         <input type="range" id="mScore" min="0" max="100" value="0" style="width:100%;"></label>
-      <label>Min assets ($M): <span id="mAssetMinVal">0</span><br>
-        <input type="range" id="mAssetMin" min="0" max="200" value="0" style="width:100%;"></label>
-      <label>Max assets ($M): <span id="mAssetMaxVal">200</span><br>
-        <input type="range" id="mAssetMax" min="0" max="200" value="200" style="width:100%;"></label>
+      <div style="min-width:240px"><div id="mapAssetSlider"></div></div>
       <label>Min geo fit: <span id="mGeoVal">1</span><br>
         <input type="range" id="mGeo" min="1" max="5" value="1" style="width:100%;"></label>
       <label><input type="checkbox" id="mPublicOnly"> Public filers only</label>
@@ -717,26 +728,40 @@ const COLS = [
 let sortKey = 'rank';
 let sortAsc = true;
 
+function visibleCols() {
+  if (window.rankingsColPicker) {
+    return COLS.filter(c => rankingsColPicker.isVisible(c.key));
+  }
+  return COLS;
+}
 function buildHead() {
   const head = document.getElementById('rankHead');
   head.innerHTML = '';
-  COLS.forEach(c => {
+  visibleCols().forEach(c => {
     const th = document.createElement('th');
     th.textContent = c.label;
     th.dataset.key = c.key;
+    th.dataset.rcKey = c.key; // for ResizableCols
     if (c.key === sortKey) th.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
-    th.onclick = () => {
+    th.onclick = (e) => {
+      // Don't trigger sort if user is hitting the resize handle on the right edge
+      const r = th.getBoundingClientRect();
+      if (e.clientX > r.right - 10) return;
       if (sortKey === c.key) sortAsc = !sortAsc;
       else { sortKey = c.key; sortAsc = (c.key === 'rank' || c.key === 'NAME' || c.key === 'CITY' || c.key === 'COUNTY'); }
       buildHead(); renderRankings();
     };
     head.appendChild(th);
   });
+  // Re-apply stored widths after rebuild
+  if (window.ResizableCols) ResizableCols.applyAll();
 }
 
+// Dual-range slider values (in $M); default 0..200
+let RANKINGS_ASSET_LO = 0, RANKINGS_ASSET_HI = 200;
 function getFiltered() {
-  const minA = +document.getElementById('minAssets').value * 1000;
-  const maxA = +document.getElementById('maxAssets').value * 1000;
+  const minA = RANKINGS_ASSET_LO * 1000;
+  const maxA = RANKINGS_ASSET_HI * 1000;
   const minG = +document.getElementById('minGeo').value;
   const q = document.getElementById('search').value.trim().toLowerCase();
   return DATA.rows.filter(r => {
@@ -772,9 +797,10 @@ function renderRankings() {
   body.innerHTML = '';
   // Columns whose formatter returns HTML and needs innerHTML (passes row context)
   const HTML_COLS = new Set(['NAME', 'rank', 'shareholder_status']);
+  const visibleColumns = visibleCols();
   for (const r of filtered) {
     const tr = document.createElement('tr');
-    for (const c of COLS) {
+    for (const c of visibleColumns) {
       const td = document.createElement('td');
       if (c.key === 'composite_score') {
         const v = r[c.key];
@@ -791,14 +817,33 @@ function renderRankings() {
   }
 }
 
-['minAssets', 'maxAssets', 'minGeo'].forEach(id => {
-  const el = document.getElementById(id);
-  el.oninput = () => {
-    document.getElementById(id + 'Val').textContent = el.value;
+// Asset dual-range slider for Summary Rankings
+if (window.DualRange) {
+  DualRange.create({
+    mount: document.getElementById('rankingsAssetSlider'),
+    min: 0, max: 200, step: 1,
+    lo: 0, hi: 200,
+    label: 'Asset Size ($M)',
+    onChange: (lo, hi) => {
+      RANKINGS_ASSET_LO = lo; RANKINGS_ASSET_HI = hi;
+      renderRankings();
+      if (window.rankingsChips) rankingsChips.refresh();
+    },
+  });
+}
+// Min geo fit slider (single-handle remains)
+const geoEl = document.getElementById('minGeo');
+if (geoEl) {
+  geoEl.oninput = () => {
+    document.getElementById('minGeoVal').textContent = geoEl.value;
     renderRankings();
+    if (window.rankingsChips) rankingsChips.refresh();
   };
-});
-document.getElementById('search').oninput = renderRankings;
+}
+document.getElementById('search').oninput = () => {
+  renderRankings();
+  if (window.rankingsChips) rankingsChips.refresh();
+};
 
 document.getElementById('exportCsv').onclick = () => {
   const filtered = getFiltered();
@@ -1271,10 +1316,12 @@ function getMultiSelected(id) {
     .map(cb => cb.value);
 }
 
+// Map dual-range slider values (in $M); default 0..200
+let MAP_ASSET_LO = 0, MAP_ASSET_HI = 200;
 function getMapFiltered() {
   const minScore = +document.getElementById('mScore').value;
-  const minA = +document.getElementById('mAssetMin').value * 1000;
-  const maxA = +document.getElementById('mAssetMax').value * 1000;
+  const minA = MAP_ASSET_LO * 1000;
+  const maxA = MAP_ASSET_HI * 1000;
   const minG = +document.getElementById('mGeo').value;
   const q = document.getElementById('mSearch').value.trim().toLowerCase();
   const publicOnly = document.getElementById('mPublicOnly').checked;
@@ -1455,11 +1502,21 @@ function initMap() {
   const holdcos = Array.from(new Set(DATA.rows.map(r => r.holdco_name || 'Standalone'))).sort();
   buildMultiSelect('mHoldco', holdcos);
 
-  // Wire filter inputs
-  ['mScore','mAssetMin','mAssetMax','mGeo'].forEach(id => {
+  // Map asset dual-range slider
+  if (window.DualRange) {
+    DualRange.create({
+      mount: document.getElementById('mapAssetSlider'),
+      min: 0, max: 200, step: 1, lo: 0, hi: 200,
+      label: 'Asset Size ($M)',
+      onChange: (lo, hi) => { MAP_ASSET_LO = lo; MAP_ASSET_HI = hi; renderMapMarkers(); },
+    });
+  }
+  // Wire filter inputs (mScore, mGeo only)
+  ['mScore','mGeo'].forEach(id => {
     const el = document.getElementById(id);
+    if (!el) return;
     el.oninput = () => {
-      const labelMap = {mScore:'mScoreVal', mAssetMin:'mAssetMinVal', mAssetMax:'mAssetMaxVal', mGeo:'mGeoVal'};
+      const labelMap = {mScore:'mScoreVal', mGeo:'mGeoVal'};
       document.getElementById(labelMap[id]).textContent = el.value;
       renderMapMarkers();
     };
@@ -2058,9 +2115,106 @@ if (window.ScoreWeights) {
 // ----- Score hover ----------------------------------------------------------
 if (window.ScoreHover) ScoreHover.init();
 
+// ----- Active filter chips (Summary Rankings) ------------------------------
+let rankingsChips = null;
+if (window.FilterChips) {
+  rankingsChips = FilterChips.create({
+    mount: document.getElementById('rankingsChipMount'),
+    getChips: () => {
+      const chips = [];
+      const q = document.getElementById('search').value.trim();
+      if (q) chips.push({ key:'search', label:'Search', value:'"'+q+'"',
+        onRemove: () => { document.getElementById('search').value=''; renderRankings(); }
+      });
+      if (RANKINGS_ASSET_LO !== 0 || RANKINGS_ASSET_HI !== 200) {
+        chips.push({ key:'assets', label:'Assets', value: `$${RANKINGS_ASSET_LO}M – $${RANKINGS_ASSET_HI}M`,
+          onRemove: () => {
+            RANKINGS_ASSET_LO = 0; RANKINGS_ASSET_HI = 200;
+            // Reset slider visually by re-rendering the slider
+            const m = document.getElementById('rankingsAssetSlider');
+            if (m && window.DualRange) {
+              m.innerHTML = '';
+              DualRange.create({mount: m, min:0, max:200, step:1, lo:0, hi:200, label:'Asset Size ($M)',
+                onChange:(lo,hi)=>{RANKINGS_ASSET_LO=lo;RANKINGS_ASSET_HI=hi;renderRankings();rankingsChips.refresh();}});
+            }
+            renderRankings();
+          }
+        });
+      }
+      const minGeo = +document.getElementById('minGeo').value;
+      if (minGeo > 1) chips.push({ key:'minGeo', label:'Min Geo Fit', value: minGeo,
+        onRemove: () => {
+          const el = document.getElementById('minGeo'); el.value=1;
+          document.getElementById('minGeoVal').textContent='1'; renderRankings();
+        }
+      });
+      return chips;
+    },
+    onClearAll: () => {
+      document.getElementById('search').value = '';
+      const el = document.getElementById('minGeo'); el.value = 1;
+      document.getElementById('minGeoVal').textContent = '1';
+      RANKINGS_ASSET_LO = 0; RANKINGS_ASSET_HI = 200;
+      const m = document.getElementById('rankingsAssetSlider');
+      if (m && window.DualRange) {
+        m.innerHTML = '';
+        DualRange.create({mount: m, min:0, max:200, step:1, lo:0, hi:200, label:'Asset Size ($M)',
+          onChange:(lo,hi)=>{RANKINGS_ASSET_LO=lo;RANKINGS_ASSET_HI=hi;renderRankings();rankingsChips.refresh();}});
+      }
+      renderRankings();
+    }
+  });
+  window.rankingsChips = rankingsChips;
+}
+
+// ----- Column picker (Summary Rankings) ------------------------------------
+let rankingsColPicker = null;
+if (window.ColumnPicker) {
+  rankingsColPicker = ColumnPicker.create({
+    dashboardId: 'ma-rankings',
+    title: 'Summary Rankings — Columns',
+    theme: 'light',
+    triggerMount: '#cp-trigger-mount',
+    columns: [
+      { key: 'rank',              label: 'Rank',          defaultShown: true, locked: true,  essential: true },
+      { key: 'NAME',              label: 'Bank',          defaultShown: true, locked: true,  essential: true },
+      { key: 'holdco_name',       label: 'Holding Co',    defaultShown: true,                essential: true },
+      { key: 'CITY',              label: 'City',          defaultShown: true,                essential: true },
+      { key: 'COUNTY',            label: 'County',        defaultShown: false },
+      { key: 'ASSET',             label: 'Assets',        defaultShown: true,                essential: true },
+      { key: 'TBVE',              label: 'TBVE',          defaultShown: true,                essential: true },
+      { key: 'leverage_ratio',    label: 'T1 Leverage %', defaultShown: true },
+      { key: 'loan_to_deposit',   label: 'L/D %',         defaultShown: true },
+      { key: 'asset_cagr_5y',     label: '5Y Asset CAGR', defaultShown: false },
+      { key: 'loan_cagr_5y',      label: '5Y Loan CAGR',  defaultShown: false },
+      { key: 'equity_cagr_5y',    label: '5Y Equity CAGR',defaultShown: false },
+      { key: 'roa',               label: 'ROA %',         defaultShown: true },
+      { key: 'roe',               label: 'ROE %',         defaultShown: true },
+      { key: 'cost_of_funds',     label: 'Cost of Funds', defaultShown: true },
+      { key: 'geo_fit_score',     label: 'Geo Fit',       defaultShown: true },
+      { key: 'shareholder_status',label: 'Ownership',     defaultShown: true,                essential: true },
+      { key: 'quant_score',       label: 'Quant Score',   defaultShown: false },
+      { key: 'deal_econ_score',   label: 'Deal Econ',     defaultShown: false },
+      { key: 'qual_score',        label: 'Qual Score',    defaultShown: false },
+      { key: 'composite_score',   label: 'Composite',     defaultShown: true, locked: true,  essential: true },
+    ],
+    onChange: () => { buildHead(); renderRankings(); }
+  });
+  window.rankingsColPicker = rankingsColPicker;
+}
+
 // ----- Initial render --------------------------------------------------------
 buildHead();
 renderRankings();
+
+// ----- Resizable columns (after first build) -------------------------------
+if (window.ResizableCols) {
+  ResizableCols.attach({
+    table: document.getElementById('rankTable'),
+    dashboardId: 'ma',
+    tableId: 'rankings',
+  });
+}
 </script>
 </body>
 </html>
