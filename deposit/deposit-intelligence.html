@@ -10,9 +10,11 @@
 <link rel="stylesheet" href="../shared/score-weights.css"/>
 <link rel="stylesheet" href="../shared/score-hover.css"/>
 <link rel="stylesheet" href="../shared/filter-chips.css"/>
+<link rel="stylesheet" href="../shared/ranger-select.css"/>
 <script src="../shared/score-weights.js"></script>
 <script src="../shared/score-hover.js"></script>
 <script src="../shared/filter-chips.js"></script>
+<script src="../shared/ranger-select.js"></script>
 <style>
 :root {
   --navy:    #1B365D;
@@ -1885,10 +1887,23 @@ function renderCharts() {
     const bands=['< 0.5%','0.5–1%','1–1.5%','1.5–2%','2–2.5%','2.5–3%','≥ 3%'];
     const counts=[0,0,0,0,0,0,0];
     withRate.forEach(b=>{const r=b.impliedRate;if(r<.5)counts[0]++;else if(r<1)counts[1]++;else if(r<1.5)counts[2]++;else if(r<2)counts[3]++;else if(r<2.5)counts[4]++;else if(r<3)counts[5]++;else counts[6]++;});
+    // Peer median COF — highlights which band the middle of the pack falls into,
+    // so the analyst can see at a glance whether any given target is above or below median.
+    const sortedCof = withRate.map(b=>b.impliedRate).sort((a,b)=>a-b);
+    const medianCof = sortedCof.length ? sortedCof[Math.floor(sortedCof.length/2)] : null;
+    const medianBandIdx = medianCof==null ? -1
+      : medianCof<.5?0:medianCof<1?1:medianCof<1.5?2:medianCof<2?3:medianCof<2.5?4:medianCof<3?5:6;
+    const barColors = counts.map((_,i)=> i===medianBandIdx ? '#c8a951' : '#63b3ed');
+    const subText = (medianCof!=null
+      ? `${_fdicSub()} · gold bar = peer median (${medianCof.toFixed(2)}%)`
+      : _fdicSub());
     S.charts.cofDist=new Chart(qs('#ch-cof-dist'),{type:'bar',
-      data:{labels:bands,datasets:[{data:counts,backgroundColor:'#63b3ed',borderColor:'#2b6cb0',borderWidth:1,borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
-        scales:{y:{grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
+      data:{labels:bands,datasets:[{data:counts,backgroundColor:barColors,borderColor:'#2b6cb0',borderWidth:1,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(subText),tooltip:{callbacks:{
+        label:ctx=>`${ctx.raw} banks`,
+        afterLabel:ctx=>ctx.dataIndex===medianBandIdx?`(contains peer median ${medianCof.toFixed(2)}%)`:''
+      }}},
+        scales:{y:{title:{display:true,text:'Bank count',font:{size:10},color:'#718096'},grid:{color:'#f0f4f8'}},x:{title:{display:true,text:'Cost of Funds band',font:{size:10},color:'#718096'},grid:{display:false}}}}});
   }
 
   // 5. Region radar

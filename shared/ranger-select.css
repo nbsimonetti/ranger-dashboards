@@ -1,0 +1,104 @@
+/* ============================================================
+   Ranger Dashboards — Shared Native <select> styling
+
+   Apply `.ranger-select` to any native <select> (or to a parent
+   that has the modifier class `.ranger-selects` to inherit).
+   This file also styles the legacy dashboard-specific classes
+   (`.sf`, `.so`, `.pipe-status-filter`) for backward compatibility
+   without requiring every HTML element to be edited.
+
+   Target spec (from cross-dashboard-functionality-audit-prompt.md):
+     - Height: 28–30px
+     - Font:   12.5px / weight 500
+     - Padding: 4px 26px 4px 10px (right pad clears the chevron)
+     - Border: 1px solid var(--border, #cbd5e0); 4px radius
+     - Custom SVG chevron via background-image + appearance:none
+     - Open state: gold border
+     - Disabled: 50% opacity
+     - Long-option truncation in the closed state
+   ============================================================ */
+
+select.ranger-select,
+select.sf,
+select.so,
+select.pipe-status-filter {
+  /* Reset native chrome */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* Box */
+  height: 30px;
+  min-height: 30px;
+  padding: 4px 26px 4px 10px;
+  border: 1px solid var(--border, #cbd5e0);
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #1a202c;
+  cursor: pointer;
+  vertical-align: middle;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02);
+
+  /* Typography */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.2;
+
+  /* Truncate long options in the closed state */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+
+  /* Custom chevron — inline SVG keeps the asset self-contained. */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%234a5568' d='M0 0l5 6 5-6z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px;
+
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+select.ranger-select:hover,
+select.sf:hover,
+select.so:hover,
+select.pipe-status-filter:hover {
+  border-color: #a0aec0;
+}
+select.ranger-select:focus,
+select.sf:focus,
+select.so:focus,
+select.pipe-status-filter:focus {
+  outline: none;
+  border-color: #c8a951;
+  box-shadow: 0 0 0 2px rgba(200, 169, 81, 0.25);
+}
+select.ranger-select:disabled,
+select.sf:disabled,
+select.so:disabled,
+select.pipe-status-filter:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Some dashboards use a dark theme — flip the chevron + bg accordingly */
+.dark select.ranger-select,
+.dark select.sf,
+.dark select.so,
+.dark select.pipe-status-filter,
+[data-theme="dark"] select.ranger-select,
+[data-theme="dark"] select.sf,
+[data-theme="dark"] select.so,
+[data-theme="dark"] select.pipe-status-filter {
+  background-color: #1e293b;
+  color: #e8eef9;
+  border-color: #334155;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23a0aec0' d='M0 0l5 6 5-6z'/></svg>");
+}
+
+@media print {
+  select.ranger-select,
+  select.sf,
+  select.so,
+  select.pipe-status-filter { display: none !important; }
+}

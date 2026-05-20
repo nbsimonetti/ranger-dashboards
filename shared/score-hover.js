@@ -162,13 +162,18 @@
       const tip = ensureTipEl();
       tip.innerHTML = renderTooltipHTML(data);
       tip.classList.toggle('shv-light', data.theme === 'light');
-      // Show (needs layout to measure size before positioning)
-      tip.style.opacity = '0';
-      tip.style.display = 'block';
-      requestAnimationFrame(() => {
-        positionTip(target);
-        tip.classList.add('shv-show');
-      });
+      // Important: do NOT set inline style.opacity or style.display here.
+      // The CSS handles both via .shv-tip (hidden) ↔ .shv-show (visible).
+      // Setting inline opacity:0 here would win against the .shv-show class
+      // rule via specificity and the tooltip would never become visible —
+      // this was the long-standing bug that affected every dashboard.
+      // Clear any stale inline state in case a caller set it previously:
+      tip.style.opacity = '';
+      tip.style.display = '';
+      // Add .shv-show first so the element is laid out (display:block),
+      // then measure + position in the next frame.
+      tip.classList.add('shv-show');
+      requestAnimationFrame(() => positionTip(target));
     }, 130);
   }
 
