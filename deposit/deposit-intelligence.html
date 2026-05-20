@@ -865,18 +865,21 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
     <div class="tabcontent" id="tab-methodology" role="tabpanel">
       <div style="max-width:900px;margin:0 auto;padding:24px 20px">
         <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Scoring & Methodology</h2>
-        <p style="color:var(--muted);font-size:13px;margin-bottom:24px">This platform uses two complementary scoring systems — one at the bank level and one at the market level — to help Ranger Bank identify competitive threats and deposit-gathering opportunities.</p>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:16px">This platform uses two complementary scoring systems — one at the bank level and one at the market level — to help Ranger Bank identify competitive threats and deposit-gathering opportunities.</p>
+
+        <!-- As-of indicator block (populated by renderMethodology) -->
+        <div id="meth-asof" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:12.5px;color:var(--text)">Loading data freshness…</div>
 
         <!-- COMPETITIVENESS SCORE -->
         <div style="background:var(--gold-lt);border:2px solid var(--gold);border-radius:8px;padding:16px 20px;margin-bottom:24px">
           <h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px">Bank-Level: Deposit Competitiveness Score (0-100)</h3>
-          <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Visible in the <strong>Bank Directory</strong> tab. Identifies which banks are most aggressively competing for deposits.</p>
-          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;font-size:11px;text-align:center">
-            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">35</div>Cost of Funds<br><span style="color:var(--muted)">EINTEXP ÷ DEPI</span></div>
-            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">20</div>Growth Proxy<br><span style="color:var(--muted)">IntExp / Assets</span></div>
-            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">15</div>Asset Size Fit<br><span style="color:var(--muted)">$100M-$1B sweet spot</span></div>
-            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">10</div>Web Presence<br><span style="color:var(--muted)">Has FDIC website</span></div>
-            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px">20</div>Scraped Rates<br><span style="color:var(--muted)">Advertises rates</span></div>
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Visible in the <strong>Bank Directory</strong> tab. Identifies which banks are most aggressively competing for deposits. Weights shown below reflect your current settings <span id="meth-weights-note" style="color:var(--muted);font-style:italic"></span> — adjust via the score-weights drawer in the header.</p>
+          <div id="meth-weights" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;font-size:11px;text-align:center">
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="cof">35</div>Cost of Funds<br><span style="color:var(--muted)">EINTEXP ÷ DEPI</span></div>
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="growth">20</div>Growth Proxy<br><span style="color:var(--muted)">IntExp / Assets</span></div>
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="assetFit">15</div>Asset Size Fit<br><span style="color:var(--muted)">$100M-$1B sweet spot</span></div>
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="web">10</div>Web Presence<br><span style="color:var(--muted)">Has FDIC website</span></div>
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="scraped">20</div>Scraped Rates<br><span style="color:var(--muted)">Advertises rates</span></div>
           </div>
         </div>
 
@@ -935,22 +938,12 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
 
         <div style="background:var(--surface);border-radius:8px;padding:16px 20px;margin-bottom:12px;border:1px solid var(--border);box-shadow:var(--shadow)">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Data Sources</div>
-          <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
-            <strong>FDIC BankFind API</strong> — Cost of funds (EINTEXP &divide; DEPI, annual interest expense over interest-bearing deposits), total deposits, interest-bearing deposits, total assets, charter type, and branch locations for all Texas community banks under $3B in assets.<br>
-            <strong>Scraped Bank Websites</strong> — Advertised deposit product rates (CD, savings, money market, interest checking) collected from 19 bank websites. Refreshed periodically.<br>
-            <strong>Federal Reserve (FRED)</strong> — Federal Funds effective rate for benchmark comparison.
-          </div>
+          <div id="meth-sources" style="font-size:12.5px;color:var(--muted);line-height:1.7">Loading…</div>
         </div>
 
         <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Limitations</div>
-          <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
-            &bull; Scraped rates cover only 19 of 318 TX banks — market scores are based on available data, not the full competitive field<br>
-            &bull; FDIC cost-of-funds is a blended average from quarterly call reports, not current advertised rates<br>
-            &bull; Market boundaries are based on FDIC-recorded city, not MSA or trade area definitions<br>
-            &bull; The score does not account for branch proximity, brand strength, or customer switching costs<br>
-            &bull; Rates change frequently — scraped data reflects a point-in-time snapshot
-          </div>
+          <div id="meth-limitations" style="font-size:12.5px;color:var(--muted);line-height:1.7">Loading…</div>
         </div>
       </div>
     </div>
@@ -1829,6 +1822,22 @@ function renderCdMatrixByRegion() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function dc(k){if(S.charts[k]){S.charts[k].destroy();delete S.charts[k];}}
 
+// Chart subtitle text helpers — surface data freshness next to every chart
+function _scrapedSub(){
+  const m = (typeof SCRAPED_RATES!=='undefined' && SCRAPED_RATES) ? SCRAPED_RATES.metadata : null;
+  if(!m?.scraped_at) return '';
+  const d = new Date(m.scraped_at);
+  if(isNaN(d.getTime())) return '';
+  return `Scraped ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})} · ${m.banks_with_rates||0} banks`;
+}
+function _fdicSub(){
+  const r = S.currentRepdte;
+  return r ? `FDIC ${formatRepdte(r)}` : '';
+}
+function _subtitleCfg(text){
+  return text ? { display:true, text, font:{size:10,style:'italic'}, color:'#a0aec0', padding:{top:4,bottom:2} } : { display:false };
+}
+
 function renderCharts() {
   // 1. Top 30 scraped rates
   dc('top');
@@ -1838,7 +1847,7 @@ function renderCharts() {
       data:{labels:top30.map(r=>{const n=r.bankName.length>20?r.bankName.slice(0,18)+'…':r.bankName;return n+(r.termMonths?` (${r.termMonths}mo)`:'');}),
         datasets:[{label:'APY%',data:top30.map(r=>r.apy),backgroundColor:top30.map(r=>PRODUCT_COLORS[r.productType]||'#4a5568'),borderRadius:4}]},
       options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const r=top30[ctx.dataIndex];return[`APY: ${r.apy.toFixed(2)}%`,r.productName.slice(0,40),`${titleCase(r.city)}, TX`];}}}},
+        plugins:{legend:{display:false},subtitle:_subtitleCfg(_scrapedSub()),tooltip:{callbacks:{label:ctx=>{const r=top30[ctx.dataIndex];return[`APY: ${r.apy.toFixed(2)}%`,r.productName.slice(0,40),`${titleCase(r.city)}, TX`];}}}},
         scales:{x:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
   }
 
@@ -1852,7 +1861,7 @@ function renderCharts() {
         datasets:[{label:'COF%',data:top30c.map(b=>b.impliedRate),
           backgroundColor:top30c.map(b=>b.impliedRate>=3?'#276749':b.impliedRate>=2?'#38a169':b.impliedRate>=1?'#68d391':'#d69e2e'),borderRadius:4}]},
       options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const b=top30c[ctx.dataIndex];return[`COF: ${b.impliedRate.toFixed(2)}%`,`${b.city}, TX`,`Assets: ${fmtM(b.assetM)}`];}}}},
+        plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>{const b=top30c[ctx.dataIndex];return[`COF: ${b.impliedRate.toFixed(2)}%`,`${b.city}, TX`,`Assets: ${fmtM(b.assetM)}`];}}}},
         scales:{x:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
   }
 
@@ -1866,7 +1875,7 @@ function renderCharts() {
       data:{labels:ptypes.map((t,i)=>`${PRODUCT_LABELS[t]} (${ptCts[i]})`),
         datasets:[{data:ptAvgs,backgroundColor:ptypes.map(t=>PRODUCT_COLORS[t]),borderRadius:5}]},
       options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'% avg APY':'No data'}}},
+        plugins:{legend:{display:false},subtitle:_subtitleCfg(_scrapedSub()),tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'% avg APY':'No data'}}},
         scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
   }
 
@@ -1878,7 +1887,7 @@ function renderCharts() {
     withRate.forEach(b=>{const r=b.impliedRate;if(r<.5)counts[0]++;else if(r<1)counts[1]++;else if(r<1.5)counts[2]++;else if(r<2)counts[3]++;else if(r<2.5)counts[4]++;else if(r<3)counts[5]++;else counts[6]++;});
     S.charts.cofDist=new Chart(qs('#ch-cof-dist'),{type:'bar',
       data:{labels:bands,datasets:[{data:counts,backgroundColor:'#63b3ed',borderColor:'#2b6cb0',borderWidth:1,borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
         scales:{y:{grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
   }
 
@@ -1889,7 +1898,7 @@ function renderCharts() {
     const regAvgs=regKeys.map(r=>{const i=S.filtScraped.filter(b=>b.region===r);return i.length?parseFloat((i.reduce((s,b)=>s+b.apy,0)/i.length).toFixed(2)):null;});
     S.charts.region=new Chart(qs('#ch-region'),{type:'radar',
       data:{labels:regKeys.map(r=>REGION_LABELS[r].replace('/ ','/')),datasets:[{label:'Avg APY%',data:regAvgs,backgroundColor:'rgba(49,130,206,.15)',borderColor:'#3182ce',pointBackgroundColor:'#3182ce',pointRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_scrapedSub())},
         scales:{r:{beginAtZero:false,ticks:{callback:v=>v+'%',font:{size:9}},grid:{color:'#e2e8f0'},pointLabels:{font:{size:9}}}}}});
   }
 
@@ -1901,7 +1910,7 @@ function renderCharts() {
     const bAvgs=buckets.map(bk=>{const items=withRate.filter(b=>b.assetBucket===bk);return items.length?parseFloat((items.reduce((s,b)=>s+b.impliedRate,0)/items.length).toFixed(2)):null;});
     S.charts.cofAsset=new Chart(qs('#ch-cof-asset'),{type:'bar',
       data:{labels:bLabels,datasets:[{data:bAvgs,backgroundColor:['#bee3f8','#90cdf4','#63b3ed','#3182ce'],borderRadius:5}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'% avg COF':'No data'}}},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'% avg COF':'No data'}}},
         scales:{y:{beginAtZero:false,ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
   }
 
@@ -1911,7 +1920,7 @@ function renderCharts() {
     const mktSorted=[...S.filtMarkets].sort((a,b)=>b.bankCount-a.bankCount).slice(0,15);
     S.charts.mktCount=new Chart(qs('#ch-mkt-count'),{type:'bar',
       data:{labels:mktSorted.map(m=>titleCase(m.city)),datasets:[{data:mktSorted.map(m=>m.bankCount),backgroundColor:'#63b3ed',borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_scrapedSub())},
         scales:{y:{ticks:{stepSize:1},grid:{color:'#f0f4f8'}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
   }
 
@@ -1923,7 +1932,7 @@ function renderCharts() {
   if(cgCounts.some(c=>c>0)){
     S.charts.charter=new Chart(qs('#ch-charter'),{type:'doughnut',
       data:{labels:cgLabels,datasets:[{data:cgCounts,backgroundColor:['#4299e1','#48bb78','#ed8936'],borderColor:'#fff',borderWidth:2}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12}}}}});
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12}},subtitle:_subtitleCfg(_fdicSub())}}});
   }
 
   // 9. LTD distribution
@@ -1935,7 +1944,7 @@ function renderCharts() {
     ltdVals.forEach(v=>{if(v<50)ltdCounts[0]++;else if(v<65)ltdCounts[1]++;else if(v<80)ltdCounts[2]++;else if(v<90)ltdCounts[3]++;else if(v<100)ltdCounts[4]++;else ltdCounts[5]++;});
     S.charts.ltdDist=new Chart(qs('#ch-ltd-dist'),{type:'bar',
       data:{labels:ltdBands,datasets:[{data:ltdCounts,backgroundColor:['#c6f6d5','#9ae6b4','#68d391','#fefcbf','#fed7d7','#fc8181'],borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
         scales:{y:{grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
   }
 
@@ -1948,7 +1957,7 @@ function renderCharts() {
     roaVals.forEach(v=>{if(v<0)roaCounts[0]++;else if(v<.5)roaCounts[1]++;else if(v<1)roaCounts[2]++;else if(v<1.5)roaCounts[3]++;else if(v<2)roaCounts[4]++;else roaCounts[5]++;});
     S.charts.roaDist=new Chart(qs('#ch-roa-dist'),{type:'bar',
       data:{labels:roaBands,datasets:[{data:roaCounts,backgroundColor:['#fc8181','#fed7d7','#fefcbf','#9ae6b4','#68d391','#276749'],borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
         scales:{y:{grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
   }
 
@@ -2150,6 +2159,7 @@ function attachListeners() {
       if(btn.dataset.tab==='cdmatrix')renderCdMatrix();
       if(btn.dataset.tab==='overview')renderOverview();
       if(btn.dataset.tab==='banks')renderBankDirectory();
+      if(btn.dataset.tab==='methodology')renderMethodology();
       updateFilterCount();
     });
   });
@@ -2303,6 +2313,15 @@ async function updateData(opts={}) {
     updateNotice();
     updateHeader();
     renderFreshnessRibbon();
+    // Re-render whatever tab the user is currently on (charts canvases + map markers
+    // are not touched by applyFilters; they only redraw when the tab is activated
+    // or explicitly re-rendered).
+    const activeTab = qs('.tab-btn.active')?.dataset.tab;
+    if(activeTab==='charts'){ renderCharts(); renderMap(); }
+    if(activeTab==='cdmatrix') renderCdMatrix();
+    if(activeTab==='overview') renderOverview();
+    if(activeTab==='banks')    renderBankDirectory();
+    if(activeTab==='methodology') renderMethodology();
 
     // Step E — toast the discovered period
     if(previousRepdte && S.currentRepdte && previousRepdte !== S.currentRepdte){
@@ -2430,6 +2449,109 @@ git commit -m "Refresh deposit rates"
 git push`;
   const pre = document.getElementById('rs-cmd');
   if(pre) pre.textContent = cmd;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  METHODOLOGY TAB — populate from live data (no hardcoded counts/sources)
+// ═══════════════════════════════════════════════════════════════════════════════
+const SOURCE_LABELS = {
+  'bank-direct':           'Bank website (direct)',
+  'depositaccounts.com':   'DepositAccounts.com aggregator',
+  'mybanktracker.com':     'MyBankTracker aggregator',
+  'web-search':            'Web-search fallback',
+  'unknown':               'Other / legacy scrape',
+};
+
+function renderMethodology(){
+  const m = (typeof SCRAPED_RATES!=='undefined' && SCRAPED_RATES) ? SCRAPED_RATES.metadata : null;
+  const banksRated = m?.banks_with_rates || 0;
+  const productRows = m?.product_rows || 0;
+  const universe   = S.banks?.length || 0;
+  const coveragePct = universe>0 ? (banksRated/universe*100).toFixed(1) : '—';
+  const scrapedAt  = m?.scraped_at ? new Date(m.scraped_at) : null;
+  const scrapedAtTxt = scrapedAt && !isNaN(scrapedAt) ? scrapedAt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+  const scrapeDays = daysAgo(scrapedAt);
+  const repdte = S.currentRepdte;
+  const repdteTxt = repdte ? formatRepdte(repdte) : '—';
+  const repdteFiled = repdteToDate(repdte);
+  const repdteFiledTxt = repdteFiled ? repdteFiled.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+  const repdteDays = daysAgo(repdteFiled);
+
+  // ── As-of indicator block at the top of Methodology
+  const asof = document.getElementById('meth-asof');
+  if(asof){
+    const cofCls  = freshnessClass(repdteDays);
+    const rateCls = freshnessClass(scrapeDays);
+    const dot = cls => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cls==='fr-green'?'#48bb78':cls==='fr-yellow'?'#ed8936':cls==='fr-red'?'#f56565':'#cbd5e0'};margin-right:6px;vertical-align:middle"></span>`;
+    asof.innerHTML = `
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Data freshness</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>${dot(cofCls)}<strong>FDIC Cost of Funds:</strong> ${repdteTxt}${repdteFiled?` <span style="color:var(--muted)">· filed ${repdteFiledTxt}${repdteDays!=null?` · ${repdteDays}d ago`:''}</span>`:''}</div>
+        <div>${dot(rateCls)}<strong>Advertised rates:</strong> scraped ${scrapedAtTxt}${scrapeDays!=null?` <span style="color:var(--muted)">· ${scrapeDays}d ago</span>`:''}</div>
+      </div>
+      <div style="margin-top:8px;color:var(--muted);font-size:11.5px">Coverage: <strong>${banksRated}</strong> of <strong>${universe}</strong> TX community banks (${coveragePct}%) with advertised rates · <strong>${productRows}</strong> product rows tracked</div>`;
+  }
+
+  // ── Live competitiveness weights
+  const wHost = document.getElementById('meth-weights');
+  if(wHost && typeof COMP_WEIGHTS!=='undefined'){
+    wHost.querySelectorAll('[data-w]').forEach(el=>{
+      const key = el.getAttribute('data-w');
+      const v = COMP_WEIGHTS[key];
+      if(typeof v === 'number') el.textContent = v;
+    });
+  }
+  const wNote = document.getElementById('meth-weights-note');
+  if(wNote && typeof COMP_WEIGHTS!=='undefined' && typeof COMP_DEFAULTS!=='undefined'){
+    const customized = Object.keys(COMP_DEFAULTS).some(k=>COMP_WEIGHTS[k]!==COMP_DEFAULTS[k]);
+    wNote.textContent = customized ? '(customized)' : '(defaults)';
+  }
+
+  // ── Sources block — list every distinct source from the SCRAPED_RATES blob
+  const srcEl = document.getElementById('meth-sources');
+  if(srcEl){
+    // Tally banks + products per source
+    const tallies = {};
+    const rates = (typeof SCRAPED_RATES!=='undefined' && SCRAPED_RATES?.rates) || {};
+    for(const cert of Object.keys(rates)){
+      const r = rates[cert];
+      const primary = r.source || 'unknown';
+      tallies[primary] = tallies[primary] || {banks:0, products:0};
+      tallies[primary].banks++;
+      for(const p of (r.products||[])){
+        const ps = p.source || primary;
+        tallies[ps] = tallies[ps] || {banks:0, products:0};
+        tallies[ps].products++;
+      }
+    }
+    const orderedSrc = Object.keys(tallies).sort((a,b)=>(tallies[b].banks-tallies[a].banks)||(tallies[b].products-tallies[a].products));
+    const srcLines = orderedSrc.map(s=>{
+      const t = tallies[s];
+      const label = SOURCE_LABELS[s] || s;
+      return `&bull; <strong>${label}</strong> — ${t.banks} bank${t.banks===1?'':'s'} (primary), ${t.products} product row${t.products===1?'':'s'}`;
+    }).join('<br>');
+    srcEl.innerHTML = `
+      <strong>FDIC BankFind API</strong> — Cost of funds (EINTEXP &divide; DEPI), total deposits, interest-bearing deposits, total assets, charter type, branch locations. Current reporting period: <strong>${repdteTxt}</strong> (filed ${repdteFiledTxt}).<br>
+      <strong>Federal Reserve (FRED)</strong> — Federal Funds effective rate and U.S. Treasury yields for benchmark comparison.<br>
+      <strong>Advertised rate scrape (${scrapedAtTxt})</strong> — ${banksRated} banks, ${productRows} product rows. Every row carries a source URL and the raw HTML context it was extracted from (visible in the Rate Scanner provenance column).
+      ${srcLines?`<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)"><div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px">Advertised-rate source breakdown:</div>${srcLines}</div>`:''}`;
+  }
+
+  // ── Limitations block — dynamic coverage figure + dynamic data age
+  const limEl = document.getElementById('meth-limitations');
+  if(limEl){
+    const ageNote = scrapeDays!=null
+      ? (scrapeDays>STALE_RATES_WARN_DAYS
+          ? `<strong style="color:#742a2a">Advertised rates are ${scrapeDays} days old</strong> — re-scrape recommended (every 30 days)`
+          : `Advertised rates are ${scrapeDays} day${scrapeDays===1?'':'s'} old`)
+      : 'Advertised rate scrape age unknown';
+    limEl.innerHTML = `
+      &bull; Advertised rates cover <strong>${banksRated} of ${universe}</strong> TX community banks (${coveragePct}%) — market scores are based on available data, not the full competitive field<br>
+      &bull; FDIC cost-of-funds is a blended average from quarterly call reports (current period: <strong>${repdteTxt}</strong>), not current advertised rates<br>
+      &bull; ${ageNote}<br>
+      &bull; Market boundaries are based on FDIC-recorded city, not MSA or trade area definitions<br>
+      &bull; The score does not account for branch proximity, brand strength, or customer switching costs`;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2691,6 +2813,7 @@ async function main() {
     updateNotice();
     updateHeader();
     renderFreshnessRibbon();
+    renderMethodology();
 
     qs('#last-refresh').textContent = `Refreshed: ${S.lastRefresh.toLocaleTimeString()}`;
     qs('#loading').style.display = 'none';
@@ -2796,6 +2919,8 @@ if (window.ScoreWeights) {
       // Re-render: applyFilters() will rebuild markets (which uses new opp weights) and tables
       try { if (typeof applyFilters === 'function') applyFilters(); } catch (e) {}
       try { if (typeof renderOverview === 'function' && qs('.tab-btn.active')?.dataset.tab === 'overview') renderOverview(); } catch (e) {}
+      // Methodology shows live weights — keep it in sync when the user adjusts the drawer
+      try { if (typeof renderMethodology === 'function') renderMethodology(); } catch (e) {}
     },
   });
 }
