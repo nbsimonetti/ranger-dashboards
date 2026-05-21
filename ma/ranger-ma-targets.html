@@ -97,6 +97,18 @@
   table.data tbody tr:hover { background: rgba(255,255,255,.03); }
   .table-wrap { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 10px; max-width: 100%; }
   .table-wrap table { min-width: 100%; }
+
+  /* Summary Rankings: fixed table layout so per-column widths from <colgroup>
+     are honored exactly. Long text in NAME/Holdco/City/County columns is
+     ellipsis-truncated; the full value is preserved in the td title attribute. */
+  #rankTable { table-layout: fixed; width: max-content; min-width: 100%; }
+  #rankTable td, #rankTable th { overflow: hidden; text-overflow: ellipsis; }
+  /* Bank column allows badges to render inline; preserve their layout. */
+  #rankTable td:nth-child(2) { text-overflow: clip; }
+  /* Don't truncate the composite cell — it carries the score + bar widget. */
+  #rankTable td.composite-cell { text-overflow: clip; overflow: visible; }
+  /* Composite bar must fit inside its column; bar width is capped in JS too. */
+  #rankTable .composite-bar { max-width: 60px; vertical-align: middle; }
   /* Ensure tbody scrollbar appears even when table is wider than viewport */
   @media (max-width: 1280px) {
     .table-wrap { max-height: 75vh; }
@@ -700,33 +712,38 @@ function compositeHoverAttrs(r) {
     'data-shv-foot="Adjust Weights to retune the formula"';
 }
 
+// Default per-column widths (px) for the Summary Rankings table.
+// The table uses `table-layout: fixed` so these are honored exactly;
+// ResizableCols overrides on a per-user basis via th.style.width.
+// Tuned so 20 columns sum to ~1950px — wider than the viewport on
+// most monitors so .table-wrap's horizontal scroll engages predictably.
 const COLS = [
-  { key: 'rank',            label: 'Rank',          fmt: (v, r) => `${v} ${rankDeltaBadge(r)}` },
-  { key: 'NAME',            label: 'Bank',          fmt: (v, r) => {
+  { key: 'rank',            label: 'Rank',          width:  70, fmt: (v, r) => `${v} ${rankDeltaBadge(r)}` },
+  { key: 'NAME',            label: 'Bank',          width: 220, fmt: (v, r) => {
       const badges = [];
       if (r.is_public) badges.push('<span class="badge public" title="SEC filer">PUBLIC</span>');
       if (r.multi_bank_holdco) badges.push('<span class="badge mbhc" title="Multi-bank holding co">MBHC</span>');
       return v + (badges.length ? ' ' + badges.join(' ') : '');
     } },
-  { key: 'holdco_name',     label: 'Holding Co',    fmt: v => holdcoShort(v) || '—' },
-  { key: 'CITY',            label: 'City',          fmt: v => v || '—' },
-  { key: 'COUNTY',          label: 'County',        fmt: v => v || '—' },
-  { key: 'ASSET',           label: 'Assets',        fmt: fmtCurrency },
-  { key: 'TBVE',            label: 'TBVE',          fmt: v => v != null ? '$' + (v/1000).toFixed(1) + 'M' : '—' },
-  { key: 'leverage_ratio',  label: 'T1 Lev %',      fmt: v => fmtPct(v) },
-  { key: 'loan_to_deposit', label: 'L/D %',         fmt: v => fmtPct(v,1) },
-  { key: 'asset_cagr_5y',   label: '5Y Asset %',    fmt: v => fmtPct(v) },
-  { key: 'loan_cagr_5y',    label: '5Y Loan %',     fmt: v => fmtPct(v) },
-  { key: 'equity_cagr_5y',  label: '5Y Eq %',       fmt: v => fmtPct(v) },
-  { key: 'roa',             label: 'ROA %',         fmt: v => fmtPct(v) },
-  { key: 'roe',             label: 'ROE %',         fmt: v => fmtPct(v) },
-  { key: 'cost_of_funds',   label: 'CoF %',         fmt: v => fmtPct(v) },
-  { key: 'geo_fit_score',   label: 'Geo',           fmt: v => v },
-  { key: 'shareholder_status', label: 'Ownership',  fmt: (v, r) => shareholderBadge(r) },
-  { key: 'quant_score',     label: 'Quant',         fmt: v => fmtNum(v) },
-  { key: 'deal_econ_score', label: 'Deal Econ',     fmt: v => v != null ? fmtNum(v) : '—' },
-  { key: 'qual_score',      label: 'Qual',          fmt: v => fmtNum(v) },
-  { key: 'composite_score', label: 'Composite',     fmt: v => fmtNum(v) },
+  { key: 'holdco_name',     label: 'Holding Co',    width: 160, fmt: v => holdcoShort(v) || '—' },
+  { key: 'CITY',            label: 'City',          width: 110, fmt: v => v || '—' },
+  { key: 'COUNTY',          label: 'County',        width: 110, fmt: v => v || '—' },
+  { key: 'ASSET',           label: 'Assets',        width:  90, fmt: fmtCurrency },
+  { key: 'TBVE',            label: 'TBVE',          width:  85, fmt: v => v != null ? '$' + (v/1000).toFixed(1) + 'M' : '—' },
+  { key: 'leverage_ratio',  label: 'T1 Lev %',      width:  78, fmt: v => fmtPct(v) },
+  { key: 'loan_to_deposit', label: 'L/D %',         width:  72, fmt: v => fmtPct(v,1) },
+  { key: 'asset_cagr_5y',   label: '5Y Asset %',    width:  90, fmt: v => fmtPct(v) },
+  { key: 'loan_cagr_5y',    label: '5Y Loan %',     width:  88, fmt: v => fmtPct(v) },
+  { key: 'equity_cagr_5y',  label: '5Y Eq %',       width:  82, fmt: v => fmtPct(v) },
+  { key: 'roa',             label: 'ROA %',         width:  72, fmt: v => fmtPct(v) },
+  { key: 'roe',             label: 'ROE %',         width:  72, fmt: v => fmtPct(v) },
+  { key: 'cost_of_funds',   label: 'CoF %',         width:  72, fmt: v => fmtPct(v) },
+  { key: 'geo_fit_score',   label: 'Geo',           width:  56, fmt: v => v },
+  { key: 'shareholder_status', label: 'Ownership',  width: 110, fmt: (v, r) => shareholderBadge(r) },
+  { key: 'quant_score',     label: 'Quant',         width:  72, fmt: v => fmtNum(v) },
+  { key: 'deal_econ_score', label: 'Deal Econ',     width:  82, fmt: v => v != null ? fmtNum(v) : '—' },
+  { key: 'qual_score',      label: 'Qual',          width:  68, fmt: v => fmtNum(v) },
+  { key: 'composite_score', label: 'Composite',     width: 140, fmt: v => fmtNum(v) },
 ];
 
 let sortKey = 'rank';
@@ -741,11 +758,29 @@ function visibleCols() {
 function buildHead() {
   const head = document.getElementById('rankHead');
   head.innerHTML = '';
+  // Rebuild matching <colgroup> so table-layout:fixed honors per-column widths.
+  // We render this BEFORE the headers; if ResizableCols has stored a user width
+  // for any column it will overwrite the <th> width later, which (under
+  // table-layout:fixed) wins over the <col> width via CSS specificity.
+  const table = document.getElementById('rankTable');
+  let colgroup = table.querySelector('colgroup');
+  if (!colgroup) {
+    colgroup = document.createElement('colgroup');
+    table.insertBefore(colgroup, table.tHead);
+  }
+  colgroup.innerHTML = '';
+  visibleCols().forEach(c => {
+    const col = document.createElement('col');
+    if (c.width) col.style.width = c.width + 'px';
+    colgroup.appendChild(col);
+  });
   visibleCols().forEach(c => {
     const th = document.createElement('th');
     th.textContent = c.label;
     th.dataset.key = c.key;
     th.dataset.rcKey = c.key; // for ResizableCols
+    // Seed the column width so ResizableCols has a baseline to override.
+    if (c.width) th.style.width = c.width + 'px';
     if (c.key === sortKey) th.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
     th.onclick = (e) => {
       // Don't trigger sort if user is hitting the resize handle on the right edge
@@ -801,6 +836,9 @@ function renderRankings() {
   body.innerHTML = '';
   // Columns whose formatter returns HTML and needs innerHTML (passes row context)
   const HTML_COLS = new Set(['NAME', 'rank', 'shareholder_status']);
+  // Columns that may overflow the fixed width — set a title tooltip with the
+  // full text so the user can hover-read truncated values.
+  const TITLE_COLS = new Set(['NAME', 'holdco_name', 'CITY', 'COUNTY']);
   const visibleColumns = visibleCols();
   for (const r of filtered) {
     const tr = document.createElement('tr');
@@ -808,12 +846,21 @@ function renderRankings() {
       const td = document.createElement('td');
       if (c.key === 'composite_score') {
         const v = r[c.key];
+        // Composite bar width capped at 60px regardless of score so it fits
+        // inside a 140px column with the numeric value + tooltip trigger.
+        const barW = Math.max(0, Math.min(60, Math.round((v||0) * 0.6)));
+        td.classList.add('composite-cell');
         td.innerHTML = '<span class="shv-trigger" style="cursor:help"' + compositeHoverAttrs(r) + '>' + fmtNum(v) +
-          '<span class="composite-bar" style="width:' + (v||0) + 'px;"></span></span>';
+          '<span class="composite-bar" style="width:' + barW + 'px;"></span></span>';
       } else if (HTML_COLS.has(c.key)) {
         td.innerHTML = c.fmt(r[c.key], r);
       } else {
         td.textContent = c.fmt(r[c.key], r);
+      }
+      // Tooltip for truncated text values so the full string is still recoverable
+      if (TITLE_COLS.has(c.key)) {
+        const raw = r[c.key];
+        if (raw) td.title = raw;
       }
       tr.appendChild(td);
     }
