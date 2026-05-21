@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Ranger Bank — Loan Maturity Intelligence (TX)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="../shared/score-weights.css"/>
+<link rel="stylesheet" href="../shared/score-hover.css"/>
+<link rel="stylesheet" href="../shared/filter-chips.css"/>
+<link rel="stylesheet" href="../shared/bulk-toggle.css"/>
+<link rel="stylesheet" href="../shared/ranger-select.css"/>
+<link rel="stylesheet" href="../shared/sortable-table.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="../shared/score-weights.js"></script>
+<script src="../shared/score-hover.js"></script>
+<script src="../shared/filter-chips.js"></script>
+<script src="../shared/bulk-toggle.js"></script>
+<script src="../shared/ranger-select.js"></script>
+<script src="../shared/sortable-table.js"></script>
+<style>
+:root {
+  --navy:    #1B365D;
+  --navy2:   #254a7a;
+  --gold:    #C8A951;
+  --gold-lt: #f5ecd5;
+  --bg:      #f4f6f9;
+  --surface: #ffffff;
+  --border:  #e2e8f0;
+  --text:    #1a202c;
+  --muted:   #718096;
+  --blue:    #2b6cb0;
+  --green:   #276749;
+  --red:     #c53030;
+  --shadow:  0 1px 3px rgba(0,0,0,.05);
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+       background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+/* Header */
+header { background: linear-gradient(135deg, var(--navy), var(--navy2)); color: #fff;
+         padding: 12px 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+.hdr { max-width: 1500px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.hdr-left { display: flex; align-items: center; gap: 14px; }
+.hdr-logo { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+.hdr-logo span { color: var(--gold); }
+.hdr-sub { font-size: 11.5px; color: rgba(255,255,255,.7); margin-top: 1px; }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.hdr-meta { font-size: 11px; color: rgba(255,255,255,.7); text-align: right; }
+.search-wrap { position: relative; }
+.search-wrap input { padding: 6px 10px 6px 28px; border: 1px solid rgba(255,255,255,.2);
+  border-radius: 4px; background: rgba(255,255,255,.1); color: #fff; font-size: 12px; width: 240px; }
+.search-wrap input::placeholder { color: rgba(255,255,255,.55); }
+.search-wrap::before { content:'🔍'; position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:11px; }
+
+/* Refresh / Update button */
+.btn-refresh { display:inline-flex; align-items:center; gap:6px; padding:7px 14px;
+  border-radius:6px; border:1px solid var(--gold); background:transparent;
+  color:var(--gold); font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; }
+.btn-refresh:hover { background:var(--gold); color:var(--navy); }
+.btn-refresh.loading { opacity:.85; pointer-events:none; }
+.btn-refresh .spin { display:none; width:14px; height:14px; border:2px solid rgba(200,169,81,.3);
+  border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; }
+.btn-refresh.loading .spin { display:inline-block; }
+.btn-refresh.loading .icon { display:none; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.btn-repull { display:inline-flex; align-items:center; gap:6px; padding:7px 12px;
+  border-radius:6px; border:1px solid rgba(255,255,255,.35); background:transparent;
+  color:#fff; font-size:11.5px; font-weight:600; cursor:pointer; opacity:.85; }
+.btn-repull:hover { opacity:1; background:rgba(255,255,255,.08); }
+.hamburger { display:none; background:none; border:none; color:#fff; font-size:22px; cursor:pointer; }
+
+/* Freshness ribbon */
+.freshness-ribbon { background:var(--surface); border-bottom:1px solid var(--border); padding:8px 24px; font-size:12px; }
+.fr-inner { max-width:1500px; margin:0 auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.fr-pill { display:inline-flex; align-items:center; gap:8px; padding:5px 12px; border-radius:14px;
+  border:1px solid transparent; font-weight:600; line-height:1.2; background:#edf2f7; color:#2d3748; }
+.fr-pill .fr-dot { width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.7; }
+.fr-pill .fr-label { font-weight:700; }
+.fr-pill .fr-detail { font-weight:400; color:inherit; opacity:.78; font-size:11px; }
+.fr-pill.fr-green  { background:#e6fffa; color:#22543d; border-color:#9ae6b4; }
+.fr-pill.fr-yellow { background:#fffbea; color:#7b341e; border-color:#f6ad55; }
+.fr-pill.fr-red    { background:#fed7d7; color:#742a2a; border-color:#fc8181; }
+.fr-pill.fr-gray   { background:#edf2f7; color:#4a5568; border-color:#cbd5e0; }
+
+/* Tabs */
+.tabbar { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; }
+.tabbar-inner { max-width:1500px; margin:0 auto; display:flex; gap:0; overflow-x:auto; }
+.tab-btn { padding:11px 16px; font-size:12.5px; font-weight:600; border:none; background:transparent;
+  color:var(--muted); cursor:pointer; border-bottom:3px solid transparent; transition:all .12s; white-space:nowrap; }
+.tab-btn.active { color:var(--navy); border-bottom-color:var(--gold); }
+.tab-btn:hover:not(.active) { color:var(--text); }
+
+/* Body grid */
+.body-grid { display: grid; grid-template-columns: 280px 1fr; max-width:1500px; margin:0 auto; min-height:calc(100vh - 130px); }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 14px; overflow-y: auto;
+           position: sticky; top: 88px; max-height: calc(100vh - 90px); }
+.main { padding: 18px 24px; }
+
+/* Filter sections */
+.fs { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.ft { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted);
+      letter-spacing: .5px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+.cl { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 0; cursor: pointer; }
+.cl input { cursor: pointer; }
+.cl .cc { margin-left: auto; font-size: 10px; color: var(--muted); }
+.fi label { display:block; font-size: 11.5px; color: var(--muted); margin-bottom:4px; }
+.fi input[type=number], .fi input[type=text] { width: 100%; padding: 4px 8px; border: 1px solid var(--border);
+  border-radius: 4px; font-size: 12px; }
+.fi { margin-bottom: 8px; }
+.btn-reset { background: #fed7d7; color: #742a2a; border: 1px solid #fc8181; padding: 4px 10px;
+  border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.btn-reset:hover { background: #fc8181; color: #fff; }
+
+/* Stat cards */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 12px; margin-bottom: 16px; }
+.stat-card { background: var(--surface); border-radius: 8px; padding: 12px 14px; border-left: 4px solid var(--blue); box-shadow: var(--shadow); }
+.stat-card.gold   { border-left-color: var(--gold); }
+.stat-card.green  { border-left-color: var(--green); }
+.stat-card.red    { border-left-color: var(--red); }
+.stat-card.navy   { border-left-color: var(--navy); }
+.stat-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: .5px; }
+.stat-value { font-size: 22px; font-weight: 700; color: var(--navy); margin: 2px 0; }
+.stat-note { font-size: 10.5px; color: var(--muted); }
+
+/* Tabs content */
+.tabcontent { display: none; }
+.tabcontent.active { display: block; }
+
+/* Tables */
+.dt-wrap { background: var(--surface); border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 16px; }
+.dt-head { padding: 10px 14px; background: var(--gold-lt); border-bottom: 1px solid var(--border);
+  font-weight: 700; font-size: 12.5px; color: var(--navy); display: flex; justify-content: space-between; align-items: center; }
+.dt-head .dt-sub { font-size: 11px; color: var(--muted); font-weight: 400; }
+table.dt { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.dt th, table.dt td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+table.dt thead th { background: #f7fafc; color: var(--muted); font-weight: 700; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .3px; position: sticky; top: 0; z-index: 5; }
+table.dt tbody tr:hover { background: #f7fafc; }
+table.dt td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.scroll-wrap { max-height: 65vh; overflow: auto; }
+.empty-state { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 13px; }
+
+/* Score badge */
+.score-badge { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 12px;
+  font-weight: 700; color: #fff; min-width: 36px; text-align: center; cursor: help; }
+.score-hot  { background: var(--red); }
+.score-warm { background: #dd6b20; }
+.score-med  { background: #d69e2e; color: var(--navy); }
+.score-cool { background: #a0aec0; }
+.score-cold { background: #cbd5e0; color: var(--navy); }
+
+/* Maturity badge */
+.mat-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px;
+  font-weight: 700; }
+.mat-imminent { background: #fed7d7; color: #742a2a; }  /* ≤6 months */
+.mat-near     { background: #feebc8; color: #7b341e; }  /* 7-12 months */
+.mat-mid      { background: #fefcbf; color: #5f370e; }  /* 13-24 months */
+.mat-far      { background: #c6f6d5; color: #22543d; }  /* >24 months */
+
+/* Source badge */
+.src-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 9.5px;
+  font-weight: 700; letter-spacing: .3px; background: #ebf4ff; color: #2c5282; }
+.src-sba-7a   { background: #c6f6d5; color: #22543d; }
+.src-sba-504  { background: #bee3f8; color: #2c5282; }
+.src-cmbs     { background: #fbb6ce; color: #702459; }
+.src-hmda     { background: #fed7e2; color: #702459; }
+.src-deed     { background: #d6bcfa; color: #44337a; }
+.src-ucc      { background: #faf089; color: #5f370e; }
+
+/* Chart card */
+.chart-card { background: var(--surface); border-radius: 8px; padding: 14px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.chart-title { font-weight: 700; font-size: 13px; color: var(--navy); margin-bottom: 8px;
+  display: flex; justify-content: space-between; align-items: baseline; }
+.chart-title span { font-weight: 400; font-size: 11px; color: var(--muted); }
+
+/* Repull / Methodology modals */
+.rs-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:10000;
+  align-items:center; justify-content:center; padding:20px; }
+.rs-modal.show { display:flex; }
+.rs-modal .rs-card { background:#fff; max-width:680px; width:100%; border-radius:10px; overflow:hidden;
+  box-shadow:0 18px 48px rgba(0,0,0,.25); }
+.rs-modal .rs-head { background:var(--navy); color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+.rs-modal .rs-head h3 { font-size:15px; }
+.rs-modal .rs-close { background:none; border:none; color:#fff; font-size:18px; cursor:pointer; }
+.rs-modal .rs-body { padding:18px; font-size:13px; line-height:1.5; }
+.rs-modal pre { background:#1a202c; color:#e2e8f0; padding:12px 14px; border-radius:6px;
+  font-size:11.5px; font-family:Consolas,Monaco,monospace; overflow-x:auto; line-height:1.45; }
+.rs-modal .rs-copy { float:right; background:var(--gold); color:var(--navy); border:none;
+  padding:4px 10px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; }
+.rs-modal .rs-note { background:#fffbea; border-left:3px solid #f6ad55; padding:8px 12px;
+  font-size:12px; color:#7b341e; border-radius:0 4px 4px 0; margin-top:10px; }
+
+/* Toast */
+.toast-stack { position:fixed; top:18px; right:18px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast { background:#2d3748; color:#fff; padding:10px 14px; border-radius:6px; font-size:12.5px;
+  font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.18); border-left:4px solid #4299e1;
+  min-width:240px; max-width:380px; opacity:0; transform:translateY(-6px); transition:.2s; pointer-events:auto; }
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.toast-success { border-left-color: #48bb78; }
+.toast.toast-error   { border-left-color: #f56565; }
+
+/* Pagination */
+.pgbar { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px;
+  background: #f7fafc; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--muted); }
+.pgbar button { background: #fff; border: 1px solid var(--border); padding: 3px 9px; border-radius: 4px;
+  cursor: pointer; font-size: 11.5px; }
+.pgbar button:disabled { opacity: .4; cursor: default; }
+
+/* Map */
+#map { height: 480px; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
+.map-legend { background:#fff; padding:8px 10px; border-radius:6px; box-shadow:var(--shadow);
+  font-size:11px; line-height:1.6; }
+
+/* Methodology */
+.meth-card { background: var(--surface); border-radius: 8px; padding: 16px 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.meth-card h3 { font-size: 14px; color: var(--navy); margin-bottom: 8px; }
+.meth-card { font-size: 12.5px; line-height: 1.7; }
+.meth-card .meth-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; }
+
+/* Provenance cell tooltip helper */
+.prov-cell { cursor: help; text-decoration: underline dotted #cbd5e0; text-underline-offset: 2px; }
+
+/* Mobile */
+@media (max-width: 1024px) {
+  .body-grid { grid-template-columns: 1fr; }
+  .sidebar { position: relative; top: 0; max-height: none; display: none; border-right: none; border-bottom: 1px solid var(--border); }
+  .sidebar.mobile-open { display: block; }
+  .hamburger { display: inline-block; }
+}
+
+@media print {
+  header, .freshness-ribbon, .tabbar, .sidebar, .toast-stack, .rs-modal, .btn-refresh, .btn-repull { display: none !important; }
+  .body-grid { grid-template-columns: 1fr; }
+  .tabcontent { display: block !important; }
+  body { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <div class="hdr-left">
+      <button class="hamburger" id="hamburger" aria-label="Toggle filters">☰</button>
+      <div>
+        <div class="hdr-logo">Ranger <span>Bank</span> — Loan Maturity Intelligence (TX)</div>
+        <div class="hdr-sub">Commercial loans rolling off in the next 24 months · Public records · Aggregated by borrower &amp; lender</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="search-wrap">
+        <input type="text" id="global-search" placeholder="Borrower, lender, NAICS…">
+      </div>
+      <button class="btn-refresh" id="btn-refresh" title="Re-pull data + rebuild blob">
+        <span class="icon">↻</span><span class="spin"></span>
+        <span class="label" id="btn-refresh-label">Update Data</span>
+      </button>
+      <button class="btn-repull" id="btn-repull" title="Show offline pipeline commands">
+        <span>⟲</span><span>Re-pull data…</span>
+      </button>
+      <div class="hdr-meta" id="hdr-meta">Loading…</div>
+    </div>
+  </div>
+</header>
+
+<!-- Freshness ribbon -->
+<div class="freshness-ribbon" id="freshness-ribbon">
+  <div class="fr-inner" id="fr-inner">
+    <span class="fr-pill fr-gray" id="fr-pill-sba">
+      <span class="fr-dot"></span>
+      <span><span class="fr-label">SBA bulk data:</span> <span class="fr-val">…</span></span>
+    </span>
+    <span class="fr-pill fr-gray" id="fr-pill-counties">
+      <span class="fr-dot"></span>
+      <span><span class="fr-label">County deeds:</span> <span class="fr-val">…</span></span>
+    </span>
+    <span class="fr-pill fr-gray" id="fr-pill-session">
+      <span class="fr-dot"></span>
+      <span><span class="fr-label">Session:</span> <span class="fr-val">not yet refreshed</span></span>
+    </span>
+  </div>
+</div>
+
+<!-- Tab bar -->
+<div class="tabbar">
+  <div class="tabbar-inner" role="tablist">
+    <button class="tab-btn active" data-tab="overview" role="tab">Overview</button>
+    <button class="tab-btn" data-tab="pipeline" role="tab">Maturity Pipeline</button>
+    <button class="tab-btn" data-tab="borrower" role="tab">By Borrower</button>
+    <button class="tab-btn" data-tab="lender" role="tab">By Lender</button>
+    <button class="tab-btn" data-tab="map" role="tab">Map</button>
+    <button class="tab-btn" data-tab="methodology" role="tab">Methodology</button>
+  </div>
+</div>
+
+<!-- Toast stack -->
+<div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+<!-- Re-pull modal -->
+<div class="rs-modal" id="rs-modal" role="dialog" aria-modal="true">
+  <div class="rs-card">
+    <div class="rs-head">
+      <h3>Re-pull loan data from public sources</h3>
+      <button class="rs-close" id="rs-close">×</button>
+    </div>
+    <div class="rs-body">
+      <p>Loan data is collected by an offline Python pipeline. It does not run in the browser.</p>
+      <p>Run these commands locally to refresh, then commit and push to redeploy:</p>
+      <button class="rs-copy" id="rs-copy">Copy</button>
+      <pre id="rs-cmd">cd dashboards/loan-maturity/data-collection
+python pull_sba.py
+python merge_loans.py
+git add ../loans.json ../loan-maturity-tx.html
+git commit -m "Refresh loan maturity data"
+git push</pre>
+      <div class="rs-note">SBA bulk files refresh quarterly at data.sba.gov. Re-pull cadence: 3 months.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main body -->
+<div class="body-grid">
+
+  <!-- Sidebar filters -->
+  <aside class="sidebar" id="sidebar">
+
+    <div class="fs">
+      <div class="ft">⏱ Maturity Window <span class="bt-actions" data-bt-group=".matwin" data-bt-after="applyFilters"></span></div>
+      <label class="cl"><input type="checkbox" class="matwin" value="0-6" onchange="applyFilters()" checked><span>≤6 months</span><span class="cc" id="cc-mat-0-6"></span></label>
+      <label class="cl"><input type="checkbox" class="matwin" value="7-12" onchange="applyFilters()" checked><span>7-12 months</span><span class="cc" id="cc-mat-7-12"></span></label>
+      <label class="cl"><input type="checkbox" class="matwin" value="13-24" onchange="applyFilters()" checked><span>13-24 months</span><span class="cc" id="cc-mat-13-24"></span></label>
+      <label class="cl"><input type="checkbox" class="matwin" value="25-60" onchange="applyFilters()"><span>2-5 years</span><span class="cc" id="cc-mat-25-60"></span></label>
+      <label class="cl"><input type="checkbox" class="matwin" value="60+" onchange="applyFilters()"><span>5+ years</span><span class="cc" id="cc-mat-60+"></span></label>
+    </div>
+
+    <div class="fs">
+      <div class="ft">📋 Loan Source <span class="bt-actions" data-bt-group=".srcf" data-bt-after="applyFilters"></span></div>
+      <div id="src-filters"></div>
+    </div>
+
+    <div class="fs">
+      <div class="ft">🗺 County <span class="bt-actions" data-bt-group=".cof" data-bt-after="applyFilters"></span></div>
+      <div id="county-filters" style="max-height:200px; overflow-y:auto;"></div>
+    </div>
+
+    <div class="fs">
+      <div class="ft">💰 Loan Size <span class="bt-actions" data-bt-group=".amtf" data-bt-after="applyFilters"></span></div>
+      <label class="cl"><input type="checkbox" class="amtf" value="0-250" onchange="applyFilters()" checked><span>&lt; $250K</span><span class="cc" id="cc-amt-0-250"></span></label>
+      <label class="cl"><input type="checkbox" class="amtf" value="250-500" onchange="applyFilters()" checked><span>$250K-500K</span><span class="cc" id="cc-amt-250-500"></span></label>
+      <label class="cl"><input type="checkbox" class="amtf" value="500-1000" onchange="applyFilters()" checked><span>$500K-1M</span><span class="cc" id="cc-amt-500-1000"></span></label>
+      <label class="cl"><input type="checkbox" class="amtf" value="1000-2000" onchange="applyFilters()" checked><span>$1M-2M</span><span class="cc" id="cc-amt-1000-2000"></span></label>
+      <label class="cl"><input type="checkbox" class="amtf" value="2000-5000" onchange="applyFilters()" checked><span>$2M-5M</span><span class="cc" id="cc-amt-2000-5000"></span></label>
+      <label class="cl"><input type="checkbox" class="amtf" value="5000+" onchange="applyFilters()" checked><span>$5M+</span><span class="cc" id="cc-amt-5000+"></span></label>
+    </div>
+
+    <div class="fs">
+      <div class="ft">🏦 Lender Type <span class="bt-actions" data-bt-group=".lndf" data-bt-after="applyFilters"></span></div>
+      <label class="cl"><input type="checkbox" class="lndf" value="tx-local" onchange="applyFilters()" checked><span>TX-headquartered</span><span class="cc" id="cc-lnd-tx"></span></label>
+      <label class="cl"><input type="checkbox" class="lndf" value="oot-bank" onchange="applyFilters()" checked><span>Out-of-state bank</span><span class="cc" id="cc-lnd-oot"></span></label>
+      <label class="cl"><input type="checkbox" class="lndf" value="non-bank" onchange="applyFilters()" checked><span>Non-bank / fintech</span><span class="cc" id="cc-lnd-nonbank"></span></label>
+    </div>
+
+    <div class="fs">
+      <div class="ft">📅 Originated Within <span class="bt-actions" data-bt-group=".agef" data-bt-after="applyFilters"></span></div>
+      <label class="cl"><input type="checkbox" class="agef" value="0-2" onchange="applyFilters()" checked><span>≤2 years</span><span class="cc" id="cc-age-0-2"></span></label>
+      <label class="cl"><input type="checkbox" class="agef" value="2-5" onchange="applyFilters()" checked><span>2-5 years</span><span class="cc" id="cc-age-2-5"></span></label>
+      <label class="cl"><input type="checkbox" class="agef" value="5-10" onchange="applyFilters()" checked><span>5-10 years</span><span class="cc" id="cc-age-5-10"></span></label>
+      <label class="cl"><input type="checkbox" class="agef" value="10+" onchange="applyFilters()" checked><span>10+ years</span><span class="cc" id="cc-age-10+"></span></label>
+    </div>
+
+    <div class="fs">
+      <div class="ft">📞 Pipeline Status <span class="bt-actions" data-bt-group=".statf" data-bt-after="applyFilters"></span></div>
+      <label class="cl"><input type="checkbox" class="statf" value="new" onchange="applyFilters()" checked><span>Not contacted</span><span class="cc" id="cc-stat-new"></span></label>
+      <label class="cl"><input type="checkbox" class="statf" value="contacted" onchange="applyFilters()" checked><span>Contacted</span><span class="cc" id="cc-stat-contacted"></span></label>
+      <label class="cl"><input type="checkbox" class="statf" value="meeting" onchange="applyFilters()" checked><span>Meeting set</span><span class="cc" id="cc-stat-meeting"></span></label>
+      <label class="cl"><input type="checkbox" class="statf" value="proposal" onchange="applyFilters()" checked><span>Proposal sent</span><span class="cc" id="cc-stat-proposal"></span></label>
+      <label class="cl"><input type="checkbox" class="statf" value="won" onchange="applyFilters()"><span>Won</span><span class="cc" id="cc-stat-won"></span></label>
+      <label class="cl"><input type="checkbox" class="statf" value="lost" onchange="applyFilters()"><span>Lost</span><span class="cc" id="cc-stat-lost"></span></label>
+    </div>
+
+    <div class="fs">
+      <div class="ft">⚙ Min Opportunity Score</div>
+      <div class="fi"><input type="range" id="f-score-min" min="0" max="100" value="0">
+        <span style="font-size:11px;color:var(--muted)">≥ <span id="f-score-min-val">0</span> / 100</span></div>
+    </div>
+
+    <div class="fs">
+      <button class="btn-reset" id="btn-reset-filters">Reset all filters</button>
+      <span id="sw-trigger-mount" style="margin-left:6px"></span>
+    </div>
+
+  </aside>
+
+  <!-- Main panel -->
+  <div class="main">
+
+    <div id="rangerChipMount"></div>
+
+    <!-- OVERVIEW -->
+    <div class="tabcontent active" id="tab-overview">
+      <div class="stat-grid">
+        <div class="stat-card navy"><div class="stat-label">Loans surfaced</div><div class="stat-value" id="s-loans">—</div><div class="stat-note" id="s-loans-note">in 32-county TX footprint</div></div>
+        <div class="stat-card gold"><div class="stat-label">Total $ rolling off</div><div class="stat-value" id="s-dollar">—</div><div class="stat-note">filtered total</div></div>
+        <div class="stat-card red"><div class="stat-label">Maturing ≤12 mo</div><div class="stat-value" id="s-12mo">—</div><div class="stat-note" id="s-12mo-note">— in $</div></div>
+        <div class="stat-card green"><div class="stat-label">Unique borrowers</div><div class="stat-value" id="s-borr">—</div><div class="stat-note">in filtered set</div></div>
+        <div class="stat-card"><div class="stat-label">Unique lenders</div><div class="stat-value" id="s-lend">—</div><div class="stat-note" id="s-lend-note">— out-of-state</div></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Maturity wall — $ rolling off by quarter <span id="wall-sub">all sources</span></div>
+        <div style="position:relative; height:280px"><canvas id="ch-wall"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Top 10 lenders by $ exposure in footprint <span>filtered maturity window</span></div>
+        <div style="position:relative; height:280px"><canvas id="ch-top-lenders"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Loans by maturity bucket and source <span id="src-sub">stacked bars</span></div>
+        <div style="position:relative; height:260px"><canvas id="ch-source-mix"></canvas></div>
+      </div>
+    </div>
+
+    <!-- MATURITY PIPELINE -->
+    <div class="tabcontent" id="tab-pipeline">
+      <div class="dt-wrap">
+        <div class="dt-head">
+          <span>Maturity Pipeline — <span id="pipe-count">—</span> loans, <span id="pipe-dollar">—</span> total</span>
+          <span class="dt-sub">Sortable: click any header. Hover Opportunity score for breakdown.</span>
+        </div>
+        <div class="scroll-wrap">
+          <table class="dt" id="pipe-table">
+            <thead><tr>
+              <th>Opp</th>
+              <th>Borrower</th>
+              <th>Lender</th>
+              <th>County</th>
+              <th class="num">Loan $</th>
+              <th>Matures</th>
+              <th>Months left</th>
+              <th title="Rate at origination vs current SBA index (~10.5% in 2026)">Rate Δ</th>
+              <th title="Other loans on this borrower in current data">Sister loans</th>
+              <th title="Distance to nearest Ranger branch (DFW / Austin / Houston / San Antonio approx)">Branch dist</th>
+              <th>Status</th>
+              <th>Source</th>
+            </tr></thead>
+            <tbody id="pipe-body"></tbody>
+          </table>
+        </div>
+        <div class="pgbar">
+          <span id="pipe-pg-info">—</span>
+          <div>
+            <button id="pipe-pg-prev">◀ Prev</button>
+            <button id="pipe-pg-next">Next ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BY BORROWER -->
+    <div class="tabcontent" id="tab-borrower">
+      <div class="dt-wrap">
+        <div class="dt-head"><span>By Borrower — <span id="borr-count">—</span> unique borrowers</span>
+          <span class="dt-sub">Aggregates loans by debtor name. Click a header to sort.</span></div>
+        <div class="scroll-wrap">
+          <table class="dt" id="borr-table">
+            <thead><tr>
+              <th>Borrower</th>
+              <th>City</th>
+              <th class="num"># loans</th>
+              <th class="num">Total $</th>
+              <th>Next maturity</th>
+              <th>Months to next</th>
+              <th>Lenders</th>
+            </tr></thead>
+            <tbody id="borr-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BY LENDER -->
+    <div class="tabcontent" id="tab-lender">
+      <div class="dt-wrap">
+        <div class="dt-head"><span>By Lender — <span id="lend-count">—</span> lenders</span>
+          <span class="dt-sub">Out-of-state lenders + non-banks are the highest-displacement targets.</span></div>
+        <div class="scroll-wrap">
+          <table class="dt" id="lend-table">
+            <thead><tr>
+              <th>Lender</th>
+              <th>HQ</th>
+              <th class="num"># loans</th>
+              <th class="num">Total $</th>
+              <th>Next maturity</th>
+              <th class="num">Avg loan</th>
+              <th>Top counties</th>
+            </tr></thead>
+            <tbody id="lend-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div class="tabcontent" id="tab-map">
+      <div class="chart-card">
+        <div class="chart-title">Geographic distribution of upcoming maturities <span>marker size ∝ loan $; color = months to maturity</span></div>
+        <div id="map"></div>
+        <div class="map-legend" style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c53030;margin-right:6px"></span>≤12 mo</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dd6b20;margin-right:6px"></span>13-24 mo</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#38a169;margin-right:6px"></span>&gt;24 mo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- METHODOLOGY -->
+    <div class="tabcontent" id="tab-methodology">
+      <div class="meth-card" id="meth-asof">
+        <div class="meth-label">Data freshness</div>
+        Loading…
+      </div>
+      <div class="meth-card">
+        <h3>What this dashboard shows</h3>
+        <p>For every commercial loan in our 32-county Texas footprint that we can confirm from a free public record, the dashboard surfaces the borrower, lender, loan amount, approval date, and computed maturity date. The lens is prospecting: <strong>which loans are rolling off in the next 6-24 months, and who is the incumbent lender?</strong></p>
+        <p>The Maturity Opportunity Score (0-100) blends time-to-maturity proximity, loan size, lender exit risk, geographic fit, borrower concentration, and source confidence. Each component is adjustable via the score-weights drawer.</p>
+      </div>
+      <div class="meth-card">
+        <div class="meth-label">Data sources currently live</div>
+        <div id="meth-sources">Loading…</div>
+      </div>
+      <div class="meth-card">
+        <div class="meth-label">Sources investigated but blocked (and why)</div>
+        <div id="meth-blocked">
+          <div style="margin-bottom:6px">&bull; <strong>State UCC bulk filings</strong> — TX SOSDirect requires paid subscription for bulk; per-debtor browser search is free but rate-limited. CA/FL/NY similar. Documented as enrichment-only.</div>
+          <div style="margin-bottom:6px">&bull; <strong>Dallas / Harris / Tarrant / Bexar / Travis County Clerks</strong> — All use vendor portals (publicsearch.us or equivalent). Free single-document download, but no CSV/JSON export. Bulk acquisition requires paid Data Sales contracts ($/county/quarter).</div>
+          <div style="margin-bottom:6px">&bull; <strong>Texas Open Data Portal (data.texas.gov)</strong> — No statewide commercial-loan or deed dataset published as of pull date.</div>
+          <div>&bull; <strong>SEC EDGAR CMBS remittance reports (10-D)</strong> — Loan-level data exists in HTML/PDF exhibits but format varies per trustee. Implemented as a per-deal extraction in iteration 2.</div>
+        </div>
+      </div>
+      <div class="meth-card">
+        <div class="meth-label">Maturity Opportunity Score components (current weights)</div>
+        <div id="meth-weights">Loading…</div>
+      </div>
+      <div class="meth-card">
+        <div class="meth-label">Per-county data coverage</div>
+        <div id="meth-coverage">Loading…</div>
+      </div>
+      <div class="meth-card">
+        <div class="meth-label">Limitations</div>
+        <div id="meth-limitations">Loading…</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script id="LOAN-DATA-EMBED" type="application/json">
+{"meta":{"loaded":false},"loans":[]}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+const qs  = sel => document.querySelector(sel);
+const qsa = sel => document.querySelectorAll(sel);
+
+const S = {
+  loans: [],
+  meta: {},
+  filtered: [],
+  filters: {
+    maturityWindows: new Set(['0-6','7-12','13-24']),  // default to <=24mo
+    sources:        new Set(),  // populated dynamically
+    counties:       new Set(),  // populated dynamically
+    sizes:          new Set(['0-250','250-500','500-1000','1000-2000','2000-5000','5000+']),
+    lenderTypes:    new Set(['tx-local','oot-bank','non-bank']),
+    scoreMin:       0,
+    search:         '',
+  },
+  charts: {},
+  map: null,
+  markers: null,
+  pipePage: 0,
+  pipePageSize: 50,
+  lastRefresh: null,
+};
+
+// Score weight defaults — Maturity Opportunity Score
+const SCORE_DEFAULTS = { proximity:30, size:20, lender_exit:15, geo:15, concentration:10, source_conf:10 };
+const SCORE_WEIGHTS = Object.assign({}, SCORE_DEFAULTS);
+
+// Ranger Bank branch coordinates (approximate; matches the Deposit dashboard's footprint —
+// real Ranger only has Dallas-area branches, but for v2 we treat the 4 TX metros as anchors).
+const RANGER_BRANCHES = [
+  { name: 'DFW',         lat: 32.78, lon: -96.80 },
+  { name: 'Austin',      lat: 30.27, lon: -97.74 },
+  { name: 'Houston',     lat: 29.76, lon: -95.37 },
+  { name: 'San Antonio', lat: 29.43, lon: -98.49 },
+];
+// Current market benchmark rate (SBA Prime + spread, mid-2026 approximation).
+// Used purely for visual delta: incumbent rate vs current. Update at re-pull time.
+const MARKET_BENCHMARK_RATE = 10.5;
+
+// Lender classification: which lender names look like TX banks vs out-of-state vs non-bank
+const NON_BANK_PATTERNS = [/^newtek\b/i, /\bfintech\b/i, /\blendio\b/i, /\bcapital\s+impact/i, /\bcdfi\b/i, /^funding\s+circle/i, /\baccion\b/i, /\bsmart\s*biz/i, /^liftfund/i, /\bsba\s+only\b/i, /^kabbage\b/i, /\bbluevine\b/i, /\bondeck\b/i, /\benova\b/i];
+
+// Pipeline status (localStorage-persisted per loan_id)
+const PIPELINE_STATUS_KEY = 'rangerLoanMaturity:status';
+function loadStatuses() { try { return JSON.parse(localStorage.getItem(PIPELINE_STATUS_KEY) || '{}'); } catch (e) { return {}; } }
+function saveStatuses(map) { try { localStorage.setItem(PIPELINE_STATUS_KEY, JSON.stringify(map)); } catch (e) {} }
+const PIPELINE_STATUSES = ['new','contacted','meeting','proposal','won','lost'];
+const STATUS_LABELS = { new:'Not contacted', contacted:'Contacted', meeting:'Meeting set', proposal:'Proposal sent', won:'Won', lost:'Lost' };
+const STATUS_COLORS = { new:'#a0aec0', contacted:'#3182ce', meeting:'#d69e2e', proposal:'#805ad5', won:'#276749', lost:'#c53030' };
+
+// Haversine distance in miles
+function haversineMi(lat1, lon1, lat2, lon2) {
+  const toRad = d => d * Math.PI / 180;
+  const R = 3958.8;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+function nearestBranchMiles(rec) {
+  const c = COUNTY_CENTROIDS[rec.county];
+  if (!c) return null;
+  let min = Infinity;
+  RANGER_BRANCHES.forEach(b => {
+    const d = haversineMi(c[0], c[1], b.lat, b.lon);
+    if (d < min) min = d;
+  });
+  return Math.round(min);
+}
+function classifyLender(rec){
+  if (!rec.lender) return 'unknown';
+  if (NON_BANK_PATTERNS.some(p=>p.test(rec.lender))) return 'non-bank';
+  const ls = (rec.lender_state || '').toUpperCase();
+  if (ls === 'TX') return 'tx-local';
+  if (ls && ls !== 'TX') return 'oot-bank';
+  return 'unknown';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LOAD DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+async function loadData() {
+  // Try external loans.json first; fall back to embedded JSON
+  try {
+    const r = await fetch('loans.json', { cache: 'no-store' });
+    if (r.ok) {
+      const j = await r.json();
+      if (Array.isArray(j.loans)) return j;
+      if (Array.isArray(j)) return { meta: {}, loans: j };
+    }
+  } catch (e) { /* fall through */ }
+  try {
+    const txt = document.getElementById('LOAN-DATA-EMBED').textContent;
+    return JSON.parse(txt);
+  } catch (e) { return { meta: {}, loans: [] }; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+const fmt$ = v => {
+  if (v == null || isNaN(v)) return '—';
+  if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return '$' + Math.round(v/1e3) + 'K';
+  return '$' + Math.round(v);
+};
+const fmtDate = s => {
+  if (!s) return '—';
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
+};
+const monthsToMat = rec => {
+  if (rec.months_to_maturity != null) return rec.months_to_maturity;
+  if (!rec.maturity_date) return null;
+  const today = new Date();
+  const m = new Date(rec.maturity_date);
+  return (m.getFullYear()-today.getFullYear())*12 + (m.getMonth()-today.getMonth());
+};
+function matBucket(m) {
+  if (m == null) return null;
+  if (m <= 6) return '0-6';
+  if (m <= 12) return '7-12';
+  if (m <= 24) return '13-24';
+  if (m <= 60) return '25-60';
+  return '60+';
+}
+function sizeBucket(v) {
+  if (v == null) return null;
+  if (v < 250000) return '0-250';
+  if (v < 500000) return '250-500';
+  if (v < 1000000) return '500-1000';
+  if (v < 2000000) return '1000-2000';
+  if (v < 5000000) return '2000-5000';
+  return '5000+';
+}
+function matBadge(m) {
+  if (m == null) return '<span class="mat-badge mat-far">—</span>';
+  if (m <= 6) return `<span class="mat-badge mat-imminent">${m} mo</span>`;
+  if (m <= 12) return `<span class="mat-badge mat-near">${m} mo</span>`;
+  if (m <= 24) return `<span class="mat-badge mat-mid">${m} mo</span>`;
+  return `<span class="mat-badge mat-far">${m} mo</span>`;
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  OPPORTUNITY SCORE
+// ═══════════════════════════════════════════════════════════════════════════════
+function computeOppScore(rec, borrowerLoanCounts) {
+  const w = SCORE_WEIGHTS;
+  const c = {};
+  const m = monthsToMat(rec);
+  // Proximity: linear 30→0 from 0 to 36 months
+  c.proximity = m == null ? 0 : Math.max(0, Math.round(w.proximity * Math.max(0, (36 - m) / 36)));
+  // Size: linear 0→20 from $250K to $5M
+  const amt = rec.loan_amount || 0;
+  c.size = amt < 250000 ? 0 :
+           amt >= 5000000 ? w.size :
+           Math.round(w.size * (amt - 250000) / 4750000);
+  // Lender exit risk: out-of-state OR non-bank => full points
+  const ltype = classifyLender(rec);
+  c.lender_exit = (ltype === 'oot-bank' || ltype === 'non-bank') ? w.lender_exit : 0;
+  // Geo fit: county is in footprint => full (binary for v1; iteration 2 adds branch proximity)
+  c.geo = rec.county ? w.geo : 0;
+  // Borrower concentration: more loans => more points (cap at w.concentration)
+  const nLoans = borrowerLoanCounts[(rec.borrower||'').trim().toUpperCase()] || 1;
+  c.concentration = Math.min(w.concentration, Math.round((nLoans - 1) * (w.concentration / 3)));
+  // Source confidence: SBA + explicit maturity date => full; UCC lapse_date or inferred => half
+  c.source_conf = (rec.source && rec.source.startsWith('sba')) ? w.source_conf : Math.round(w.source_conf / 2);
+  const total = Math.min(100, c.proximity + c.size + c.lender_exit + c.geo + c.concentration + c.source_conf);
+  return { total, components: c };
+}
+function oppBadge(score, rec, comps) {
+  const s = score | 0;
+  const cls = s >= 75 ? 'score-hot' : s >= 55 ? 'score-warm' : s >= 35 ? 'score-med' : s >= 20 ? 'score-cool' : 'score-cold';
+  const components = [
+    { label: 'Proximity to maturity', value: comps.proximity, max: SCORE_WEIGHTS.proximity,    color: '#c53030' },
+    { label: 'Loan size',             value: comps.size,         max: SCORE_WEIGHTS.size,         color: '#3182ce' },
+    { label: 'Lender exit risk',      value: comps.lender_exit,  max: SCORE_WEIGHTS.lender_exit,  color: '#dd6b20' },
+    { label: 'Geo fit (footprint)',   value: comps.geo,          max: SCORE_WEIGHTS.geo,          color: '#38a169' },
+    { label: 'Borrower concentration',value: comps.concentration,max: SCORE_WEIGHTS.concentration,color: '#805ad5' },
+    { label: 'Source confidence',     value: comps.source_conf,  max: SCORE_WEIGHTS.source_conf,  color: '#319795' },
+  ];
+  const compsJson = JSON.stringify(components).replace(/"/g, '&quot;');
+  return `<span class="score-badge shv-trigger ${cls}" tabindex="0"
+            data-shv-title="Maturity Opportunity Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light"
+            data-shv-components="${compsJson}"
+            data-shv-foot="Hover any score for breakdown · Adjust weights via the drawer">${s}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  FILTERING
+// ═══════════════════════════════════════════════════════════════════════════════
+function ageBucket(months) {
+  if (months == null) return null;
+  if (months <= 24) return '0-2';
+  if (months <= 60) return '2-5';
+  if (months <= 120) return '5-10';
+  return '10+';
+}
+function applyFilters() {
+  const f = S.filters;
+  const search = f.search.toLowerCase();
+  // collect checked values from sidebar (live read for robustness)
+  const checkedSet = sel => new Set(Array.from(qsa(sel + ':checked')).map(el => el.value));
+  f.maturityWindows = checkedSet('.matwin');
+  f.sources         = checkedSet('.srcf');
+  f.counties        = checkedSet('.cof');
+  f.sizes           = checkedSet('.amtf');
+  f.lenderTypes     = checkedSet('.lndf');
+  f.origAges        = checkedSet('.agef');
+  f.statuses        = checkedSet('.statf');
+
+  S.filtered = S.loans.filter(rec => {
+    const mb = matBucket(rec._months);
+    if (mb && f.maturityWindows.size && !f.maturityWindows.has(mb)) return false;
+    if (f.sources.size && !f.sources.has(rec.source)) return false;
+    if (f.counties.size && !f.counties.has((rec.county||'').trim())) return false;
+    const sb = sizeBucket(rec.loan_amount);
+    if (sb && f.sizes.size && !f.sizes.has(sb)) return false;
+    const lt = rec._lenderType || classifyLender(rec);
+    if (f.lenderTypes.size && !f.lenderTypes.has(lt)) return false;
+    const ab = ageBucket(rec._origAgeMonths);
+    if (ab && f.origAges.size && !f.origAges.has(ab)) return false;
+    if (f.statuses.size && !f.statuses.has(rec._status || 'new')) return false;
+    if (rec._score < f.scoreMin) return false;
+    if (search) {
+      const blob = (rec.borrower + ' ' + rec.lender + ' ' + (rec.naics_description||'') + ' ' + (rec.county||'') + ' ' + (rec.borrower_city||'')).toLowerCase();
+      if (!blob.includes(search)) return false;
+    }
+    return true;
+  });
+  // Update bulk-toggle counts
+  if (window.BulkToggle) BulkToggle.refresh();
+  S.pipePage = 0;
+  refreshActiveTab();
+}
+
+function refreshActiveTab() {
+  const active = qs('.tab-btn.active')?.dataset.tab;
+  if (active === 'overview') renderOverview();
+  else if (active === 'pipeline') renderPipeline();
+  else if (active === 'borrower') renderBorrower();
+  else if (active === 'lender') renderLender();
+  else if (active === 'map') renderMap();
+  else if (active === 'methodology') renderMethodology();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  POPULATE SIDEBAR FILTERS (dynamic from data)
+// ═══════════════════════════════════════════════════════════════════════════════
+function populateSidebarFilters() {
+  // SOURCES — dynamic
+  const srcCounts = {};
+  S.loans.forEach(r => { srcCounts[r.source] = (srcCounts[r.source]||0) + 1; });
+  const srcLabels = { 'sba-7a':'SBA 7(a)', 'sba-504':'SBA 504', 'cmbs':'CMBS (EDGAR)', 'hmda':'HMDA business-purpose', 'deed-of-trust':'County Deed of Trust', 'ucc-1':'State UCC-1' };
+  const srcHost = qs('#src-filters');
+  srcHost.innerHTML = Object.keys(srcCounts).sort().map(k => {
+    const label = srcLabels[k] || k;
+    return `<label class="cl"><input type="checkbox" class="srcf" value="${esc(k)}" onchange="applyFilters()" checked><span>${esc(label)}</span><span class="cc">${srcCounts[k]}</span></label>`;
+  }).join('');
+
+  // COUNTIES — dynamic, sorted by loan count desc
+  const coCounts = {};
+  S.loans.forEach(r => { if (r.county) coCounts[r.county] = (coCounts[r.county]||0) + 1; });
+  const coHost = qs('#county-filters');
+  const sortedCo = Object.keys(coCounts).sort((a,b)=>coCounts[b]-coCounts[a]);
+  coHost.innerHTML = sortedCo.map(c =>
+    `<label class="cl"><input type="checkbox" class="cof" value="${esc(c)}" onchange="applyFilters()" checked><span>${esc(c)}</span><span class="cc">${coCounts[c]}</span></label>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════════════════════
+function setupTabs() {
+  qsa('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      qsa('.tab-btn').forEach(b => b.classList.remove('active'));
+      qsa('.tabcontent').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      qs('#tab-' + btn.dataset.tab).classList.add('active');
+      refreshActiveTab();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  OVERVIEW RENDER
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderOverview() {
+  const F = S.filtered;
+  const totalDollar = F.reduce((s,r) => s + (r.loan_amount||0), 0);
+  const near12 = F.filter(r => r._months != null && r._months <= 12);
+  const near12Dollar = near12.reduce((s,r) => s + (r.loan_amount||0), 0);
+  const borrSet = new Set(F.map(r => (r.borrower||'').trim().toUpperCase()).filter(Boolean));
+  const lendSet = new Set(F.map(r => (r.lender||'').trim().toUpperCase()).filter(Boolean));
+  const oosLenders = new Set(F.filter(r => r._lenderType === 'oot-bank' || r._lenderType === 'non-bank').map(r => (r.lender||'').trim().toUpperCase()).filter(Boolean));
+
+  qs('#s-loans').textContent = F.length.toLocaleString();
+  qs('#s-dollar').textContent = fmt$(totalDollar);
+  qs('#s-12mo').textContent = near12.length.toLocaleString();
+  qs('#s-12mo-note').textContent = fmt$(near12Dollar) + ' total';
+  qs('#s-borr').textContent = borrSet.size.toLocaleString();
+  qs('#s-lend').textContent = lendSet.size.toLocaleString();
+  qs('#s-lend-note').textContent = oosLenders.size + ' out-of-state / non-bank';
+
+  renderMaturityWall(F);
+  renderTopLendersChart(F);
+  renderSourceMixChart(F);
+}
+
+function destroyChart(key) { if (S.charts[key]) { S.charts[key].destroy(); delete S.charts[key]; } }
+
+function renderMaturityWall(F) {
+  destroyChart('wall');
+  const today = new Date(); today.setDate(1);
+  const buckets = []; // [{label:'2026Q3', sum:$, by:{sba-7a:..,sba-504:..}}]
+  for (let i = 0; i < 12; i++) {  // 12 quarters out
+    const qStart = new Date(today.getFullYear(), today.getMonth() + i*3, 1);
+    const qEnd   = new Date(qStart.getFullYear(), qStart.getMonth()+3, 1);
+    const qLabel = `${qStart.getFullYear()}Q${Math.floor(qStart.getMonth()/3)+1}`;
+    buckets.push({label:qLabel, qStart, qEnd, by:{}, sum:0});
+  }
+  const sources = new Set(F.map(r => r.source));
+  F.forEach(r => {
+    if (!r.maturity_date) return;
+    const d = new Date(r.maturity_date);
+    const b = buckets.find(bk => d >= bk.qStart && d < bk.qEnd);
+    if (!b) return;
+    const v = r.loan_amount || 0;
+    b.by[r.source] = (b.by[r.source]||0) + v;
+    b.sum += v;
+  });
+  const palette = { 'sba-7a':'#48bb78', 'sba-504':'#3182ce', 'cmbs':'#d53f8c', 'hmda':'#f687b3', 'deed-of-trust':'#805ad5', 'ucc-1':'#d69e2e' };
+  const datasets = Array.from(sources).map(src => ({
+    label: src,
+    data: buckets.map(b => b.by[src] || 0),
+    backgroundColor: palette[src] || '#a0aec0',
+    stack: 'all',
+  }));
+  S.charts.wall = new Chart(qs('#ch-wall'), {
+    type: 'bar',
+    data: { labels: buckets.map(b=>b.label), datasets },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt$(ctx.raw)}` } },
+        subtitle: { display: true, text: `${F.length.toLocaleString()} loans in current filter · sum ${fmt$(F.reduce((s,r)=>s+(r.loan_amount||0),0))}`, font:{size:10,style:'italic'}, color:'#a0aec0', padding:{top:4,bottom:2} },
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, ticks: { callback: v => fmt$(v) }, title: { display: true, text: 'Dollars rolling off', font: { size: 10 }, color: '#718096' } },
+      },
+    },
+  });
+  qs('#wall-sub').textContent = `next 12 quarters · ${F.length.toLocaleString()} loans · ${fmt$(F.reduce((s,r)=>s+(r.loan_amount||0),0))}`;
+}
+
+function renderTopLendersChart(F) {
+  destroyChart('topLenders');
+  const byLender = {};
+  F.forEach(r => {
+    const k = (r.lender || 'Unknown').trim();
+    if (!byLender[k]) byLender[k] = { sum: 0, count: 0, type: r._lenderType };
+    byLender[k].sum += r.loan_amount || 0;
+    byLender[k].count++;
+  });
+  const sorted = Object.entries(byLender).sort((a,b)=>b[1].sum-a[1].sum).slice(0,10);
+  if (!sorted.length) {
+    qs('#ch-top-lenders').parentElement.innerHTML = '<div class="empty-state">No lender data in current filter.</div>';
+    return;
+  }
+  S.charts.topLenders = new Chart(qs('#ch-top-lenders'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(([k]) => k.length > 30 ? k.slice(0,28)+'…' : k),
+      datasets: [{
+        data: sorted.map(([,v]) => v.sum),
+        backgroundColor: sorted.map(([,v]) => v.type === 'tx-local' ? '#48bb78' : v.type === 'oot-bank' ? '#3182ce' : v.type === 'non-bank' ? '#dd6b20' : '#a0aec0'),
+      }],
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => {
+        const [, v] = sorted[ctx.dataIndex];
+        return [`${fmt$(v.sum)} across ${v.count} loans`, `Type: ${v.type}`];
+      } } } },
+      scales: { x: { ticks: { callback: v => fmt$(v) }, grid: { color: '#f0f4f8' } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } },
+  });
+}
+
+function renderSourceMixChart(F) {
+  destroyChart('srcMix');
+  const buckets = ['0-6','7-12','13-24','25-60','60+'];
+  const blabel = { '0-6':'≤6 mo', '7-12':'7-12 mo', '13-24':'13-24 mo', '25-60':'2-5 yr', '60+':'5+ yr' };
+  const sources = Array.from(new Set(F.map(r => r.source)));
+  const palette = { 'sba-7a':'#48bb78', 'sba-504':'#3182ce', 'cmbs':'#d53f8c', 'hmda':'#f687b3', 'deed-of-trust':'#805ad5', 'ucc-1':'#d69e2e' };
+  const data = {};
+  sources.forEach(s => { data[s] = buckets.map(() => 0); });
+  F.forEach(r => {
+    const b = matBucket(r._months);
+    const idx = buckets.indexOf(b);
+    if (idx >= 0 && data[r.source]) data[r.source][idx]++;
+  });
+  S.charts.srcMix = new Chart(qs('#ch-source-mix'), {
+    type: 'bar',
+    data: {
+      labels: buckets.map(b => blabel[b]),
+      datasets: sources.map(s => ({ label: s, data: data[s], backgroundColor: palette[s] || '#a0aec0', stack: 'all' })),
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, title: { display: true, text: 'Loan count', font: { size: 10 }, color: '#718096' }, grid: { color: '#f0f4f8' } } } },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  PIPELINE TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderPipeline() {
+  const F = S.filtered;
+  const pg = S.pipePage, sz = S.pipePageSize;
+  const total = F.length, pages = Math.max(1, Math.ceil(total / sz));
+  const rows = F.slice(pg * sz, pg * sz + sz);
+  const sum = F.reduce((s,r) => s + (r.loan_amount||0), 0);
+  qs('#pipe-count').textContent = total.toLocaleString();
+  qs('#pipe-dollar').textContent = fmt$(sum);
+  qs('#pipe-pg-info').textContent = `Page ${pg+1} of ${pages} · showing ${rows.length} of ${total.toLocaleString()}`;
+  qs('#pipe-pg-prev').disabled = pg <= 0;
+  qs('#pipe-pg-next').disabled = pg >= pages-1;
+
+  if (!rows.length) {
+    qs('#pipe-body').innerHTML = '<tr><td colspan="12" class="empty-state">No loans match the current filters.</td></tr>';
+    return;
+  }
+  qs('#pipe-body').innerHTML = rows.map(r => {
+    const addr = r.borrower_address ? esc(r.borrower_address) : '';
+    const rateDeltaCell = (() => {
+      if (r.interest_rate == null) return '—';
+      const d = r._rateDelta;
+      const color = d > 0 ? '#276749' : d < -1 ? '#c53030' : '#718096';
+      const sign = d > 0 ? '+' : '';
+      return `<span title="Origination rate ${r.interest_rate.toFixed(2)}% vs market benchmark ${MARKET_BENCHMARK_RATE}%">${r.interest_rate.toFixed(2)}%<br><span style="font-size:10px;color:${color};font-weight:700">${sign}${d}% vs mkt</span></span>`;
+    })();
+    const sisterCell = r._sisterCount > 0 ? `<span title="${r._sisterCount} other loan(s) for this borrower in current data" style="font-weight:700;color:#805ad5">👥 +${r._sisterCount}</span>` : '<span style="color:#cbd5e0">—</span>';
+    const branchCell = r._branchMi != null ? `<span title="Nearest Ranger branch (DFW/Austin/Houston/SA approx)">${r._branchMi} mi</span>` : '—';
+    return `
+    <tr data-loan-id="${esc(r.loan_id)}">
+      <td>${oppBadge(r._score, r, r._scoreComponents)}</td>
+      <td>
+        <div style="font-weight:600"${addr?` title="${addr}"`:''}>${esc(r.borrower)}</div>
+        <div style="font-size:10.5px;color:var(--muted)">${esc(r.borrower_city || '')}${r.borrower_state ? ', ' + esc(r.borrower_state) : ''}</div>
+      </td>
+      <td>
+        ${esc(r.lender)}
+        <div style="font-size:10px;color:var(--muted)">${esc(r.lender_city||'')}${r.lender_state ? ', ' + esc(r.lender_state) : ''} · ${esc(r._lenderType||'')}</div>
+      </td>
+      <td>${esc(r.county || '—')}</td>
+      <td class="num"><strong>${fmt$(r.loan_amount)}</strong><div style="font-size:10px;color:var(--muted)">approved ${fmtDate(r.approval_date)}</div></td>
+      <td><strong>${fmtDate(r.maturity_date)}</strong></td>
+      <td>${matBadge(r._months)}</td>
+      <td class="num">${rateDeltaCell}</td>
+      <td class="num">${sisterCell}</td>
+      <td class="num">${branchCell}</td>
+      <td>
+        <select class="status-sel ranger-select" data-loan-id="${esc(r.loan_id)}" style="min-width:115px;height:26px;padding:1px 22px 1px 8px;border-color:${STATUS_COLORS[r._status||'new']};color:${STATUS_COLORS[r._status||'new']};font-weight:700;font-size:11px">
+          ${PIPELINE_STATUSES.map(st => `<option value="${st}"${r._status===st?' selected':''}>${STATUS_LABELS[st]}</option>`).join('')}
+        </select>
+      </td>
+      <td><span class="src-badge src-${esc(r.source||'').replace(/[^a-z0-9-]/g,'')}" title="${esc(r.source_context||'')}">${esc((r.source||'').toUpperCase())}</span></td>
+    </tr>`;
+  }).join('');
+  // Wire status dropdowns
+  qsa('#pipe-body .status-sel').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const id = sel.dataset.loanId;
+      const map = loadStatuses();
+      map[id] = sel.value;
+      saveStatuses(map);
+      const rec = S.loans.find(r => r.loan_id === id);
+      if (rec) { rec._status = sel.value; }
+      // Re-color the select inline
+      sel.style.borderColor = STATUS_COLORS[sel.value];
+      sel.style.color = STATUS_COLORS[sel.value];
+      // If the row no longer matches a status filter, drop it from the visible set
+      const visible = S.filters.statuses && S.filters.statuses.size ? S.filters.statuses.has(sel.value) : true;
+      if (!visible) {
+        const tr = sel.closest('tr'); if (tr) tr.style.opacity = '.35';
+      }
+    });
+  });
+  if (window.ScoreHover) ScoreHover.init();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BY BORROWER
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderBorrower() {
+  const groups = {};
+  S.filtered.forEach(r => {
+    const k = (r.borrower||'').trim().toUpperCase();
+    if (!k) return;
+    if (!groups[k]) groups[k] = { borrower: r.borrower, city: r.borrower_city, state: r.borrower_state, total: 0, count: 0, lenders: new Set(), nextDate: null, nextMonths: null };
+    groups[k].total += r.loan_amount || 0;
+    groups[k].count++;
+    groups[k].lenders.add(r.lender);
+    if (r.maturity_date && (!groups[k].nextDate || r.maturity_date < groups[k].nextDate)) {
+      groups[k].nextDate = r.maturity_date;
+      groups[k].nextMonths = r._months;
+    }
+  });
+  const sorted = Object.values(groups).sort((a,b)=>b.total-a.total);
+  qs('#borr-count').textContent = sorted.length.toLocaleString();
+  if (!sorted.length) { qs('#borr-body').innerHTML = '<tr><td colspan="7" class="empty-state">No borrowers in current filter.</td></tr>'; return; }
+  qs('#borr-body').innerHTML = sorted.slice(0,500).map(g => `
+    <tr>
+      <td><strong>${esc(g.borrower)}</strong></td>
+      <td>${esc(g.city || '')}${g.state ? ', ' + esc(g.state) : ''}</td>
+      <td class="num">${g.count}</td>
+      <td class="num"><strong>${fmt$(g.total)}</strong></td>
+      <td>${fmtDate(g.nextDate)}</td>
+      <td>${matBadge(g.nextMonths)}</td>
+      <td>${esc(Array.from(g.lenders).slice(0,3).join(' · '))}${g.lenders.size > 3 ? ' (+' + (g.lenders.size - 3) + ')' : ''}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BY LENDER
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderLender() {
+  const groups = {};
+  S.filtered.forEach(r => {
+    const k = (r.lender||'').trim().toUpperCase();
+    if (!k) return;
+    if (!groups[k]) groups[k] = { lender: r.lender, state: r.lender_state, city: r.lender_city, total: 0, count: 0, counties: {}, nextDate: null, nextMonths: null };
+    groups[k].total += r.loan_amount || 0;
+    groups[k].count++;
+    groups[k].counties[r.county] = (groups[k].counties[r.county]||0) + 1;
+    if (r.maturity_date && (!groups[k].nextDate || r.maturity_date < groups[k].nextDate)) {
+      groups[k].nextDate = r.maturity_date;
+      groups[k].nextMonths = r._months;
+    }
+  });
+  const sorted = Object.values(groups).sort((a,b)=>b.total-a.total);
+  qs('#lend-count').textContent = sorted.length.toLocaleString();
+  if (!sorted.length) { qs('#lend-body').innerHTML = '<tr><td colspan="7" class="empty-state">No lenders in current filter.</td></tr>'; return; }
+  qs('#lend-body').innerHTML = sorted.slice(0,500).map(g => {
+    const topCo = Object.entries(g.counties).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([c,n])=>`${c} (${n})`).join(', ');
+    return `<tr>
+      <td><strong>${esc(g.lender)}</strong></td>
+      <td>${esc(g.city||'')}${g.state ? ', ' + esc(g.state) : ''}</td>
+      <td class="num">${g.count}</td>
+      <td class="num"><strong>${fmt$(g.total)}</strong></td>
+      <td>${fmtDate(g.nextDate)}</td>
+      <td class="num">${fmt$(g.count ? g.total / g.count : 0)}</td>
+      <td>${esc(topCo)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MAP
+// ═══════════════════════════════════════════════════════════════════════════════
+const COUNTY_CENTROIDS = {
+  // approximate centroids for the 32-county footprint
+  'Angelina':[31.25,-94.61],'Bell':[31.04,-97.48],'Bexar':[29.43,-98.49],'Brazoria':[29.17,-95.43],
+  'Brazos':[30.65,-96.40],'Caldwell':[29.83,-97.61],'Cameron':[26.13,-97.44],'Chambers':[29.78,-94.66],
+  'Coryell':[31.39,-97.79],'Dallas':[32.78,-96.80],'Ector':[31.87,-102.55],'Fort Bend':[29.53,-95.77],
+  'Galveston':[29.30,-94.79],'Grayson':[33.63,-96.68],'Gregg':[32.49,-94.82],'Hardin':[30.30,-94.39],
+  'Harris':[29.76,-95.37],'Jefferson':[29.95,-94.05],'Johnson':[32.38,-97.36],'Kaufman':[32.59,-96.30],
+  'Kerr':[30.06,-99.35],'Liberty':[30.14,-94.81],'Nueces':[27.74,-97.40],'Panola':[32.16,-94.31],
+  'Rusk':[32.11,-94.76],'Tarrant':[32.78,-97.29],'Taylor':[32.30,-99.89],'Titus':[33.22,-94.97],
+  'Travis':[30.32,-97.78],'Victoria':[28.79,-97.00],'Wichita':[33.99,-98.70],'Williamson':[30.67,-97.59],'Wise':[33.21,-97.65],
+};
+
+function renderMap() {
+  if (!S.map) {
+    S.map = L.map('map').setView([31.0,-99.0], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+    }).addTo(S.map);
+  }
+  if (S.markers) S.map.removeLayer(S.markers);
+  S.markers = L.layerGroup();
+  // jitter so multiple loans in the same county don't overlap
+  const seenPerCounty = {};
+  S.filtered.forEach(r => {
+    const c = COUNTY_CENTROIDS[r.county];
+    if (!c) return;
+    const i = (seenPerCounty[r.county] = (seenPerCounty[r.county]||0) + 1);
+    const angle = (i * 137.5) * Math.PI / 180;  // golden-angle spiral
+    const radius = 0.04 * Math.sqrt(i);
+    const lat = c[0] + Math.cos(angle) * radius;
+    const lon = c[1] + Math.sin(angle) * radius;
+    const months = r._months;
+    const color = months == null ? '#a0aec0' : months <= 12 ? '#c53030' : months <= 24 ? '#dd6b20' : '#38a169';
+    const radiusPx = Math.max(3, Math.min(16, Math.log10(Math.max(10000, r.loan_amount||0)) * 1.6));
+    L.circleMarker([lat,lon], { radius: radiusPx, color, weight: 1, fillColor: color, fillOpacity: 0.6 })
+      .bindPopup(`<strong>${esc(r.borrower)}</strong><br>${esc(r.lender)}<br>${fmt$(r.loan_amount)} · matures ${fmtDate(r.maturity_date)}<br><span style="font-size:10px;color:#666">${esc(r.source_context||'')}</span>`)
+      .addTo(S.markers);
+  });
+  S.markers.addTo(S.map);
+  setTimeout(() => S.map.invalidateSize(), 60);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  METHODOLOGY
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderMethodology() {
+  const meta = S.meta || {};
+  // As-of block
+  const sbaAt = meta.sba_asof || meta.scraped_at;
+  const sbaDate = sbaAt ? new Date(sbaAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+  qs('#meth-asof').innerHTML = `
+    <div class="meth-label">Data freshness</div>
+    <div><strong>SBA bulk data:</strong> ${sbaDate} (data.sba.gov asof-${meta.sba_asof_tag||'?'}) · refreshed quarterly</div>
+    <div><strong>Loans surfaced:</strong> ${S.loans.length.toLocaleString()} active loans with future maturity in the 32-county TX footprint</div>
+    <div><strong>Total $ tracked:</strong> ${fmt$(S.loans.reduce((s,r)=>s+(r.loan_amount||0),0))}</div>
+  `;
+  // Sources
+  const srcCounts = {};
+  const srcDollars = {};
+  S.loans.forEach(r => { srcCounts[r.source]=(srcCounts[r.source]||0)+1; srcDollars[r.source]=(srcDollars[r.source]||0)+(r.loan_amount||0); });
+  const srcLabels = { 'sba-7a':'SBA 7(a) loans — bulk CSV from data.sba.gov', 'sba-504':'SBA 504 loans — bulk CSV from data.sba.gov', 'cmbs':'SEC EDGAR CMBS 10-D filings', 'hmda':'HMDA business-purpose loans (CFPB)', 'deed-of-trust':'County clerk Deed of Trust records', 'ucc-1':'State UCC-1 filings' };
+  qs('#meth-sources').innerHTML = Object.keys(srcCounts).sort().map(k =>
+    `<div style="margin-bottom:6px">&bull; <strong>${esc(srcLabels[k] || k)}</strong> — ${srcCounts[k].toLocaleString()} loans, ${fmt$(srcDollars[k])} total</div>`
+  ).join('');
+  // Weights
+  qs('#meth-weights').innerHTML = `
+    <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:6px; font-size:11.5px">
+      ${Object.entries(SCORE_WEIGHTS).map(([k,v]) => {
+        const labels = { proximity:'Time-to-maturity', size:'Loan size', lender_exit:'Lender exit risk', geo:'Geo fit', concentration:'Borrower concentration', source_conf:'Source confidence' };
+        return `<div style="background:#f7fafc;padding:6px 8px;border-radius:4px"><strong>${v}</strong> · ${labels[k]||k}</div>`;
+      }).join('')}
+    </div>`;
+  // Coverage
+  const coCounts = {};
+  S.loans.forEach(r => { if (r.county) coCounts[r.county] = (coCounts[r.county]||0) + 1; });
+  qs('#meth-coverage').innerHTML = `
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:4px; font-size:11.5px">
+      ${Object.entries(coCounts).sort((a,b)=>b[1]-a[1]).map(([co,n]) => `<div>${esc(co)}: <strong>${n.toLocaleString()}</strong></div>`).join('')}
+    </div>
+    <div style="margin-top:8px;font-size:11.5px;color:var(--muted)">Counties with 0 loans surfaced have either no SBA-listed projects in the date window or are not in our footprint. See "Sources blocked" above for why deed-of-trust / UCC are not yet contributing.</div>
+  `;
+  // Limitations
+  qs('#meth-limitations').innerHTML = `
+    <div style="margin-bottom:6px">&bull; SBA data covers <strong>SBA-flagged loans only</strong>. Non-SBA commercial loans (the bulk of bank CRE) are not surfaced until deed-of-trust or UCC sources are added.</div>
+    <div style="margin-bottom:6px">&bull; Maturity date = approval date + term months. Early-payoff and balloon resets are not detected in this data — the actual remaining balance may differ.</div>
+    <div style="margin-bottom:6px">&bull; Loan status field tracks 'Paid In Full' and 'Charged Off' status — we exclude both. But 'EXEMPT' status (some PPP cases) is treated as active; treat with caution.</div>
+    <div>&bull; Borrower addresses are as-of approval date; the borrower may have moved.</div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  FRESHNESS RIBBON
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderFreshnessRibbon() {
+  const meta = S.meta || {};
+  const sbaAt = meta.sba_asof ? new Date(meta.sba_asof) : null;
+  const daysSinceSba = sbaAt ? Math.floor((Date.now() - sbaAt.getTime())/(86400*1000)) : null;
+  const sbaCls = daysSinceSba == null ? 'fr-gray' : daysSinceSba <= 100 ? 'fr-green' : daysSinceSba <= 200 ? 'fr-yellow' : 'fr-red';
+  setPill('fr-pill-sba', sbaCls, 'SBA bulk data:',
+    sbaAt ? sbaAt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—',
+    daysSinceSba != null ? `${daysSinceSba}d ago · ${S.loans.length.toLocaleString()} loans` : '');
+  setPill('fr-pill-counties', 'fr-yellow', 'County deeds:', 'Blocked',
+    '32 TX counties paywall bulk; see Methodology');
+  setPill('fr-pill-session', S.lastRefresh ? 'fr-green' : 'fr-gray', 'Session:',
+    S.lastRefresh ? S.lastRefresh.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}) : 'not yet refreshed', '');
+}
+function setPill(id, cls, label, val, detail) {
+  const el = qs('#' + id); if (!el) return;
+  el.className = 'fr-pill ' + cls;
+  el.innerHTML = `<span class="fr-dot"></span><span><span class="fr-label">${label}</span> ${val}${detail?` <span class="fr-detail">${detail}</span>`:''}</span>`;
+}
+
+function updateHdrMeta() {
+  qs('#hdr-meta').innerHTML = `<strong>${S.loans.length.toLocaleString()}</strong> loans · <strong>${fmt$(S.loans.reduce((s,r)=>s+(r.loan_amount||0),0))}</strong> total<br><span style="font-size:10px">${Object.keys(S.meta.sources_seen || {}).length} sources · 32-county TX footprint</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════════════════════════
+function toast(msg, opts={}) {
+  const stack = qs('#toast-stack'); if (!stack) return;
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + (opts.kind || 'info');
+  el.innerHTML = `<div>${msg}</div>${opts.sub ? `<div style="font-weight:400;opacity:.78;font-size:11.5px;margin-top:2px">${opts.sub}</div>` : ''}`;
+  stack.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 250); }, opts.duration || 4200);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  UPDATE DATA / RE-PULL MODAL
+// ═══════════════════════════════════════════════════════════════════════════════
+async function updateData() {
+  const btn = qs('#btn-refresh');
+  btn.classList.add('loading');
+  qs('#btn-refresh-label').textContent = 'Re-reading…';
+  try {
+    const blob = await loadData();
+    S.loans = (blob.loans || []).map(r => {
+      r._months = monthsToMat(r);
+      r._lenderType = classifyLender(r);
+      r._branchMi = nearestBranchMiles(r);
+      // Origination age in months (relative to today)
+      if (r.approval_date) {
+        const ap = new Date(r.approval_date);
+        r._origAgeMonths = isNaN(ap.getTime()) ? null : Math.floor((Date.now() - ap.getTime()) / (30.4 * 86400 * 1000));
+      } else {
+        r._origAgeMonths = null;
+      }
+      // Rate vs current market (positive Δ = borrower is paying ABOVE market = soft target for us)
+      r._rateDelta = (r.interest_rate != null) ? +(r.interest_rate - MARKET_BENCHMARK_RATE).toFixed(2) : null;
+      return r;
+    });
+    S.meta = blob.meta || {};
+    // Borrower loan counts for concentration scoring + sister-loan column
+    const borrCounts = {};
+    S.loans.forEach(r => { const k = (r.borrower||'').trim().toUpperCase(); if (k) borrCounts[k] = (borrCounts[k]||0)+1; });
+    S.loans.forEach(r => { r._sisterCount = Math.max(0, (borrCounts[(r.borrower||'').trim().toUpperCase()] || 1) - 1); });
+    // Pipeline statuses from localStorage
+    const statusMap = loadStatuses();
+    S.loans.forEach(r => { r._status = statusMap[r.loan_id] || 'new'; });
+    S.loans.forEach(r => {
+      const sc = computeOppScore(r, borrCounts);
+      r._score = sc.total; r._scoreComponents = sc.components;
+    });
+    populateSidebarFilters();
+    applyFilters();  // also rerenders active tab
+    renderFreshnessRibbon();
+    updateHdrMeta();
+    S.lastRefresh = new Date();
+    toast(`Loaded ${S.loans.length.toLocaleString()} loans`, { kind: 'success', sub: `Total ${fmt$(S.loans.reduce((s,r)=>s+(r.loan_amount||0),0))}` });
+  } catch (e) {
+    console.error(e);
+    toast('Update failed — see console', { kind: 'error', sub: String(e.message||e) });
+  }
+  btn.classList.remove('loading');
+  qs('#btn-refresh-label').textContent = 'Update Data';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  WIRE EVENTS + INIT
+// ═══════════════════════════════════════════════════════════════════════════════
+function wireEvents() {
+  setupTabs();
+  qs('#btn-refresh').addEventListener('click', updateData);
+
+  // Re-pull modal
+  qs('#btn-repull').addEventListener('click', () => qs('#rs-modal').classList.add('show'));
+  qs('#rs-close').addEventListener('click', () => qs('#rs-modal').classList.remove('show'));
+  qs('#rs-modal').addEventListener('click', e => { if (e.target === qs('#rs-modal')) qs('#rs-modal').classList.remove('show'); });
+  qs('#rs-copy').addEventListener('click', () => {
+    const cmd = qs('#rs-cmd').textContent;
+    navigator.clipboard?.writeText(cmd).then(() => {
+      const b = qs('#rs-copy'); b.textContent = 'Copied!'; setTimeout(() => b.textContent = 'Copy', 1500);
+    });
+  });
+
+  // Search
+  let searchT;
+  qs('#global-search').addEventListener('input', () => {
+    clearTimeout(searchT);
+    searchT = setTimeout(() => { S.filters.search = qs('#global-search').value; applyFilters(); }, 200);
+  });
+
+  // Score min
+  qs('#f-score-min').addEventListener('input', () => {
+    S.filters.scoreMin = +qs('#f-score-min').value;
+    qs('#f-score-min-val').textContent = S.filters.scoreMin;
+    applyFilters();
+  });
+
+  // Reset
+  qs('#btn-reset-filters').addEventListener('click', () => {
+    qsa('.sidebar input[type=checkbox]').forEach(c => { c.checked = true; });
+    qs('#f-score-min').value = 0; qs('#f-score-min-val').textContent = '0'; S.filters.scoreMin = 0;
+    qs('#global-search').value = ''; S.filters.search = '';
+    applyFilters();
+  });
+
+  // Pagination
+  qs('#pipe-pg-prev').addEventListener('click', () => { S.pipePage = Math.max(0, S.pipePage - 1); renderPipeline(); });
+  qs('#pipe-pg-next').addEventListener('click', () => { S.pipePage++; renderPipeline(); });
+
+  // Hamburger (mobile)
+  qs('#hamburger').addEventListener('click', () => qs('#sidebar').classList.toggle('mobile-open'));
+
+  // BulkToggle
+  if (window.BulkToggle) BulkToggle.init();
+
+  // Score weights drawer
+  if (window.ScoreWeights) {
+    ScoreWeights.init({
+      mount: { triggerEl: qs('#sw-trigger-mount') },
+      title: 'Maturity Opportunity Score',
+      groups: [{
+        groupKey: 'oppScore',
+        groupLabel: 'Components',
+        items: [
+          { key:'proximity',     label:'Time-to-maturity proximity', desc:'Linear: 30 pts at 0 months, 0 pts at 36 months.', default: 30, min: 0, max: 50 },
+          { key:'size',          label:'Loan size',                  desc:'Linear: 20 pts at ≥$5M, 0 pts at <$250K.',       default: 20, min: 0, max: 40 },
+          { key:'lender_exit',   label:'Lender exit risk',           desc:'Full points if lender is out-of-state OR non-bank.', default: 15, min: 0, max: 30 },
+          { key:'geo',           label:'Geographic fit',             desc:'County is in Ranger 32-county footprint.',         default: 15, min: 0, max: 25 },
+          { key:'concentration', label:'Borrower concentration',     desc:'More points if borrower has multiple loans rolling off.', default: 10, min: 0, max: 25 },
+          { key:'source_conf',   label:'Source confidence',          desc:'Full for SBA explicit dates; half for inferred UCC lapse.', default: 10, min: 0, max: 20 },
+        ],
+      }],
+      onChange: weights => {
+        if (weights.oppScore) Object.assign(SCORE_WEIGHTS, weights.oppScore);
+        // Recompute scores
+        const borrCounts = {};
+        S.loans.forEach(r => { const k = (r.borrower||'').trim().toUpperCase(); if (k) borrCounts[k] = (borrCounts[k]||0)+1; });
+        S.loans.forEach(r => {
+          const sc = computeOppScore(r, borrCounts);
+          r._score = sc.total; r._scoreComponents = sc.components;
+        });
+        applyFilters();
+      },
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MAIN
+// ═══════════════════════════════════════════════════════════════════════════════
+(async function main() {
+  wireEvents();
+  await updateData();
+})();
+
+if (window.ScoreHover) ScoreHover.init();
+</script>
+</body>
+</html>

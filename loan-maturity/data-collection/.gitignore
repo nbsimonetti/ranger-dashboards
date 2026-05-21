@@ -1,0 +1,6 @@
+# Raw SBA bulk CSVs — re-downloaded by pull_sba.py on each refresh.
+# Each file is 50-225 MB; do not commit. The output tx_sba_loans.json IS committed.
+foia-7a-*.csv
+foia-504-*.csv
+*.tmp
+__pycache__/
