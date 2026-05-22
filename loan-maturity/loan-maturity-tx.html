@@ -300,6 +300,33 @@ table.dt td.num { text-align: right; font-variant-numeric: tabular-nums; }
 <!-- Toast stack -->
 <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
 
+<!-- Cross-link popover modal -->
+<div class="rs-modal" id="cre-link-modal" role="dialog" aria-modal="true">
+  <div class="rs-card" style="max-width:720px">
+    <div class="rs-head">
+      <h3 id="cre-link-title">CRE properties owned by this borrower</h3>
+      <button class="rs-close" id="cre-link-close">×</button>
+    </div>
+    <div class="rs-body">
+      <div id="cre-link-summary" style="margin-bottom:12px;font-size:12.5px;color:var(--muted)"></div>
+      <table class="dt" style="font-size:11.5px">
+        <thead><tr>
+          <th>Owner (CRE)</th>
+          <th>Address</th>
+          <th class="num">Value</th>
+          <th class="num">Confidence</th>
+          <th>Match method</th>
+        </tr></thead>
+        <tbody id="cre-link-body"></tbody>
+      </table>
+      <div style="margin-top:14px;display:flex;gap:8px;justify-content:space-between;align-items:center">
+        <div style="font-size:11px;color:var(--muted)">Matches surface via free-data fuzzy entity resolution. Paid entity resolution (Reonomy / OpenCorporates) would raise the hit rate significantly — see <code>PAID_DATA_EVAL.md</code>.</div>
+        <a id="cre-link-jump" href="#" target="_blank" rel="noopener" style="background:var(--gold);color:var(--navy);text-decoration:none;padding:6px 12px;border-radius:5px;font-weight:700;font-size:12px">Open in CRE Dashboard →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Re-pull modal -->
 <div class="rs-modal" id="rs-modal" role="dialog" aria-modal="true">
   <div class="rs-card">
@@ -445,6 +472,7 @@ git push</pre>
               <th>Months left</th>
               <th title="Rate at origination vs current SBA index (~10.5% in 2026)">Rate Δ</th>
               <th title="Other loans on this borrower in current data">Sister loans</th>
+              <th title="CRE properties this borrower owns in our footprint (click to inspect)">CRE owned</th>
               <th title="Distance to nearest Ranger branch (DFW / Austin / Houston / San Antonio approx)">Branch dist</th>
               <th>Status</th>
               <th>Source</th>
@@ -574,6 +602,7 @@ const qsa = sel => document.querySelectorAll(sel);
 const S = {
   loans: [],
   meta: {},
+  joinIndex: { forward:{}, reverse:{}, entity_to_loans:{}, entity_to_parcels:{}, meta:{loaded:false} },
   filtered: [],
   filters: {
     maturityWindows: new Set(['0-6','7-12','13-24']),  // default to <=24mo
@@ -663,6 +692,16 @@ async function loadData() {
     const txt = document.getElementById('LOAN-DATA-EMBED').textContent;
     return JSON.parse(txt);
   } catch (e) { return { meta: {}, loans: [] }; }
+}
+
+// Loan ↔ CRE property cross-link index (produced by data-collection/join_to_cre.py).
+// Optional: the dashboard works without it. Falls back to no badges if missing.
+async function loadJoinIndex() {
+  try {
+    const r = await fetch('loan_property_join.json', { cache: 'no-store' });
+    if (r.ok) return await r.json();
+  } catch (e) { /* fall through */ }
+  return { meta:{loaded:false}, forward:{}, reverse:{}, entity_to_loans:{}, entity_to_parcels:{} };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1001,7 +1040,7 @@ function renderPipeline() {
   qs('#pipe-pg-next').disabled = pg >= pages-1;
 
   if (!rows.length) {
-    qs('#pipe-body').innerHTML = '<tr><td colspan="12" class="empty-state">No loans match the current filters.</td></tr>';
+    qs('#pipe-body').innerHTML = '<tr><td colspan="13" class="empty-state">No loans match the current filters.</td></tr>';
     return;
   }
   qs('#pipe-body').innerHTML = rows.map(r => {
@@ -1014,6 +1053,13 @@ function renderPipeline() {
       return `<span title="Origination rate ${r.interest_rate.toFixed(2)}% vs market benchmark ${MARKET_BENCHMARK_RATE}%">${r.interest_rate.toFixed(2)}%<br><span style="font-size:10px;color:${color};font-weight:700">${sign}${d}% vs mkt</span></span>`;
     })();
     const sisterCell = r._sisterCount > 0 ? `<span title="${r._sisterCount} other loan(s) for this borrower in current data" style="font-weight:700;color:#805ad5">👥 +${r._sisterCount}</span>` : '<span style="color:#cbd5e0">—</span>';
+    // Cross-link CRE badge — link to CRE Prospecting dashboard pre-filtered to this borrower
+    const visibleProps = (r._propertyMatches||[]).filter(m => m.visible_default);
+    const cnt = visibleProps.length;
+    const allCnt = (r._propertyMatches||[]).length;
+    const crelink = cnt > 0
+      ? `<button class="cre-link-btn" data-loan-id="${esc(r.loan_id)}" title="${cnt} high-confidence CRE property match${cnt>1?'es':''} (of ${allCnt} candidates). Click for details &amp; CRE dashboard link." style="background:#e6fffa;color:#22543d;border:1px solid #9ae6b4;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer">🏢 ${cnt}</button>`
+      : '<span style="color:#cbd5e0">—</span>';
     const branchCell = r._branchMi != null ? `<span title="Nearest Ranger branch (DFW/Austin/Houston/SA approx)">${r._branchMi} mi</span>` : '—';
     return `
     <tr data-loan-id="${esc(r.loan_id)}">
@@ -1032,6 +1078,7 @@ function renderPipeline() {
       <td>${matBadge(r._months)}</td>
       <td class="num">${rateDeltaCell}</td>
       <td class="num">${sisterCell}</td>
+      <td class="num">${crelink}</td>
       <td class="num">${branchCell}</td>
       <td>
         <select class="status-sel ranger-select" data-loan-id="${esc(r.loan_id)}" style="min-width:115px;height:26px;padding:1px 22px 1px 8px;border-color:${STATUS_COLORS[r._status||'new']};color:${STATUS_COLORS[r._status||'new']};font-weight:700;font-size:11px">
@@ -1041,6 +1088,14 @@ function renderPipeline() {
       <td><span class="src-badge src-${esc(r.source||'').replace(/[^a-z0-9-]/g,'')}" title="${esc(r.source_context||'')}">${esc((r.source||'').toUpperCase())}</span></td>
     </tr>`;
   }).join('');
+  // Wire CRE cross-link badges
+  qsa('#pipe-body .cre-link-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const loanId = btn.dataset.loanId;
+      openCreLinkModal(loanId);
+    });
+  });
   // Wire status dropdowns
   qsa('#pipe-body .status-sel').forEach(sel => {
     sel.addEventListener('change', e => {
@@ -1269,11 +1324,16 @@ async function updateData() {
   btn.classList.add('loading');
   qs('#btn-refresh-label').textContent = 'Re-reading…';
   try {
-    const blob = await loadData();
+    const [blob, joinBlob] = await Promise.all([loadData(), loadJoinIndex()]);
+    S.joinIndex = joinBlob || S.joinIndex;
     S.loans = (blob.loans || []).map(r => {
       r._months = monthsToMat(r);
       r._lenderType = classifyLender(r);
       r._branchMi = nearestBranchMiles(r);
+      // Cross-link: how many CRE properties does this borrower own?
+      const matches = (S.joinIndex.forward && S.joinIndex.forward[r.loan_id]) || [];
+      r._propertyMatches = matches;
+      r._propertyCount = matches.length;
       // Origination age in months (relative to today)
       if (r.approval_date) {
         const ap = new Date(r.approval_date);
@@ -1314,6 +1374,34 @@ async function updateData() {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  WIRE EVENTS + INIT
 // ═══════════════════════════════════════════════════════════════════════════════
+function openCreLinkModal(loanId) {
+  const loan = S.loans.find(r => r.loan_id === loanId);
+  if (!loan) return;
+  const matches = (loan._propertyMatches || []).slice().sort((a,b)=>b.confidence-a.confidence);
+  const modal = qs('#cre-link-modal');
+  qs('#cre-link-title').textContent = `${loan.borrower} — CRE properties in footprint`;
+  const visible = matches.filter(m => m.visible_default);
+  const totalVal = visible.reduce((s,m)=>s+(m.val||0), 0);
+  qs('#cre-link-summary').innerHTML = `
+    <strong>${visible.length}</strong> high-confidence match${visible.length===1?'':'es'} (of ${matches.length} candidates ≥${(S.joinIndex.meta?.min_confidence)||50}% confidence)
+    · Combined assessed value <strong>${fmt$(totalVal)}</strong>
+    · Borrower: ${esc(loan.borrower)}${loan.borrower_city ? ' · '+esc(loan.borrower_city) : ''}, ${esc(loan.borrower_state||'')}`;
+  const rowsHtml = matches.map(m => {
+    const cls = m.confidence >= 75 ? '#22543d' : m.confidence >= 60 ? '#7b341e' : '#742a2a';
+    return `<tr${m.visible_default ? '' : ' style="opacity:.6"'}>
+      <td><strong>${esc(m.owner || '—')}</strong></td>
+      <td>${esc(m.addr || '—')}</td>
+      <td class="num">${fmt$(m.val)}</td>
+      <td class="num"><strong style="color:${cls}">${m.confidence}</strong></td>
+      <td><span class="src-badge">${esc(m.match_method)}</span></td>
+    </tr>`;
+  }).join('');
+  qs('#cre-link-body').innerHTML = rowsHtml || '<tr><td colspan="5" class="empty-state">No matches</td></tr>';
+  // CRE-dashboard link with the borrower name as a search pre-filter
+  qs('#cre-link-jump').href = '../cre/cre-dashboard-tx.html?owner=' + encodeURIComponent(loan.borrower);
+  modal.classList.add('show');
+}
+
 function wireEvents() {
   setupTabs();
   qs('#btn-refresh').addEventListener('click', updateData);
@@ -1322,6 +1410,10 @@ function wireEvents() {
   qs('#btn-repull').addEventListener('click', () => qs('#rs-modal').classList.add('show'));
   qs('#rs-close').addEventListener('click', () => qs('#rs-modal').classList.remove('show'));
   qs('#rs-modal').addEventListener('click', e => { if (e.target === qs('#rs-modal')) qs('#rs-modal').classList.remove('show'); });
+
+  // CRE link modal
+  qs('#cre-link-close').addEventListener('click', () => qs('#cre-link-modal').classList.remove('show'));
+  qs('#cre-link-modal').addEventListener('click', e => { if (e.target === qs('#cre-link-modal')) qs('#cre-link-modal').classList.remove('show'); });
   qs('#rs-copy').addEventListener('click', () => {
     const cmd = qs('#rs-cmd').textContent;
     navigator.clipboard?.writeText(cmd).then(() => {
@@ -1396,9 +1488,21 @@ function wireEvents() {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  MAIN
 // ═══════════════════════════════════════════════════════════════════════════════
+function applyIncomingFilter() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const borrower = p.get('borrower');
+    if (borrower) {
+      qs('#global-search').value = borrower;
+      S.filters.search = borrower;
+      applyFilters();
+    }
+  } catch (e) {}
+}
 (async function main() {
   wireEvents();
   await updateData();
+  applyIncomingFilter();
 })();
 
 if (window.ScoreHover) ScoreHover.init();
