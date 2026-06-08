@@ -11,6 +11,11 @@
 <link rel="stylesheet" href="../shared/score-hover.css"/>
 <link rel="stylesheet" href="../shared/ranger-select.css"/>
 <link rel="stylesheet" href="../shared/sortable-table.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="../shared/score-weights.js"></script>
 <script src="../shared/score-hover.js"></script>
 <script src="../shared/ranger-select.js"></script>
@@ -343,9 +348,20 @@ a.wl{color:var(--acc);text-decoration:none;font-size:11px}a.wl:hover{text-decora
   </div>
   <div class="chart-grid cg-4" style="padding:0">
     <div class="cd"><div class="cd-t">Metro Distribution</div><div class="cc"><canvas id="c3"></canvas></div></div>
-    <div class="cd"><div class="cd-t">Territory Revenue Map</div><div class="cc"><canvas id="c4"></canvas></div></div>
+    <div class="cd"><div class="cd-t">Top Metros by Medicare Revenue</div><div class="cc"><canvas id="c4"></canvas></div></div>
     <div class="cd"><div class="cd-t">Top Medical Schools</div><div class="cc"><canvas id="c5"></canvas></div></div>
     <div class="cd"><div class="cd-t">Medicare Payment Tiers</div><div class="cc"><canvas id="c6"></canvas></div></div>
+  </div>
+
+  <!-- Real practice-location map (added in map-precision iteration) -->
+  <div class="cd" style="margin-top:14px">
+    <div class="cd-t" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+      <span>Practice locations &mdash; <span id="map-count">—</span> physicians</span>
+      <span style="font-size:11px;color:var(--mut);font-weight:400">marker size = Medicare $ · color = specialty group</span>
+    </div>
+    <div class="cc" style="height:520px;padding:0">
+      <div id="phys-map" style="height:100%;border-radius:8px;overflow:hidden"></div>
+    </div>
   </div>
 </div>
 
@@ -1051,7 +1067,98 @@ function resetFilters(){
 }
 
 /* === RENDER ALL === */
-function renderAll(){kpis();charts();tbl();renderInsights();}
+function renderAll(){kpis();charts();tbl();renderInsights();renderPhysMap();}
+
+// ─── Practice-location map (added in map-precision iteration) ─────────────
+let _physMap = null, _physMapMarkers = null, _physGeoCache = null, _physGeoLoaded = false;
+async function ensurePhysGeo() {
+  if (_physGeoLoaded) return;
+  _physGeoLoaded = true;
+  try {
+    const r = await fetch('physicians-geocoded.json', { cache: 'force-cache' });
+    if (r.ok) _physGeoCache = await r.json();
+  } catch (e) { /* dashboard works without it */ }
+}
+function specialtyColor(spec) {
+  const s = (spec || '').toLowerCase();
+  if (/family|internal|pediatric|general practice/.test(s)) return '#3182ce';   // PCP
+  if (/surgery|surgical|orthopaed|orthopedic|ophthal|otolaryng|cardiothoracic|plastic|urology|vascular|colon|neurosurg/.test(s)) return '#c53030'; // Surgical
+  if (/anesthes|radiol|patholog|emergency|hospitalist/.test(s)) return '#805ad5';  // Hospital-based
+  return '#dd6b20'; // Medical specialty / other
+}
+function renderPhysMap() {
+  const el = document.getElementById('phys-map');
+  if (!el || typeof L === 'undefined') return;
+  if (!_physMap) {
+    _physMap = L.map(el, { preferCanvas: true }).setView([31.2, -99.5], 6);
+    const cdn = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OSM © CARTO', maxZoom: 19 });
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM', maxZoom: 18 });
+    cdn.addTo(_physMap);
+    L.control.layers({ 'Carto Positron': cdn, 'OpenStreetMap': osm }, null, { position:'topleft', collapsed:true }).addTo(_physMap);
+    // Legend
+    const lg = L.control({ position: 'bottomright' });
+    lg.onAdd = function() {
+      const div = L.DomUtil.create('div');
+      div.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.15);font-size:11px;line-height:1.6';
+      div.innerHTML = '<strong style="display:block;margin-bottom:4px">Specialty group</strong>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3182ce;margin-right:6px"></span>Primary Care</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c53030;margin-right:6px"></span>Surgical</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dd6b20;margin-right:6px"></span>Medical Specialty</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#805ad5;margin-right:6px"></span>Hospital-Based</span><br>' +
+        '<span style="color:#6b7280;font-style:italic">size ∝ Medicare $</span>';
+      return div;
+    };
+    lg.addTo(_physMap);
+    // Fit-to-filter button
+    const fb = L.control({ position: 'topright' });
+    fb.onAdd = function() {
+      const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      div.innerHTML = '<a href="#" id="phys-fit-btn" title="Fit to filtered practices" style="background:#fff;color:#0a2342;padding:6px 10px;font-weight:700;font-size:11px;text-decoration:none;display:block">⛶ Fit to filter</a>';
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    };
+    fb.addTo(_physMap);
+    setTimeout(() => {
+      const b = document.getElementById('phys-fit-btn');
+      if (b) b.addEventListener('click', e => { e.preventDefault(); fitPhysMap(); });
+    }, 100);
+  }
+  if (!_physGeoLoaded) { ensurePhysGeo().then(() => renderPhysMap()); }
+  if (_physMapMarkers) _physMap.removeLayer(_physMapMarkers);
+  _physMapMarkers = L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 45, disableClusteringAtZoom: 13 });
+  let plotted = 0;
+  D.forEach(r => {
+    const g = _physGeoCache && _physGeoCache[r.npi];
+    if (!g || !g.matched || g.lat == null) return;
+    const color = specialtyColor(r.specialty);
+    const pay  = r.totalMedicarePayment || 0;
+    const radius = pay > 0 ? Math.max(3, Math.min(14, Math.log10(Math.max(1000, pay)) * 1.5)) : 4;
+    const m = L.circleMarker([g.lat, g.lng], {
+      radius, color: '#fff', weight: 1, fillColor: color, fillOpacity: 0.78,
+    });
+    m.bindPopup(
+      `<div style="font-size:12.5px">` +
+      `<strong>${(r.name||'').replace(/[<>]/g,'')}, ${r.credential||''}</strong>` +
+      `<div style="font-size:11px;color:#6b7280;margin-bottom:4px">${r.specialty||'—'}</div>` +
+      `<div>${(r.address||'').replace(/[<>]/g,'')}<br>${(r.city||'')}${r.state ? ', '+r.state : ''} ${r.zip||''}</div>` +
+      `<div style="margin-top:4px;font-size:11px"><strong>Medicare $:</strong> ${pay>0 ? '$'+pay.toLocaleString() : 'no data'}</div>` +
+      (r.phone ? `<div style="font-size:11px"><strong>Phone:</strong> ${r.phone}</div>` : '') +
+      `<div style="font-size:10px;color:#a0aec0;margin-top:5px;font-style:italic">NPI ${r.npi} · NPPES data</div>` +
+      `</div>`
+    );
+    _physMapMarkers.addLayer(m);
+    plotted++;
+  });
+  _physMapMarkers.addTo(_physMap);
+  const cnt = document.getElementById('map-count');
+  if (cnt) cnt.textContent = `${plotted.toLocaleString()} of ${D.length.toLocaleString()} (${D.length ? Math.round(100*plotted/D.length) : 0}% geocoded)`;
+  setTimeout(() => _physMap.invalidateSize(), 80);
+}
+function fitPhysMap() {
+  if (!_physMap || !_physMapMarkers) return;
+  const b = _physMapMarkers.getBounds();
+  if (b.isValid()) _physMap.fitBounds(b, { padding: [30,30], maxZoom: 13 });
+}
 
 /* === KPIs === */
 function kpis(){

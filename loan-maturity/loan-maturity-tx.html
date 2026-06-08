@@ -1199,34 +1199,136 @@ const COUNTY_CENTROIDS = {
   'Travis':[30.32,-97.78],'Victoria':[28.79,-97.00],'Wichita':[33.99,-98.70],'Williamson':[30.67,-97.59],'Wise':[33.21,-97.65],
 };
 
+// Lazy-loaded geocoded coordinate cache (loans-geocoded.json), keyed by loan_id.
+// Loaded once on first map render. The dashboard works without it (falls back to county centroid).
+let _loansGeocoded = null;
+let _loansGeocodedLoaded = false;
+async function ensureLoansGeocoded() {
+  if (_loansGeocodedLoaded) return;
+  _loansGeocodedLoaded = true;
+  try {
+    const r = await fetch('loans-geocoded.json', { cache: 'force-cache' });
+    if (r.ok) _loansGeocoded = await r.json();
+  } catch (e) { /* fall back to county centroid */ }
+}
+
 function renderMap() {
   if (!S.map) {
-    S.map = L.map('map').setView([31.0,-99.0], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
-    }).addTo(S.map);
+    S.map = L.map('map', { preferCanvas: true }).setView([31.0,-99.0], 6);
+    // Two base layers + a switcher control
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',  { attribution:'© OpenStreetMap', maxZoom:18 });
+    const cdn = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution:'© OpenStreetMap, © CARTO', maxZoom:19 });
+    cdn.addTo(S.map);  // Carto Positron is the default — neutral base for score-colored markers
+    L.control.layers({ 'Carto Positron':cdn, 'OpenStreetMap':osm }, null, { position:'topleft', collapsed:true }).addTo(S.map);
+    // Map legend — borrower marker color = months to maturity
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function() {
+      const div = L.DomUtil.create('div');
+      div.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.15);font-size:11px;line-height:1.6';
+      div.innerHTML = '<strong style="display:block;margin-bottom:4px">Months to maturity</strong>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c53030;margin-right:6px"></span>≤12 mo</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dd6b20;margin-right:6px"></span>13-24 mo</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#38a169;margin-right:6px"></span>&gt;24 mo</span><br>' +
+        '<span style="color:#718096;font-size:10px;font-style:italic">size ∝ loan $</span>';
+      return div;
+    };
+    legend.addTo(S.map);
+    // "Fit to filter" button
+    const fitBtn = L.control({ position: 'topright' });
+    fitBtn.onAdd = function() {
+      const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      div.innerHTML = '<a href="#" id="map-fit-btn" title="Fit map to filtered borrowers" style="background:#fff;color:#1B365D;padding:6px 10px;font-weight:700;font-size:11px;text-decoration:none;display:block">⛶ Fit to filter</a>';
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    };
+    fitBtn.addTo(S.map);
+    setTimeout(() => {
+      const b = document.getElementById('map-fit-btn');
+      if (b) b.addEventListener('click', e => { e.preventDefault(); fitMapToFilter(); });
+    }, 100);
+  }
+  // Trigger lazy load of geocoded cache; re-renders when ready.
+  if (!_loansGeocodedLoaded) {
+    ensureLoansGeocoded().then(() => renderMap());
   }
   if (S.markers) S.map.removeLayer(S.markers);
   S.markers = L.layerGroup();
-  // jitter so multiple loans in the same county don't overlap
-  const seenPerCounty = {};
+  let geocodedCount = 0, fallbackCount = 0;
+  // Group multiple loans sharing the same coord (same locationid / business address)
+  // into one marker. Loan-level rows in the table still render every disbursement;
+  // the map shows one pin per distinct property.
+  const byCoord = {};
   S.filtered.forEach(r => {
-    const c = COUNTY_CENTROIDS[r.county];
-    if (!c) return;
-    const i = (seenPerCounty[r.county] = (seenPerCounty[r.county]||0) + 1);
-    const angle = (i * 137.5) * Math.PI / 180;  // golden-angle spiral
-    const radius = 0.04 * Math.sqrt(i);
-    const lat = c[0] + Math.cos(angle) * radius;
-    const lon = c[1] + Math.sin(angle) * radius;
-    const months = r._months;
-    const color = months == null ? '#a0aec0' : months <= 12 ? '#c53030' : months <= 24 ? '#dd6b20' : '#38a169';
-    const radiusPx = Math.max(3, Math.min(16, Math.log10(Math.max(10000, r.loan_amount||0)) * 1.6));
-    L.circleMarker([lat,lon], { radius: radiusPx, color, weight: 1, fillColor: color, fillOpacity: 0.6 })
-      .bindPopup(`<strong>${esc(r.borrower)}</strong><br>${esc(r.lender)}<br>${fmt$(r.loan_amount)} · matures ${fmtDate(r.maturity_date)}<br><span style="font-size:10px;color:#666">${esc(r.source_context||'')}</span>`)
-      .addTo(S.markers);
+    let lat, lng, source;
+    const g = _loansGeocoded && _loansGeocoded[r.loan_id];
+    if (g && g.matched && g.lat != null && g.lng != null) {
+      lat = g.lat; lng = g.lng; source = 'address';
+      geocodedCount++;
+    } else {
+      const c = COUNTY_CENTROIDS[r.county];
+      if (!c) return;
+      // Jitter only at county fallback so distinct businesses don't stack
+      const seed = (r.loan_id||'').split('').reduce((s,c)=>s+c.charCodeAt(0),0);
+      const angle = (seed % 360) * Math.PI / 180;
+      const offset = 0.04;
+      lat = c[0] + Math.cos(angle) * offset;
+      lng = c[1] + Math.sin(angle) * offset;
+      source = 'county';
+      fallbackCount++;
+    }
+    const key = lat.toFixed(5) + ',' + lng.toFixed(5);
+    if (!byCoord[key]) byCoord[key] = { lat, lng, source, loans: [] };
+    byCoord[key].loans.push(r);
+  });
+  Object.values(byCoord).forEach(grp => {
+    const totalAmt = grp.loans.reduce((s,L) => s + (L.loan_amount||0), 0);
+    const earliestMonths = Math.min(...grp.loans.map(L => L._months ?? 999));
+    const color = earliestMonths == null ? '#a0aec0' :
+                  earliestMonths <= 12 ? '#c53030' :
+                  earliestMonths <= 24 ? '#dd6b20' : '#38a169';
+    const radiusPx = Math.max(4, Math.min(18, Math.log10(Math.max(10000, totalAmt)) * 1.8));
+    const opacity = grp.source === 'address' ? 0.75 : 0.45;
+    const weight  = grp.source === 'address' ? 1 : 0;
+    const dash    = grp.source === 'address' ? null : '3,3';
+    const m = L.circleMarker([grp.lat, grp.lng], {
+      radius: radiusPx, color: '#1B365D', weight, fillColor: color, fillOpacity: opacity,
+      dashArray: dash,
+    });
+    // Standardized popup
+    const head = grp.loans.length === 1
+      ? `<strong>${esc(grp.loans[0].borrower)}</strong>`
+      : `<strong>${grp.loans.length} loans · ${esc(grp.loans[0].borrower)}${grp.loans.length>1 ? ` <span style="color:#718096">+${grp.loans.length-1} more</span>`:''}</strong>`;
+    const sortedLoans = grp.loans.slice().sort((a,b) => (a._months||9999) - (b._months||9999));
+    const top = sortedLoans[0];
+    const rowsHtml = sortedLoans.slice(0,5).map(L =>
+      `<div style="font-size:11px;color:#4a5568;border-top:1px solid #edf2f7;padding-top:3px;margin-top:3px">${esc(L.lender)} · ${fmt$(L.loan_amount)} · matures ${fmtDate(L.maturity_date)}</div>`
+    ).join('');
+    const more = grp.loans.length > 5 ? `<div style="font-size:10px;color:#718096;margin-top:3px;font-style:italic">+${grp.loans.length-5} more loans at this address</div>` : '';
+    const provenance = grp.source === 'county'
+      ? `<div style="font-size:9.5px;color:#a0aec0;margin-top:6px;font-style:italic">Position = county centroid (street address not geocoded)</div>`
+      : `<div style="font-size:9.5px;color:#a0aec0;margin-top:6px;font-style:italic">Position = US Census Geocoder match on ${esc(top.borrower_address||'borrower address')}</div>`;
+    m.bindPopup(`<div style="font-size:12.5px">${head}<div style="font-size:11px;color:#718096;margin-bottom:4px">${esc(top.county||'')} County · combined ${fmt$(totalAmt)}</div>${rowsHtml}${more}${provenance}</div>`);
+    m.addTo(S.markers);
   });
   S.markers.addTo(S.map);
+  // Record marker counts in the legend hint area for transparency
+  const legendNote = document.querySelector('.leaflet-bottom.leaflet-right .leaflet-control:last-of-type div');
+  if (legendNote && legendNote.innerHTML.indexOf('Months to maturity') >= 0) {
+    if (legendNote.querySelector('.geo-note')) legendNote.querySelector('.geo-note').remove();
+    const note = document.createElement('div');
+    note.className = 'geo-note';
+    note.style.cssText = 'margin-top:5px;padding-top:5px;border-top:1px solid #edf2f7;color:#718096;font-size:10px';
+    note.innerHTML = `${geocodedCount.toLocaleString()} address-precise<br>${fallbackCount.toLocaleString()} county-only`;
+    legendNote.appendChild(note);
+  }
   setTimeout(() => S.map.invalidateSize(), 60);
+}
+
+function fitMapToFilter() {
+  if (!S.map || !S.markers) return;
+  const bounds = L.latLngBounds([]);
+  S.markers.eachLayer(m => { if (m.getLatLng) bounds.extend(m.getLatLng()); });
+  if (bounds.isValid()) S.map.fitBounds(bounds, { padding: [30,30], maxZoom: 13 });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

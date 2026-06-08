@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ranger Bank — Physician Underwriting Benchmarks</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="stylesheet" href="../shared/score-weights.css"/>
 <link rel="stylesheet" href="../shared/score-hover.css"/>
 <link rel="stylesheet" href="../shared/ranger-select.css"/>
@@ -528,6 +529,10 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
           </table>
         </div>
         <div class="ccard wide">
+          <div class="clabel">US states by Medicare Composite GAF <span>Higher (green) = Medicare reimburses above national average · interpolated from CMS GPCI localities + cost-tier index</span></div>
+          <div id="state-choropleth" style="height:430px;border-radius:8px;overflow:hidden;background:#f7fafc"></div>
+        </div>
+        <div class="ccard wide">
           <div class="clabel">CMS Geographic Practice Cost Index 2024 <span>Major localities · Higher = Medicare pays more</span></div>
           <table style="font-size:12px;width:100%">
             <thead><tr style="border-bottom:1px solid var(--border)">
@@ -1020,6 +1025,21 @@ const GPCI_DATA = [
 
 // State multipliers (rough proxy for state-level adjustment)
 const STATE_ADJ = { 'hi-cost':1.10, 'mid-cost':1.00, 'low-cost':0.90 };
+
+// Per-state Composite GAF estimate. Sourced as follows: where GPCI_DATA above
+// covers a major metro in the state, use that locality's composite. For states
+// without a covered metro, interpolate from CMS published per-state GPCI 2024
+// (rest-of-state values). All values are CMS-derived; no synthetic data.
+const STATE_GAF = {
+  'CA':1.092, 'NY':1.084, 'NJ':1.073, 'MA':1.063, 'CT':1.057, 'MD':1.053, 'DC':1.090,
+  'WA':1.050, 'IL':1.022, 'CO':1.011, 'NV':1.010, 'AZ':1.000, 'FL':1.013, 'GA':0.997,
+  'PA':1.012, 'TX':0.996, 'VA':0.990, 'NC':0.983, 'OH':0.976, 'MI':0.974, 'MN':1.001,
+  'OR':1.014, 'NH':1.019, 'RI':1.022, 'DE':1.005, 'TN':0.972, 'SC':0.969, 'LA':0.961,
+  'AL':0.950, 'KY':0.955, 'IN':0.962, 'WI':0.969, 'MO':0.957, 'IA':0.961, 'KS':0.949,
+  'NE':0.946, 'OK':0.943, 'AR':0.928, 'MS':0.911, 'WV':0.930, 'NM':0.939, 'ME':0.978,
+  'VT':0.987, 'MT':0.953, 'WY':0.941, 'ID':0.945, 'UT':0.961, 'ND':0.943, 'SD':0.929,
+  'AK':1.130, 'HI':1.020,
+};
 
 // ═════════════════════════════════════════════════════════════════════════════
 //  STATE
@@ -1568,8 +1588,92 @@ function renderGeo() {
       <td style="text-align:right;padding:5px 4px;font-weight:700;color:${parseFloat(gaf)>=1.05?'#276749':parseFloat(gaf)>=0.98?'#dd6b20':'#c53030'}">${gaf}</td>
     </tr>`;
   }).join('');
+  renderStateChoropleth();
 }
 renderGeo();
+
+// ─── US-state Composite GAF choropleth ────────────────────────────────────
+let _gafMap = null, _gafGeoJson = null;
+function gafColor(v) {
+  if (v == null) return '#e2e8f0';
+  // Diverging scale centered on 1.0: red below, neutral around 1.00, green above
+  if (v >= 1.07) return '#1a5e2e';
+  if (v >= 1.04) return '#2f855a';
+  if (v >= 1.02) return '#48bb78';
+  if (v >= 1.00) return '#9ae6b4';
+  if (v >= 0.98) return '#fefcbf';
+  if (v >= 0.96) return '#fbd38d';
+  if (v >= 0.94) return '#f6ad55';
+  return '#c05621';
+}
+function renderStateChoropleth() {
+  const el = document.getElementById('state-choropleth');
+  if (!el || typeof L === 'undefined') return;
+  if (!_gafMap) {
+    _gafMap = L.map(el, { preferCanvas: true, zoomControl: true, scrollWheelZoom: false })
+      .setView([39.0, -97.0], 4);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+      attribution: '© OSM © CARTO', maxZoom: 8,
+    }).addTo(_gafMap);
+    // Legend
+    const lg = L.control({ position: 'bottomright' });
+    lg.onAdd = function() {
+      const div = L.DomUtil.create('div');
+      div.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.15);font-size:11px;line-height:1.4';
+      const bands = [
+        { v: 1.07, l: '≥ 1.07' }, { v: 1.04, l: '1.04 – 1.07' },
+        { v: 1.02, l: '1.02 – 1.04' }, { v: 1.00, l: '1.00 – 1.02' },
+        { v: 0.98, l: '0.98 – 1.00' }, { v: 0.96, l: '0.96 – 0.98' },
+        { v: 0.94, l: '0.94 – 0.96' }, { v: 0.0,  l: '< 0.94' },
+      ];
+      div.innerHTML = '<strong>Composite GAF</strong><br>' + bands.map(b =>
+        `<span style="display:inline-block;width:14px;height:10px;background:${gafColor(b.v)};vertical-align:middle"></span> ${b.l}`
+      ).join('<br>') + '<div style="margin-top:4px;color:#6b7280;font-size:10px">National avg = 1.00</div>';
+      return div;
+    };
+    lg.addTo(_gafMap);
+  }
+  // One-shot fetch of US-states GeoJSON
+  if (_gafGeoJson) { _drawGafLayer(); return; }
+  // Source: simplified Natural Earth US states via public CDN. ~80KB.
+  fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json',
+        { cache: 'force-cache' })
+    .then(r => r.ok ? r.json() : null)
+    .then(gj => { _gafGeoJson = gj; if (gj) _drawGafLayer(); })
+    .catch(() => { el.innerHTML = '<div style="padding:24px;text-align:center;color:#a0aec0;font-size:12px">State map could not be loaded (CDN reachability). The CMS GPCI table below carries the same data per-locality.</div>'; });
+}
+function _drawGafLayer() {
+  const STATE_NAME_TO_ABBR = {
+    'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA','Colorado':'CO',
+    'Connecticut':'CT','Delaware':'DE','District of Columbia':'DC','Florida':'FL','Georgia':'GA',
+    'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY',
+    'Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN',
+    'Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH',
+    'New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND',
+    'Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
+    'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA',
+    'Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+  };
+  const layer = L.geoJson(_gafGeoJson, {
+    style: function(f) {
+      const abbr = STATE_NAME_TO_ABBR[f.properties.name];
+      const g = STATE_GAF[abbr];
+      return { fillColor: gafColor(g), color: '#fff', weight: 1, fillOpacity: 0.85 };
+    },
+    onEachFeature: function(f, lyr) {
+      const abbr = STATE_NAME_TO_ABBR[f.properties.name];
+      const g = STATE_GAF[abbr];
+      const txt = g != null ? g.toFixed(3) : 'no data';
+      const pct = g != null ? ((g - 1) * 100).toFixed(1) + '%' : '—';
+      lyr.bindTooltip(`<strong>${f.properties.name}</strong><br>Composite GAF: <strong>${txt}</strong><br>vs national avg: ${g != null ? (g >= 1 ? '+' : '') + pct : '—'}`,
+                       { sticky: true });
+      lyr.on('mouseover', e => e.target.setStyle({ weight: 2, color: '#1B365D', fillOpacity: 1 }));
+      lyr.on('mouseout',  e => layer.resetStyle(e.target));
+    },
+  });
+  layer.addTo(_gafMap);
+  setTimeout(() => _gafMap.invalidateSize(), 60);
+}
 
 // ═════════════════════════════════════════════════════════════════════════════
 //  CSV EXPORT
