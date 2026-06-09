@@ -635,7 +635,11 @@ function fmtN(n){return n?Number(n).toLocaleString():'\u2014';}
 function E(s){if(!s)return'\u2014';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function ph(p){if(!p)return'\u2014';const d=p.replace(/\D/g,'');return d.length===10?'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6):p;}
 function phLink(p){if(!p)return'\u2014';const d=p.replace(/\D/g,'');const display=d.length===10?'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6):p;return'<a href="tel:+1'+d+'" style="color:var(--acc);text-decoration:none;white-space:nowrap">'+display+'</a>';}
-function scoreClass(s){return s>=PHYS_BANDS.green?'score-green':s>=PHYS_BANDS.yellow?'score-yellow':'score-red';}
+function scoreClass(s){
+  return s >= _physBandCuts.hot  ? 'score-hot'  :
+         s >= _physBandCuts.warm ? 'score-warm' :
+         s >= _physBandCuts.mod  ? 'score-med'  : 'score-cool';
+}
 function _physScoreHoverAttrs(r){
   if(!r||!r._scoreComponents)return '';
   const c=r._scoreComponents,w=PHYS_WEIGHTS;
@@ -648,50 +652,125 @@ function _physScoreHoverAttrs(r){
     {label:'Contact',         value:c.contact||0,    max:w.contact,   color:'#d69e2e'},
     {label:'Compliance',      value:c.compliance||0, max:w.compliance,color:'#48bb78'}
   ];
+  if(c.bonus) comps.push({label:'Premium-signal bonus', value:c.bonus, max:5, color:'#22c55e'});
+  const penaltyLabels={oig:'− OIG LEIE flag', too_new:'− Practice <3y (too new)', retirement:'− Practice >35y (retirement-track)', stale_data:'− Stale NPPES data (>4y)'};
+  Object.keys(c.penalties||{}).forEach(k => comps.push({label:penaltyLabels[k]||('− '+k), value:c.penalties[k], max:c.penalties[k], color:'#e53e3e'}));
+  // Percentile within the filtered set
+  const arr = (typeof F!=='undefined' && F.length) ? F : (typeof D!=='undefined' ? D : []);
+  let pctStr='';
+  if(arr && arr.length){
+    let cnt=0;
+    for(let i=0;i<arr.length;i++) if((arr[i].prospectScore||0) <= (r.prospectScore||0)) cnt++;
+    const top = Math.round(100 - 100*cnt/arr.length);
+    pctStr = ' · Top '+top+'%';
+  }
   const json=JSON.stringify(comps).replace(/"/g,'&quot;');
-  return ' tabindex="0" data-shv-title="Prospect Score" data-shv-total="'+(r.prospectScore||0)+'" data-shv-max="100" data-shv-theme="light" data-shv-components="'+json+'" data-shv-foot="Hover any score for breakdown · Adjust Weights to retune"';
+  return ' tabindex="0" data-shv-title="Prospect Score" data-shv-total="'+(r.prospectScore||0)+'" data-shv-max="100" data-shv-theme="light" data-shv-components="'+json+'" data-shv-foot="Bands are percentile-based on the filtered set'+pctStr+'. Adjust Weights to retune."';
 }
 function scoreBadge(s,r){return'<span class="score-badge shv-trigger '+scoreClass(s)+'"'+_physScoreHoverAttrs(r)+'>'+s+'</span>';}
 function scoreBadgeLg(s,r){return'<span class="score-badge score-badge-lg shv-trigger '+scoreClass(s)+'"'+_physScoreHoverAttrs(r)+'>'+s+'</span>';}
 function cby(a,k){const m={};a.forEach(r=>{const v=r[k]||'Unknown';m[v]=(m[v]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
 
-/* === PROSPECT SCORING MODEL === */
-// Default weights (max points per component) and score-band thresholds
+/* === PROSPECT SCORING MODEL (v2: continuous + bonus + penalties + percentile bands) === */
 const PHYS_DEFAULTS={medicare:25,ownership:20,maturity:15,specialty:15,data:10,contact:10,compliance:5};
 const PHYS_WEIGHTS=Object.assign({},PHYS_DEFAULTS);
-const PHYS_BAND_DEFAULTS={green:60,yellow:30};  // >=green=green; >=yellow=yellow; below=red
+const PHYS_PENALTY_DEFAULTS={oig:25,too_new:15,retirement:15,stale_data:10};
+const PHYS_PENALTIES=Object.assign({},PHYS_PENALTY_DEFAULTS);
+const PHYS_BAND_DEFAULTS={hot_pct:0.93,warm_pct:0.75,mod_pct:0.35};
 const PHYS_BANDS=Object.assign({},PHYS_BAND_DEFAULTS);
+let _physBandCuts={hot:75,warm:55,mod:35};
+
+// Continuous log curve on Medicare receipts: 0 at <$25K, 1.0 at $1M+
+function medicareFrac(pay){
+  if(!pay || pay<=25e3) return 0;
+  if(pay>=1e6) return 1;
+  return Math.max(0,Math.min(1,(Math.log10(pay)-Math.log10(25e3))/(Math.log10(1e6)-Math.log10(25e3))));
+}
+// Ownership 4-tier
+function ownershipFrac(r){
+  const gs=r.groupSize||r.estPracticeSize||0;
+  if(r.practiceType==='Solo Practice' && r.medicareParticipating==='Y') return 1.00;  // textbook small biz borrower
+  if(r.practiceType==='Solo Practice') return 0.80;
+  if(r.practiceType==='Group Practice' && gs>=2 && gs<=5) return 0.60;
+  if(r.practiceType==='Group Practice') return 0.25;
+  return 0.10;
+}
+// Practice age in years (from enumDate)
+function practiceAgeYears(r){
+  if(!r.enumDate) return null;
+  try { const d=new Date(r.enumDate); if(isNaN(d.getTime())) return null;
+    return (Date.now() - d.getTime()) / (365.25*86400*1000);
+  } catch(e){ return null; }
+}
+// Practice-viable specialties for solo banking (drives the specialty signal)
+const PRIVATE_PRACTICE_VIABLE = new Set([
+  'Orthopedic','Cardiology','Gastroenterology','Dermatology','Plastic Surgery',
+  'Ophthalmology','Urology','Otolaryngology','Family Medicine','Internal Medicine','Pediatrics'
+]);
+function isPrivateViable(spec){ if(!spec)return false; const s=spec.toLowerCase(); return [...PRIVATE_PRACTICE_VIABLE].some(k => s.includes(k.toLowerCase())); }
 
 function computeScore(r){
-  const w=PHYS_WEIGHTS;let score=0;const c={};
-  // 1. Medicare billing volume
+  const w=PHYS_WEIGHTS, pen=PHYS_PENALTIES;
+  const c={};
   const pay=r.totalMedicarePayment||0;
-  let medFrac=pay>=1000000?1.0:pay>=500000?0.80:pay>=200000?0.60:pay>=50000?0.20:0;
-  c.medicare=Math.round(medFrac*w.medicare);
-  score+=c.medicare;
-  // 2. Practice ownership signal
-  let ownFrac;
-  if(r.practiceType==='Solo Practice')ownFrac=1.0;
-  else if(r.practiceType==='Group Practice'){const gs=r.groupSize||r.estPracticeSize||0;ownFrac=(gs>0&&gs<10)?0.60:0.25;}
-  else ownFrac=0;
-  c.ownership=Math.round(ownFrac*w.ownership);
-  score+=c.ownership;
-  // 3. Practice maturity fit
-  let matFrac=r.practiceMaturity==='established'?1.0:r.practiceMaturity==='mid-career'?0.67:r.practiceMaturity==='early-career'?0.53:0;
-  c.maturity=Math.round(matFrac*w.maturity);
-  score+=c.maturity;
-  // 4. High-revenue specialty
-  c.specialty=r.isHR?w.specialty:0;score+=c.specialty;
-  // 5. Data completeness (4 sub-signals at 30%/30%/20%/20% of weight)
-  c.data=Math.round(((r.medSchool?0.30:0)+(pay>0?0.30:0)+(r.webVerified?0.20:0)+(r.practiceName?0.20:0))*w.data);
-  score+=c.data;
-  // 6. Contact readiness (3 sub-signals at 50%/30%/20%)
-  c.contact=Math.round(((r.phone?0.50:0)+(r.website?0.30:0)+(r.practiceName?0.20:0))*w.contact);
-  score+=c.contact;
-  // 7. Compliance
-  c.compliance=r.complianceFlag?0:w.compliance;score+=c.compliance;
+  const age=practiceAgeYears(r);
+  // 1. Medicare billing volume — continuous log
+  c.medicare = Math.round(medicareFrac(pay)*w.medicare);
+  // 2. Ownership — 4 tiers
+  c.ownership = Math.round(ownershipFrac(r)*w.ownership);
+  // 3. Maturity — continuous on practice age
+  let matFrac=0;
+  if(age!=null){
+    if(age<3) matFrac=0.20;            // too new
+    else if(age<=20) matFrac=1.00;     // established
+    else if(age<=30) matFrac=0.75;     // mature
+    else matFrac=0.40;                  // retirement-track
+  }
+  c.maturity = Math.round(matFrac*w.maturity);
+  // 4. Specialty — Tier 1 (high-revenue) gets full; Tier 2 (private-viable) gets 0.65; else 0.20
+  let specFrac = r.isHR ? 1.0 : (isPrivateViable(r.specialty) ? 0.65 : 0.20);
+  c.specialty = Math.round(specFrac*w.specialty);
+  // 5. Data completeness
+  c.data = Math.round(((r.medSchool?0.30:0)+(pay>0?0.30:0)+(r.webVerified?0.20:0)+(r.practiceName?0.20:0))*w.data);
+  // 6. Contact readiness
+  c.contact = Math.round(((r.phone?0.50:0)+(r.website?0.30:0)+(r.practiceName?0.20:0))*w.contact);
+  // 7. Compliance — clean adds, flag subtracts (handled in penalty)
+  c.compliance = r.complianceFlag ? 0 : w.compliance;
+  const gross = c.medicare+c.ownership+c.maturity+c.specialty+c.data+c.contact+c.compliance;
+  // Cross-signal bonus
+  let signals=0;
+  if(r.practiceType==='Solo Practice') signals++;
+  if(pay>=200e3) signals++;
+  if(r.pecosEnrolled==='Yes' || r.pecosEnrolled===true) signals++;
+  if(isPrivateViable(r.specialty) || r.isHR) signals++;
+  if(age!=null && age>=5 && age<=20) signals++;
+  c.bonus = signals>=3 ? (signals-2) : 0;
+  // Penalties
+  const penalties={};
+  if(r.complianceFlag) penalties.oig = pen.oig;
+  if(age!=null && age<3) penalties.too_new = pen.too_new;
+  if(age!=null && age>35) penalties.retirement = pen.retirement;
+  // Stale data — lastUpdated more than 4 years ago
+  if(r.lastUpdated){
+    try { const lu=new Date(r.lastUpdated);
+      if(!isNaN(lu.getTime()) && (Date.now()-lu.getTime())/(365.25*86400*1000) > 4) penalties.stale_data = pen.stale_data;
+    } catch(e){}
+  }
+  c.penalties = penalties;
+  let pTotal = 0; Object.keys(penalties).forEach(k => pTotal += penalties[k]);
+  c.penalty_total = pTotal;
   r._scoreComponents=c;
-  return Math.min(score,100);
+  return Math.min(100, Math.max(1, Math.round(gross + c.bonus - pTotal)));
+}
+
+// Percentile band cuts for the prospect score
+function recomputePhysBandCuts(arr){
+  arr = (arr && arr.length) ? arr : (typeof F !== 'undefined' && F.length ? F : (typeof D !== 'undefined' ? D : []));
+  const sorted = arr.map(r => r.prospectScore).filter(v => v != null).sort((a,b)=>a-b);
+  const n=sorted.length;
+  if(!n){ _physBandCuts={hot:75,warm:55,mod:35}; return; }
+  const pct=p=>sorted[Math.min(n-1,Math.floor(p*n))];
+  _physBandCuts={hot:pct(PHYS_BANDS.hot_pct),warm:pct(PHYS_BANDS.warm_pct),mod:pct(PHYS_BANDS.mod_pct)};
 }
 // Click-tooltip removed; hover-tooltip handled by shared ScoreHover module
 if(window.ScoreHover)ScoreHover.init();
@@ -836,6 +915,8 @@ function init(){
   // Default sort by prospect score descending
   M.sort((a,b)=>b.prospectScore-a.prospectScore);
   F=[...M];D=F;
+  // Initial percentile band cuts now that scores exist
+  if(typeof recomputePhysBandCuts==='function') recomputePhysBandCuts(F);
 
   popDD();
   populateSavedFilterDropdown();
@@ -1049,6 +1130,8 @@ function go(){
     return true;
   });
   D=F;$('qs').value='';cp=0;
+  // Recompute percentile band cuts so Hot is always top 7% of the filtered set
+  if(typeof recomputePhysBandCuts==='function') recomputePhysBandCuts(F);
   updateFilterPill();
   renderAll();
   $('sb').textContent='Showing '+F.length.toLocaleString()+' of '+M.length.toLocaleString()+' physicians.';
@@ -1060,7 +1143,9 @@ function resetFilters(){
   // Clear single selects
   ['fPT','fPS','fCred','fGen','fDQ','fMat','fComp'].forEach(id=>$(id).value='');
   ['fName','fZip','fSchool','fMinPay','fMinScore','qs'].forEach(id=>$(id).value='');
-  F=[...M];D=F;cp=0;
+  F=[...M];D=F;
+  // Initial percentile band cuts now that scores exist
+  if(typeof recomputePhysBandCuts==='function') recomputePhysBandCuts(F);cp=0;
   updateFilterPill();
   renderAll();
   $('sb').textContent='Showing all '+M.length.toLocaleString()+' physicians.';

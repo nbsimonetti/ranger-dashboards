@@ -940,39 +940,77 @@ const SPECIALTIES = [
 ];
 
 // Default weights (max points per component; payer-mix is decimal weights)
-const BOPS_DEFAULTS = { income: 25, payer: 20, stability: 15, capex: 15, demand: 10, overhead: 10, defaultRisk: 5 };
+// v2: down-weight income (was dominant), continuous payer mix, explicit
+// capex/AR penalties, percentile bands. Senior underwriter lens.
+const BOPS_DEFAULTS = { income: 18, payer: 22, stability: 16, capex: 12, demand: 12, overhead: 10, defaultRisk: 10 };
 const BOPS_WEIGHTS = Object.assign({}, BOPS_DEFAULTS);
 const PMIX_DEFAULTS = { commercial: 1.0, medicare: 0.5, selfpay: 0.4, other: 0.4, medicaid: 0.1 };
 const PMIX_WEIGHTS = Object.assign({}, PMIX_DEFAULTS);
+const BOPS_PENALTY_DEFAULTS = { hospital_dominant: 15, capex_heavy: 10, high_malpractice: 10 };
+const BOPS_PENALTIES = Object.assign({}, BOPS_PENALTY_DEFAULTS);
+const BOPS_BANDS = { hot_pct: 0.93, warm_pct: 0.75, mod_pct: 0.35 };
+let _bopsBandCuts = { hot: 65, warm: 50, mod: 35 };
 
-// Compute payer mix score (0-100) with adjustable per-payer weights
+// Hospital-dominant specialties: solo practice acquisitions are rare here
+const HOSPITAL_DOMINANT = new Set(['Anesthesiology','Emergency Medicine','Radiology','Pathology','Hospital Medicine','Critical Care','Neonatology']);
+// Capex-heavy specialties (cyclical equipment refresh = credit-sensitive)
+const CAPEX_HEAVY = new Set(['Orthopedic Surgery','Ophthalmology','Cardiology','Plastic Surgery','Radiation Oncology']);
+// High malpractice cost specialties
+const HIGH_MALPRACTICE = new Set(['Obstetrics & Gynecology','Neurosurgery']);
+
 function payerScore(p) {
   const w = PMIX_WEIGHTS;
   const raw = p.commercial*w.commercial + p.medicare*w.medicare + p.selfpay*w.selfpay + p.other*w.other + p.medicaid*w.medicaid;
   return Math.round(Math.max(0, Math.min(100, raw)));
 }
 
-// Compute Bank Opportunity Score with adjustable component weights
 function bankOppScore(s) {
-  const w = BOPS_WEIGHTS;
-  // Income: $250K → 0, $700K → w.income (linear)
-  const incomeScore = Math.min(w.income, Math.max(0, ((s.medMean - 250000) / 450000) * w.income));
-  // Payer mix: payerScore 0-100 → 0-w.payer
+  const w = BOPS_WEIGHTS, pen = BOPS_PENALTIES;
+  const c = {};
+  // Income — continuous log curve. Cap at $700K so income alone can't dominate.
+  c.income = Math.round(Math.min(1, Math.max(0, (s.medMean - 250000) / 450000)) * w.income);
+  // Payer mix — continuous on payerScore
   const pScore = payerScore(s.payer);
-  const payerComp = (pScore / 100) * w.payer;
-  // Income stability: High=1.0, Med=0.67, Low=0.33 of weight
+  c.payer = Math.round((pScore / 100) * w.payer);
+  // Income stability
   const stabFrac = s.incomeStability==='High' ? 1.0 : s.incomeStability==='Med' ? 0.67 : 0.33;
-  const stabScore = stabFrac * w.stability;
-  // Capex: M=1.0, H=0.80, L=0.53 (M = sweet spot)
-  const capexFrac = s.capexLevel==='M' ? 1.0 : s.capexLevel==='H' ? 0.80 : 0.53;
-  const capexScore = capexFrac * w.capex;
-  // Demand outlook: scaled
-  const demandScore = Math.min(w.demand, Math.max(0, ((s.demandOutlook + 2) / 10) * w.demand));
+  c.stability = Math.round(stabFrac * w.stability);
+  // Capex — keep current scaling but it's now smaller; M=sweet spot
+  const capexFrac = s.capexLevel==='M' ? 1.0 : s.capexLevel==='H' ? 0.65 : 0.55;
+  c.capex = Math.round(capexFrac * w.capex);
+  // Demand outlook
+  c.demand = Math.round(Math.min(1, Math.max(0, (s.demandOutlook + 2) / 10)) * w.demand);
   // Overhead efficiency
-  const ovhScore = Math.min(w.overhead, Math.max(0, ((85 - s.overhead) / 55) * w.overhead));
-  // Default risk inverse
-  const defRiskScore = Math.min(w.defaultRisk, (pScore / 100) * w.defaultRisk);
-  return Math.round(incomeScore + payerComp + stabScore + capexScore + demandScore + ovhScore + defRiskScore);
+  c.overhead = Math.round(Math.min(1, Math.max(0, (85 - s.overhead) / 55)) * w.overhead);
+  // Default risk inverse (low payer mix = high risk = low component score)
+  c.defaultRisk = Math.round((pScore / 100) * w.defaultRisk);
+  const gross = c.income + c.payer + c.stability + c.capex + c.demand + c.overhead + c.defaultRisk;
+  // Cross-signal bonus: 3+ premium underwriting signals
+  let signals = 0;
+  if (s.medMean >= 450000) signals++;            // top quartile income
+  if (s.payer.commercial >= 50) signals++;       // commercial-heavy
+  if (s.payer.medicaid <= 15) signals++;         // low medicaid risk
+  if (s.incomeStability === 'High') signals++;
+  if (s.capexLevel === 'M' || s.capexLevel === 'L') signals++;  // manageable capex
+  c.bonus = signals >= 3 ? (signals - 2) : 0;
+  // Penalties — apply to specialties we'd be wary of in credit committee
+  const penalties = {};
+  if (HOSPITAL_DOMINANT.has(s.name)) penalties.hospital_dominant = pen.hospital_dominant;
+  if (CAPEX_HEAVY.has(s.name))       penalties.capex_heavy       = pen.capex_heavy;
+  if (HIGH_MALPRACTICE.has(s.name))  penalties.high_malpractice  = pen.high_malpractice;
+  c.penalties = penalties;
+  let pTotal = 0; Object.keys(penalties).forEach(k => pTotal += penalties[k]);
+  s._bopsComponents = c;
+  return Math.min(100, Math.max(1, Math.round(gross + c.bonus - pTotal)));
+}
+
+// Percentile band cuts on the specialties array
+function recomputeBopsBandCuts(){
+  const sorted = SPECIALTIES.map(s => s.bops).filter(v=>v!=null).sort((a,b)=>a-b);
+  const n = sorted.length;
+  if(!n) return;
+  const pct = p => sorted[Math.min(n-1, Math.floor(p*n))];
+  _bopsBandCuts = { hot: pct(BOPS_BANDS.hot_pct), warm: pct(BOPS_BANDS.warm_pct), mod: pct(BOPS_BANDS.mod_pct) };
 }
 
 // Compute scores for each specialty
@@ -980,6 +1018,7 @@ SPECIALTIES.forEach(s => {
   s.payerScore = payerScore(s.payer);
   s.bops = bankOppScore(s);
 });
+recomputeBopsBandCuts();
 
 // Geographic data (from Doximity 2025)
 const TOP_METROS = [
@@ -1061,31 +1100,32 @@ const fmtK = v => v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + (v/1000).toF
 const fmtPct = v => (v||0).toFixed(0) + '%';
 
 function bopsBadge(s, spec) {
-  const cls = s>=70?'bops-hi':s>=50?'bops-mid':'bops-lo';
-  // Component breakdown using same logic as bankOppScore
+  const cls = s >= _bopsBandCuts.hot  ? 'bops-hi' :
+              s >= _bopsBandCuts.warm ? 'bops-mid' :
+              s >= _bopsBandCuts.mod  ? 'bops-mid' : 'bops-lo';
   let attrs = '';
   if (spec) {
     const w = BOPS_WEIGHTS;
-    const incomeVal = Math.min(w.income, Math.max(0, ((spec.medMean-250000)/450000)*w.income));
-    const payerVal = (spec.payerScore/100)*w.payer;
-    const stabFrac = spec.incomeStability==='High'?1.0:spec.incomeStability==='Med'?0.67:0.33;
-    const stabVal = stabFrac*w.stability;
-    const capexFrac = spec.capexLevel==='M'?1.0:spec.capexLevel==='H'?0.80:0.53;
-    const capexVal = capexFrac*w.capex;
-    const demandVal = Math.min(w.demand, Math.max(0, ((spec.demandOutlook+2)/10)*w.demand));
-    const ovhVal = Math.min(w.overhead, Math.max(0, ((85-spec.overhead)/55)*w.overhead));
-    const defRiskVal = Math.min(w.defaultRisk, (spec.payerScore/100)*w.defaultRisk);
+    const c = spec._bopsComponents || {};
     const comps = [
-      {label:'Income Level',     value:+incomeVal.toFixed(1), max:w.income,      color:'#3182ce'},
-      {label:'Payer Mix',        value:+payerVal.toFixed(1),  max:w.payer,       color:'#38a169'},
-      {label:'Income Stability', value:+stabVal.toFixed(1),   max:w.stability,   color:'#319795'},
-      {label:'Capex / Loan',     value:+capexVal.toFixed(1),  max:w.capex,       color:'#dd6b20'},
-      {label:'Demand Outlook',   value:+demandVal.toFixed(1), max:w.demand,      color:'#805ad5'},
-      {label:'Overhead Eff.',    value:+ovhVal.toFixed(1),    max:w.overhead,    color:'#d69e2e'},
-      {label:'Default Risk Inv.',value:+defRiskVal.toFixed(1),max:w.defaultRisk, color:'#48bb78'},
+      {label:'Income Level',     value:c.income||0,      max:w.income,      color:'#3182ce'},
+      {label:'Payer Mix',        value:c.payer||0,       max:w.payer,       color:'#38a169'},
+      {label:'Income Stability', value:c.stability||0,   max:w.stability,   color:'#319795'},
+      {label:'Capex / Loan',     value:c.capex||0,       max:w.capex,       color:'#dd6b20'},
+      {label:'Demand Outlook',   value:c.demand||0,      max:w.demand,      color:'#805ad5'},
+      {label:'Overhead Eff.',    value:c.overhead||0,    max:w.overhead,    color:'#d69e2e'},
+      {label:'Default Risk Inv.',value:c.defaultRisk||0, max:w.defaultRisk, color:'#48bb78'},
     ];
+    if (c.bonus) comps.push({label:'Premium-signal bonus', value:c.bonus, max:5, color:'#22c55e'});
+    const penaltyLabels = { hospital_dominant:'− Hospital-dominant specialty', capex_heavy:'− Capex-heavy (cyclical refresh)', high_malpractice:'− High malpractice cost' };
+    Object.keys(c.penalties||{}).forEach(k => comps.push({label:penaltyLabels[k]||('− '+k), value:c.penalties[k], max:c.penalties[k], color:'#e53e3e'}));
+    // Percentile rank
+    const sorted = SPECIALTIES.map(x => x.bops).sort((a,b)=>a-b);
+    let cnt = 0;
+    sorted.forEach(v => { if (v <= s) cnt++; });
+    const top = Math.round(100 - 100*cnt/sorted.length);
     const json = JSON.stringify(comps).replace(/"/g,'&quot;');
-    attrs = ` tabindex="0" data-shv-title="Bank Opportunity Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light" data-shv-components="${json}" data-shv-foot="Hover any score for breakdown · Adjust Weights to retune"`;
+    attrs = ` tabindex="0" data-shv-title="Bank Opportunity Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light" data-shv-components="${json}" data-shv-foot="Bands are percentile-based · Top ${top}% · Adjust Weights to retune"`;
   }
   return `<span class="bops shv-trigger ${cls}"${attrs}>${s}</span>`;
 }

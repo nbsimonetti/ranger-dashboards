@@ -1395,6 +1395,15 @@ function normalizeBank(d, finResults, branchMap) {
     cofPctile:null, // computed after all banks loaded
     websiteUrl,
     hasScraped: SCRAPED_RATES?.rates?.[String(cert)] ? true : false,
+    // Best advertised APY across this bank's scraped products (used by the
+    // refactored Competitiveness Score's percentile-rank scraped component).
+    _bestApy: (function(){
+      const r = SCRAPED_RATES?.rates?.[String(cert)];
+      if (!r || !Array.isArray(r.products)) return null;
+      let best = null;
+      r.products.forEach(p => { if (typeof p.apy === 'number' && (best == null || p.apy > best)) best = p.apy; });
+      return best;
+    })(),
   };
 }
 
@@ -1442,6 +1451,31 @@ function buildScrapedRows(banks) {
 // Market Opportunity Score weights (default; max pts per component)
 const MKT_OPP_DEFAULTS = { lowApy: 40, marketSize: 30, productVariety: 30 };
 const MKT_OPP_WEIGHTS = Object.assign({}, MKT_OPP_DEFAULTS);
+const MKT_OPP_BANDS_DEFAULTS = { hot_pct: 0.93, warm_pct: 0.75, mod_pct: 0.35 };
+const MKT_OPP_BANDS = Object.assign({}, MKT_OPP_BANDS_DEFAULTS);
+let _mktBandCuts = { hot: 70, warm: 40, mod: 25 };
+
+// Triangular Low-APY curve, peaks 25% below TX median (the sweet spot
+// where Ranger can offer a competitive rate without paying up).
+function lowApyFrac(avgApy, txMedian) {
+  if (avgApy == null || txMedian == null || txMedian <= 0) return 0;
+  const ratio = avgApy / txMedian;            // 1.0 = at median
+  const sweet = 0.75;                          // 25% below median
+  const distance = Math.abs(ratio - sweet);
+  // Wide window: full points within ±10%, taper to 0 by ±60%
+  if (distance <= 0.10) return 1.0;
+  if (distance >= 0.60) return 0.0;
+  return 1.0 - (distance - 0.10) / 0.50;
+}
+// U-shaped market-size curve: 3-8 banks is sweet spot, > 12 diminishing
+function mktSizeFrac(n) {
+  if (n == null || n <= 0) return 0;
+  if (n < 2) return 0.20;
+  if (n <= 3) return 0.60;
+  if (n <= 8) return 1.00;
+  if (n <= 12) return 0.85;
+  return 0.55;        // diminishing returns past 12
+}
 function buildMarkets(rows) {
   const w = MKT_OPP_WEIGHTS;
   const map={};
@@ -1449,7 +1483,7 @@ function buildMarkets(rows) {
     if(!map[r.city])map[r.city]={city:r.city,region:r.region,regionLabel:r.regionLabel,banks:new Set(),rows:[]};
     map[r.city].banks.add(r.cert); map[r.city].rows.push(r);
   }
-  return Object.values(map).map(m=>{
+  const markets = Object.values(map).map(m=>{
     const cd12=m.rows.filter(r=>r.productType==='cd'&&r.termMonths===12).map(r=>r.apy);
     const sav=m.rows.filter(r=>r.productType==='savings').map(r=>r.apy);
     const mm=m.rows.filter(r=>r.productType==='mmkt').map(r=>r.apy);
@@ -1459,43 +1493,86 @@ function buildMarkets(rows) {
     const types=[...new Set(m.rows.map(r=>r.productType))];
     const avgAll=avg(all);
     const level=avgAll===null?'unknown':avgAll<1.5?'soft':avgAll<3?'mod':'hot';
-    // Opportunity score with adjustable weights
-    let oppComps = null, oppScore = null;
-    if (avgAll != null) {
-      const lowApy = (1 - avgAll/5) * w.lowApy;
-      const mktSize = Math.min(m.banks.size/5, 1) * w.marketSize;
-      const prodVar = Math.min(types.length/4, 1) * w.productVariety;
-      oppComps = {
-        lowApy: +lowApy.toFixed(1),
-        marketSize: +mktSize.toFixed(1),
-        productVariety: +prodVar.toFixed(1)
-      };
-      oppScore = Math.round(Math.max(0, Math.min(100, lowApy + mktSize + prodVar)));
-    }
     return{city:m.city,region:m.region,regionLabel:m.regionLabel,
       bankCount:m.banks.size,productCount:m.rows.length,
       avgApy:avgAll,bestApy:best(all),avgCd12:avg(cd12),avgSavings:avg(sav),avgMmkt:avg(mm),
-      products:types,level,opportunity:oppScore,_oppComponents:oppComps};
+      products:types,level,
+      // Opportunity score + components computed AFTER we know the TX median
+      opportunity: null, _oppComponents: null};
   });
+  // Compute TX median across markets (for the triangular curve)
+  const avgs = markets.map(m => m.avgApy).filter(v => v != null).sort((a,b)=>a-b);
+  const txMedian = avgs.length ? avgs[Math.floor(avgs.length/2)] : null;
+  // Compute hi-APY market threshold (top 10%) — penalty
+  const top10pctApy = avgs.length ? avgs[Math.floor(avgs.length * 0.90)] : null;
+  // Per-market score
+  markets.forEach(m => {
+    if (m.avgApy == null) return;
+    const lowApy = lowApyFrac(m.avgApy, txMedian) * w.lowApy;
+    const mktSize = mktSizeFrac(m.bankCount) * w.marketSize;
+    const prodVar = Math.min(m.products.length / 4, 1) * w.productVariety;
+    const gross = lowApy + mktSize + prodVar;
+    // Cross-signal bonus (3+ premium signals)
+    let signals = 0;
+    if (txMedian != null && m.avgApy < txMedian) signals++;
+    if (m.bankCount >= 3 && m.bankCount <= 8) signals++;
+    if (m.products.length === 4) signals++;
+    if (m.bestApy != null && txMedian != null && m.bestApy > txMedian * 1.20) signals++;  // at least one aggressive grower
+    const bonus = signals >= 3 ? (signals - 2) : 0;
+    // Penalty: market in top 10% of TX APY (war already won by aggressive incumbent)
+    const penalty = (top10pctApy != null && m.avgApy >= top10pctApy) ? 10 : 0;
+    m._oppComponents = {
+      lowApy: +lowApy.toFixed(1),
+      marketSize: +mktSize.toFixed(1),
+      productVariety: +prodVar.toFixed(1),
+      bonus,
+      penalty,
+    };
+    m.opportunity = Math.round(Math.max(0, Math.min(100, gross + bonus - penalty)));
+  });
+  return markets;
+}
+
+// Percentile band cuts for market opportunity against filtered markets
+function recomputeMktBandCuts() {
+  const arr = (S && S.filtMarkets) || (S && S.markets) || [];
+  const sorted = arr.map(m => m.opportunity).filter(v => v != null).sort((a,b)=>a-b);
+  const n = sorted.length;
+  if (!n) { _mktBandCuts = { hot: 70, warm: 40, mod: 25 }; return; }
+  const pct = p => sorted[Math.min(n-1, Math.floor(p*n))];
+  _mktBandCuts = { hot: pct(MKT_OPP_BANDS.hot_pct), warm: pct(MKT_OPP_BANDS.warm_pct), mod: pct(MKT_OPP_BANDS.mod_pct) };
 }
 
 // Market Opportunity Score badge with hover
 function mktOppBadge(m) {
   if (m.opportunity == null) return '<span style="color:#a0aec0">—</span>';
   const s = m.opportunity;
-  const color = s>=70?'#276749':s>=40?'#c05621':'#a0aec0';
+  const color = s >= _mktBandCuts.hot  ? '#c53030' :
+                s >= _mktBandCuts.warm ? '#c05621' :
+                s >= _mktBandCuts.mod  ? '#3182ce' : '#a0aec0';
   const c = m._oppComponents || {};
   const w = MKT_OPP_WEIGHTS;
   const comps = [
-    { label:'Low APY (Ease of Entry)', value: c.lowApy||0,         max: w.lowApy,         color: '#3182ce' },
-    { label:'Market Size',             value: c.marketSize||0,     max: w.marketSize,     color: '#38a169' },
+    { label:'Low APY (sweet spot)',    value: c.lowApy||0,         max: w.lowApy,         color: '#3182ce' },
+    { label:'Market Size (U-curve)',   value: c.marketSize||0,     max: w.marketSize,     color: '#38a169' },
     { label:'Product Variety',         value: c.productVariety||0, max: w.productVariety, color: '#805ad5' },
   ];
+  if (c.bonus) comps.push({ label:'Premium-signal bonus', value: c.bonus, max: 5, color: '#22c55e' });
+  if (c.penalty) comps.push({ label:'− Saturated market', value: c.penalty, max: c.penalty, color:'#e53e3e' });
+  const arr = (S && S.filtMarkets) || [];
+  const n = arr.length;
+  let rank = null;
+  if (n) {
+    let cnt = 0;
+    for (let i=0;i<n;i++) if ((arr[i].opportunity||0) <= s) cnt++;
+    rank = Math.round(100 - 100*cnt/n);
+  }
+  const pctStr = (rank != null) ? ' · Top '+rank+'%' : '';
   const compsJson = JSON.stringify(comps).replace(/"/g, '&quot;');
   return `<span class="shv-trigger" tabindex="0" `+
     `data-shv-title="Market Opportunity Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light" `+
     `data-shv-components="${compsJson}" `+
-    `data-shv-foot="Hover any score for breakdown · Adjust Weights to retune" `+
+    `data-shv-foot="Bands are percentile-based on the filtered set${pctStr}. Adjust Weights to retune." `+
     `style="font-weight:700;color:${color};cursor:help">${s}</span>`;
 }
 
@@ -1562,6 +1639,9 @@ function applyFilters() {
   // Sort COF
   const {col:cc,dir:cd}=S.cofSort; const dd=cd==='asc'?1:-1;
   S.filtBanks.sort((a,b)=>{const av=a[cc],bv=b[cc];if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return-1;return typeof av==='string'?dd*av.localeCompare(bv):dd*(av-bv);});
+  // Recompute percentile band cuts for the Competitiveness Score against the
+  // now-filtered bank set. Hot is always top 7% of what the user is looking at.
+  if (typeof recomputeCompBandCuts === 'function') recomputeCompBandCuts();
 
   // Filter scraped rows
   S.filtScraped=S.allScraped.filter(r=>{
@@ -1581,6 +1661,8 @@ function applyFilters() {
 
   // Build markets from filtered scraped
   S.filtMarkets=buildMarkets(S.filtScraped);
+  // Percentile band cuts for Market Opportunity Score against the now-filtered set
+  if (typeof recomputeMktBandCuts === 'function') recomputeMktBandCuts();
   const {col:mc,dir:md}=S.mktSort; const me=md==='asc'?1:-1;
   S.filtMarkets.sort((a,b)=>{const av=a[mc],bv=b[mc];if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return-1;return typeof av==='string'?me*av.localeCompare(bv):me*(av-bv);});
 
@@ -2595,45 +2677,126 @@ function updateHeader() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  COMPETITIVENESS SCORE (bank-level)
+//  COMPETITIVENESS SCORE (bank-level) — v2: percentile-rank components + bonus
+//  + penalties + percentile banding. Head-of-deposit-pricing lens.
 // ═══════════════════════════════════════════════════════════════════════════════
-// Default weights for the bank-level Competitiveness Score (also max pts per component)
 const COMP_DEFAULTS = { cof: 35, growth: 20, assetFit: 15, web: 10, scraped: 20 };
 const COMP_WEIGHTS = Object.assign({}, COMP_DEFAULTS);
+const COMP_PENALTY_DEFAULTS = { mega_bank: 15, micro_bank: 10 };
+const COMP_PENALTIES = Object.assign({}, COMP_PENALTY_DEFAULTS);
+const COMP_BAND_DEFAULTS = { hot_pct: 0.93, warm_pct: 0.75, mod_pct: 0.35 };
+const COMP_BANDS = Object.assign({}, COMP_BAND_DEFAULTS);
+let _compBandCuts = { hot: 75, warm: 55, mod: 35 };
+
+// Asset-fit bell curve centered on $100M-$1B sweet spot
+function assetFitFrac(a) {
+  if (!a || a <= 0) return 0.20;
+  if (a >= 100 && a <= 1000) return 1.0;
+  if (a > 1000 && a <= 2000) return 0.85;
+  if (a > 2000 && a <= 3000) return 0.65;
+  if (a > 0 && a < 100)      return 0.50 + (a/100) * 0.35;
+  return 0.20;
+}
+// Percentile rank of `val` in `arr` (0-1). Used for COF + best-APY ranking.
+function _pctRank(val, arr) {
+  if (val == null || !arr || !arr.length) return 0;
+  let c = 0;
+  for (let i=0;i<arr.length;i++) if (arr[i] != null && arr[i] <= val) c++;
+  return c / arr.length;
+}
+let _cofUniverse = null, _bestApyUniverse = null;
+function refreshCompUniverses() {
+  if (!S || !S.banks) return;
+  _cofUniverse     = S.banks.map(b => b.impliedRate).filter(v => v != null);
+  _bestApyUniverse = S.banks.map(b => b._bestApy).filter(v => v != null);
+}
+
 function computeCompScore(b) {
-  const w = COMP_WEIGHTS;
+  const w = COMP_WEIGHTS, pen = COMP_PENALTIES;
   const c = {};
-  c.cof = b.impliedRate !== null ? Math.min(Math.round(b.impliedRate / 3 * w.cof), w.cof) : 0;
-  c.growth = (b.eintexpM > 0 && b.assetM > 0) ? Math.min(Math.round((b.eintexpM / b.assetM * 100) / 3 * w.growth), w.growth) : 0;
-  const a = b.assetM;
-  // Asset fit: full points in $100M-$1B sweet spot; 0.80x for $1B-$3B; 0.67x for <$100M; 0.33x otherwise
-  let fitFrac;
-  if (a >= 100 && a <= 1000) fitFrac = 1.0;
-  else if (a > 1000 && a <= 3000) fitFrac = 0.80;
-  else if (a > 0 && a < 100) fitFrac = 0.67;
-  else fitFrac = 0.33;
-  c.assetFit = Math.round(fitFrac * w.assetFit);
-  c.web = b.websiteUrl ? w.web : 0;
-  c.scraped = b.hasScraped ? w.scraped : 0;
+  if (!_cofUniverse) refreshCompUniverses();
+  // 1. Cost of funds — percentile rank within TX peer set (the higher COF,
+  //    the more aggressively a bank is paying for deposits = the more
+  //    competitive). Replaces the old "impliedRate / 3 × w" scaling.
+  c.cof = b.impliedRate != null
+    ? +(_pctRank(b.impliedRate, _cofUniverse) * w.cof).toFixed(1)
+    : 0;
+  // 2. Growth proxy — keep the existing eintexp/asset ratio but rank within peers
+  const growth_raw = (b.eintexpM > 0 && b.assetM > 0) ? (b.eintexpM / b.assetM * 100) : null;
+  if (growth_raw != null && S.banks) {
+    if (!S._growthUniverse) S._growthUniverse = S.banks.map(x => (x.eintexpM > 0 && x.assetM > 0) ? (x.eintexpM/x.assetM*100) : null).filter(v => v != null);
+    c.growth = +(_pctRank(growth_raw, S._growthUniverse) * w.growth).toFixed(1);
+  } else c.growth = 0;
+  // 3. Asset fit — bell curve, sweet spot $100M-$1B
+  c.assetFit = +(assetFitFrac(b.assetM) * w.assetFit).toFixed(1);
+  // 4. Web presence — 3 tiers
+  //    has URL + scraped rates on file (strongest signal) = full
+  //    has URL only = half
+  //    nothing = 0
+  c.web = b.hasScraped ? w.web : (b.websiteUrl ? +(0.5 * w.web).toFixed(1) : 0);
+  // 5. Scraped rates — continuous on best advertised APY (percentile rank)
+  if (b._bestApy != null) {
+    c.scraped = +(_pctRank(b._bestApy, _bestApyUniverse) * w.scraped).toFixed(1);
+  } else c.scraped = 0;
+  const gross = c.cof + c.growth + c.assetFit + c.web + c.scraped;
+  // Cross-signal bonus — 3+ premium signals lining up
+  let signals = 0;
+  if (b.impliedRate != null && _pctRank(b.impliedRate, _cofUniverse) >= 0.75) signals++;       // top-quartile COF
+  if (growth_raw != null && S._growthUniverse && _pctRank(growth_raw, S._growthUniverse) >= 0.75) signals++;  // top-quartile growth
+  if (b.assetM >= 300 && b.assetM <= 2000) signals++;   // sweet spot for aggressive community growth
+  if (b._bestApy != null && _bestApyUniverse.length && b._bestApy >= _bestApyUniverse.sort((a,c)=>a-c)[Math.floor(_bestApyUniverse.length/2)]) signals++; // best APY above peer median
+  if ((b.charterType || '').toUpperCase().startsWith('STATE')) signals++;   // state-chartered (more pricing flexibility)
+  c.bonus = signals >= 3 ? (signals - 2) : 0;
+  // Penalties
+  const penalties = {};
+  if (b.assetM > 5000) penalties.mega_bank  = pen.mega_bank;
+  if (b.assetM && b.assetM < 50) penalties.micro_bank = pen.micro_bank;
+  c.penalties = penalties;
+  let pTotal = 0; Object.keys(penalties).forEach(k => pTotal += penalties[k]);
+  c.penalty_total = pTotal;
   b._compComponents = c;
-  b.compScore = Math.min(c.cof + c.growth + c.assetFit + c.web + c.scraped, 100);
+  b.compScore = Math.min(100, Math.max(1, Math.round(gross + c.bonus - pTotal)));
+}
+
+// Percentile band cuts against displayed bank list
+function recomputeCompBandCuts() {
+  const arr = (S && S.filtBanks && S.filtBanks.length) ? S.filtBanks : (S && S.banks) || [];
+  const sorted = arr.map(b => b.compScore).filter(x => x != null).sort((a,b)=>a-b);
+  const n = sorted.length;
+  if (!n) { _compBandCuts = { hot: 75, warm: 55, mod: 35 }; return; }
+  const pct = p => sorted[Math.min(n-1, Math.floor(p*n))];
+  _compBandCuts = { hot: pct(COMP_BANDS.hot_pct), warm: pct(COMP_BANDS.warm_pct), mod: pct(COMP_BANDS.mod_pct) };
+}
+function compScorePct(b) {
+  const arr = (S && S.filtBanks && S.filtBanks.length) ? S.filtBanks : (S && S.banks) || [];
+  const n = arr.length; if (!n) return null;
+  let c = 0;
+  for (let i=0;i<n;i++) if (arr[i].compScore <= b.compScore) c++;
+  return Math.round(100 * c / n);
 }
 function compBadge(s, bank) {
-  const bg = s >= 60 ? '#276749' : s >= 35 ? '#dd6b20' : '#a0aec0';
+  const bg = s >= _compBandCuts.hot  ? '#c53030' :
+             s >= _compBandCuts.warm ? '#dd6b20' :
+             s >= _compBandCuts.mod  ? '#3182ce' : '#a0aec0';
   const c = (bank && bank._compComponents) || {};
   const w = COMP_WEIGHTS;
   const comps = [
-    { label: 'Cost of Funds',     value: c.cof||0,      max: w.cof,      color: '#3182ce' },
-    { label: 'Growth Proxy',      value: c.growth||0,   max: w.growth,   color: '#38a169' },
-    { label: 'Asset Size Fit',    value: c.assetFit||0, max: w.assetFit, color: '#319795' },
-    { label: 'Web Presence',      value: c.web||0,      max: w.web,      color: '#dd6b20' },
-    { label: 'Scraped Rates',     value: c.scraped||0,  max: w.scraped,  color: '#805ad5' },
+    { label: 'Cost of Funds (peer-rank)',  value: c.cof||0,      max: w.cof,      color: '#3182ce' },
+    { label: 'Growth Proxy (peer-rank)',   value: c.growth||0,   max: w.growth,   color: '#38a169' },
+    { label: 'Asset Size Fit',             value: c.assetFit||0, max: w.assetFit, color: '#319795' },
+    { label: 'Web Presence',               value: c.web||0,      max: w.web,      color: '#dd6b20' },
+    { label: 'Best APY (peer-rank)',       value: c.scraped||0,  max: w.scraped,  color: '#805ad5' },
   ];
+  if (c.bonus) comps.push({ label:'Premium-signal bonus', value:c.bonus, max:5, color:'#22c55e' });
+  const penaltyLabels = { mega_bank:'− Mega bank (>$5B)', micro_bank:'− Sub-scale (<$50M)' };
+  Object.keys(c.penalties || {}).forEach(k => comps.push({ label: penaltyLabels[k], value: c.penalties[k], max: c.penalties[k], color: '#e53e3e' }));
+  const pct = compScorePct(bank);
+  const pctStr = (pct != null) ? ' · Top '+(100 - pct)+'%' : '';
   const compsJson = JSON.stringify(comps).replace(/"/g, '&quot;');
   return `<span class="comp-badge shv-trigger" tabindex="0" `+
     `data-shv-title="Competitiveness Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light" `+
     `data-shv-components="${compsJson}" `+
-    `data-shv-foot="Hover any score for breakdown · Adjust Weights to retune" `+
+    `data-shv-foot="Bands are percentile-based on the filtered set${pctStr}. Adjust Weights to retune." `+
     `style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:700;cursor:help;background:${bg};color:#fff">${s}</span>`;
 }
 
