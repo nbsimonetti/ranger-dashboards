@@ -513,9 +513,9 @@ th.dash-sortable:hover { background:#eef3f8; }
         <div class="stat-note">Banks with cost-of-funds data</div>
       </div>
       <div class="stat-card green">
-        <div class="stat-label">Avg Cost of Funds</div>
+        <div class="stat-label">Avg Interest-Bearing COF</div>
         <div class="stat-value" id="s-avg-cof">—</div>
-        <div class="stat-note">EINTEXP ÷ DEPI (interest-bearing)</div>
+        <div class="stat-note">Marginal rate on rate-sensitive deposits (excl. NIB)</div>
       </div>
       <div class="stat-card teal">
         <div class="stat-label">Banks w/ Rates</div>
@@ -528,9 +528,9 @@ th.dash-sortable:hover { background:#eef3f8; }
         <div class="stat-note">Deposit product rates</div>
       </div>
       <div class="stat-card purple">
-        <div class="stat-label">Highest COF</div>
+        <div class="stat-label">Highest IB COF</div>
         <div class="stat-value" id="s-max-cof">—</div>
-        <div class="stat-note">Most deposit-competitive</div>
+        <div class="stat-note">Most aggressive marginal-rate bidder</div>
       </div>
       <div class="stat-card navy">
         <div class="stat-label">Avg Loan-to-Deposit</div>
@@ -696,24 +696,23 @@ th.dash-sortable:hover { background:#eef3f8; }
     <div class="tabcontent" id="tab-markets" role="tabpanel">
       <div class="insight-banner insight-opportunity">
         <span class="ib-icon">🟢 ↑</span>
-        <span><strong>Higher score = more attractive market for Ranger to ENTER or expand.</strong>
-        Under-served metros with below-median rates and room for a competitive new entrant. Green = go here.
-        The "Comp. Pressure" column flags how many aggressive incumbents already operate there — a high-opportunity market with zero aggressive competitors is the cleanest green-light.</span>
+        <span><strong>Higher score = more attractive TX COUNTY for Ranger to ENTER or expand.</strong>
+        Counties with a low marginal rate floor (incumbents not paying up) and light competition — cheap to win deposits, no rate war. Green = go here.
+        "Comp. Pressure" = aggressive incumbents (Hot/Warm on Competitor Watch) operating in the county; "Marginal Rate to Win" shows the median (typical floor) and max (most aggressive incumbent) interest-bearing COF of every bank with a branch there.</span>
       </div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
             <th data-col="opportunity" data-tbl="mkt" class="sort-desc">Entry Opportunity</th>
-            <th data-col="city" data-tbl="mkt">Market</th>
+            <th data-col="city" data-tbl="mkt">County</th>
             <th data-col="regionLabel" data-tbl="mkt">Region</th>
-            <th data-col="bankCount" data-tbl="mkt">Competitors</th>
-            <th data-col="_compPressure" data-tbl="mkt" title="Number of banks in this market that land in the Competitor Watch Hot/Warm bands. Fewer = cleaner entry.">Comp. Pressure</th>
-            <th data-col="marginalRate" data-tbl="mkt" title="Median interest-bearing cost of funds of banks operating in this market — the FDIC-derived rate floor you must beat to win the marginal (rate-sensitive) depositor. NIB relationship deposits don't move on rate.">Marginal Rate to Win</th>
+            <th data-col="bankCount" data-tbl="mkt" title="Distinct banks with at least one branch in this county.">Competitors</th>
+            <th data-col="_compPressure" data-tbl="mkt" title="Banks in this county that land in the Competitor Watch Hot/Warm bands. Fewer = cleaner entry.">Comp. Pressure</th>
+            <th data-col="marginalRate" data-tbl="mkt" title="MEDIAN interest-bearing COF of banks with a branch in this county — the typical rate floor you must beat to win the marginal (rate-sensitive) depositor.">Marginal Rate — Median</th>
+            <th data-col="marginalRateMax" data-tbl="mkt" title="MAXIMUM interest-bearing COF among banks in this county — the rate the single most aggressive incumbent is paying. The ceiling to clear for the most contested money.">Marginal Rate — Max</th>
             <th data-col="avgCd12" data-tbl="mkt">Avg 12mo CD</th>
-            <th data-col="avgSavings" data-tbl="mkt">Avg Savings</th>
-            <th data-col="avgMmkt" data-tbl="mkt">Avg Money Mkt</th>
-            <th data-col="bestApy" data-tbl="mkt">Best Rate</th>
-            <th data-col="avgApy" data-tbl="mkt">Avg All APY</th>
+            <th data-col="bestApy" data-tbl="mkt">Best Adv. Rate</th>
+            <th data-col="avgApy" data-tbl="mkt">Avg Adv. APY</th>
             <th class="nosort">Products</th>
             <th class="nosort">Environment</th>
           </tr></thead>
@@ -889,9 +888,26 @@ th.dash-sortable:hover { background:#eef3f8; }
 
       <!-- Map section (within Charts & Map tab) -->
       <div style="padding:20px">
-        <div class="clabel" style="margin-bottom:12px">Geographic Distribution <span>Click markers for details · Size ∝ assets</span></div>
+        <div class="clabel" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <span>Geographic Distribution <span id="map-sub">County entry attractiveness · green = enter, red = avoid</span></span>
+          <span class="map-view-toggle" style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+            <button id="mapview-counties" class="mapview-btn active" style="font-size:11px;font-weight:600;padding:5px 11px;border:0;cursor:pointer;background:var(--navy);color:#fff">County Attractiveness</button>
+            <button id="mapview-banks" class="mapview-btn" style="font-size:11px;font-weight:600;padding:5px 11px;border:0;cursor:pointer;background:#fff;color:var(--navy)">Bank Markers</button>
+          </span>
+        </div>
         <div class="map-wrap" style="padding:0">
-          <div class="map-legend">
+          <!-- County-attractiveness legend (diverging green→red) -->
+          <div class="map-legend" id="legend-counties">
+            <strong style="font-size:11.5px;color:#4a5568">Entry attractiveness:</strong>
+            <div class="mleg"><div class="mdot" style="background:#1a9850"></div>Best — low rate, low competition</div>
+            <div class="mleg"><div class="mdot" style="background:#91cf60"></div>Good</div>
+            <div class="mleg"><div class="mdot" style="background:#fee08b"></div>Moderate</div>
+            <div class="mleg"><div class="mdot" style="background:#fc8d59"></div>Contested</div>
+            <div class="mleg"><div class="mdot" style="background:#d73027"></div>Avoid — high rate, high competition</div>
+            <div class="mleg"><div class="mdot" style="background:#e2e8f0"></div>No data</div>
+          </div>
+          <!-- Bank-marker legend (hidden until that view is active) -->
+          <div class="map-legend" id="legend-banks" style="display:none">
             <strong style="font-size:11.5px;color:#4a5568">Color = Cost of Funds:</strong>
             <div class="mleg"><div class="mdot" style="background:#d69e2e"></div>&lt; 1%</div>
             <div class="mleg"><div class="mdot" style="background:#68d391"></div>1–2%</div>
@@ -952,17 +968,19 @@ th.dash-sortable:hover { background:#eef3f8; }
           </div>
         </div>
 
-        <h3 style="font-size:16px;font-weight:700;margin-bottom:8px">🟢 Market Entry Opportunity Score (0-100)</h3>
-        <p style="color:var(--muted);font-size:12.5px;margin-bottom:16px">Visible in the <strong>Market Entry Opportunity</strong> tab. Identifies geographic markets where Ranger Bank has the greatest deposit-gathering opportunity — where to grow. Bands are percentile-based on the filtered set (Hot = top 7%).</p>
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:8px">🟢 County Entry Opportunity Score (0-100)</h3>
+        <p style="color:var(--muted);font-size:12.5px;margin-bottom:16px">Visible in the <strong>Market Entry Opportunity</strong> tab and as the <strong>county choropleth</strong> on the map. Scored at the <strong>county</strong> grain: every TX county where a bank in our universe has a branch is scored, using each bank's full branch footprint. Higher = a more attractive county to enter or expand — low prevailing rates and light competition. Green on the map = enter; red = avoid. Bands are percentile-based on the filtered set (Hot = top 7%).</p>
 
         <div style="background:var(--surface);border-radius:8px;padding:16px 20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow)">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Score Interpretation</div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Choropleth color (entry attractiveness)</div>
           <div style="display:flex;border-radius:6px;overflow:hidden;height:28px;font-size:11px;font-weight:700;color:#fff">
-            <div style="flex:3;background:#e53e3e;display:flex;align-items:center;justify-content:center">0-29 Low</div>
-            <div style="flex:3;background:#dd6b20;display:flex;align-items:center;justify-content:center">30-49 Moderate</div>
-            <div style="flex:2;background:#38a169;display:flex;align-items:center;justify-content:center">50-69 Good</div>
-            <div style="flex:2;background:#276749;display:flex;align-items:center;justify-content:center">70+ High</div>
+            <div style="flex:1;background:#d73027;display:flex;align-items:center;justify-content:center">Avoid</div>
+            <div style="flex:1;background:#fc8d59;display:flex;align-items:center;justify-content:center">Contested</div>
+            <div style="flex:1;background:#fee08b;display:flex;align-items:center;justify-content:center;color:#7b5b1e">Moderate</div>
+            <div style="flex:1;background:#91cf60;display:flex;align-items:center;justify-content:center">Good</div>
+            <div style="flex:1;background:#1a9850;display:flex;align-items:center;justify-content:center">Best</div>
           </div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:8px">Green = lower marginal rate + lighter competition (cheap to win deposits, no rate war). Red = higher rates already bid up + crowded with aggressive incumbents. Counties with no matched bank render gray ("insufficient data").</div>
         </div>
 
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:12px">Scoring Components (3 factors, 100 points max)</div>
@@ -970,39 +988,43 @@ th.dash-sortable:hover { background:#eef3f8; }
 
           <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-weight:700;font-size:14px">Low Average APY (Ease of Entry)</span>
-              <span style="font-size:13px;font-weight:700;color:var(--gold)">0-40 pts</span>
+              <span style="font-weight:700;font-size:14px">Low Marginal Rate (county IB cost of funds)</span>
+              <span style="font-size:13px;font-weight:700;color:var(--gold)">0-45 pts</span>
             </div>
             <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
-              <strong>What it measures:</strong> How low the average advertised rate is in the market.<br>
-              <strong>How it works:</strong> Formula: (1 - avgAPY/5) &times; 40. A market averaging 0% APY scores 40/40; a market averaging 5% scores 0/40.<br>
-              <strong>Why it matters:</strong> Markets with low existing rates are easiest for Ranger Bank to enter competitively — even a modest rate offer can be market-leading, attracting depositors without aggressive pricing.
+              <strong>What it measures:</strong> The county's <em>marginal rate to win</em> — the median interest-bearing cost of funds (annualized EINTEXP ÷ interest-bearing deposits) across every bank with a branch in the county. We also surface the <strong>maximum</strong> IB COF (the single most aggressive incumbent).<br>
+              <strong>How it works:</strong> Lower median rate vs. the statewide county median scores higher (1.0 well below median, 0.5 at median, → 0 at 2&times; median).<br>
+              <strong>Why it matters:</strong> Where incumbents pay a low marginal rate, Ranger can win rate-sensitive deposits cheaply. Where the rate is already bid up, entry means an expensive rate war. This is a real, complete FDIC signal — it covers every county, including those with no scraped advertised rates.
             </div>
           </div>
 
           <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-weight:700;font-size:14px">Market Size (Bank Count)</span>
-              <span style="font-size:13px;font-weight:700;color:var(--gold)">0-30 pts</span>
+              <span style="font-weight:700;font-size:14px">Low Competition (few aggressive incumbents)</span>
+              <span style="font-size:13px;font-weight:700;color:var(--gold)">0-35 pts</span>
             </div>
             <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
-              <strong>What it measures:</strong> How many banks with scraped rates operate in the market.<br>
-              <strong>How it works:</strong> Formula: min(bankCount/5, 1) &times; 30. Markets with 5+ banks score 30/30; fewer banks scale proportionally.<br>
-              <strong>Why it matters:</strong> Larger markets have more deposit volume available and more established demand. A market with many banks indicates healthy deposit activity worth competing for.
+              <strong>What it measures:</strong> How many banks operating in the county land in the Competitor Watch Hot/Warm bands (aggressive marginal-rate bidders).<br>
+              <strong>How it works:</strong> Zero aggressive incumbents scores full; the score tapers as more aggressive competitors operate in the county.<br>
+              <strong>Why it matters:</strong> A county already contested by aggressive rate-payers is a fight to enter; an uncontested county is a clean green-light.
             </div>
           </div>
 
           <div style="background:var(--surface);border-radius:8px;padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-weight:700;font-size:14px">Product Variety</span>
-              <span style="font-size:13px;font-weight:700;color:var(--gold)">0-30 pts</span>
+              <span style="font-weight:700;font-size:14px">Market Size (Bank Count, U-curve)</span>
+              <span style="font-size:13px;font-weight:700;color:var(--gold)">0-20 pts</span>
             </div>
             <div style="font-size:12.5px;color:var(--muted);line-height:1.5">
-              <strong>What it measures:</strong> How many different deposit product types are offered in the market (CD, savings, money market, interest checking).<br>
-              <strong>How it works:</strong> Formula: min(productTypeCount/4, 1) &times; 30. Markets with all 4 product types score 30/30.<br>
-              <strong>Why it matters:</strong> Markets with diverse product offerings indicate mature deposit competition. These markets have customers who actively compare products — exactly the audience Ranger Bank can target.
+              <strong>What it measures:</strong> Distinct banks with a branch in the county.<br>
+              <strong>How it works:</strong> U-curve — 3–10 banks is the sweet spot (real market depth without saturation); very few banks (thin market) or a very crowded metro both score lower.<br>
+              <strong>Why it matters:</strong> Enough deposit demand to be worth entering, without the crowding that turns entry into a brawl.
             </div>
           </div>
+        </div>
+
+        <div style="background:#fffbea;border-left:3px solid var(--gold);padding:11px 15px;border-radius:0 6px 6px 0;font-size:12.5px;color:#5a4a1e;line-height:1.55;margin-bottom:20px">
+          <strong>On marketed rates from national competitors.</strong> The larger national banks (Chase, BofA, Wells Fargo, Capital One…) publish consumer rates through JS-rendered / ZIP-gated apps; their server HTML carries no parseable APY values, and we won't fabricate rates. So the county rate signal is the <strong>FDIC interest-bearing cost of funds</strong> — the blended rate each competitor actually pays on rate-sensitive money — segmented by branch footprint. It's real, sourced, and complete for all 457 TX-branch banks. Advertised-rate scraping remains community-bank-focused; a feasibility audit of the national pages is logged for a scoped follow-up.
         </div>
 
         <div style="background:var(--surface);border-radius:8px;padding:16px 20px;margin-bottom:12px;border:1px solid var(--border);box-shadow:var(--shadow)">
@@ -1501,6 +1523,11 @@ function normalizeBank(d, finResults, branchMap) {
   const hqCounty=(d.COUNTY||'').trim().toUpperCase();
   const effCity   = oosHq ? (branch?.city   || hqCity)   : hqCity;
   const effCounty = oosHq ? (branch?.county || hqCounty) : hqCounty;
+  // Full TX county footprint (every county where this bank has a branch) — drives
+  // county-level market aggregation. Falls back to the effective county.
+  const txCounties = (branch && branch.counties && Object.keys(branch.counties).length)
+    ? Object.keys(branch.counties)
+    : (effCounty ? [effCounty] : []);
 
   return {
     cert, name:d.NAME,
@@ -1508,6 +1535,7 @@ function normalizeBank(d, finResults, branchMap) {
     county:effCounty,
     region:countyToRegion(effCounty),
     regionLabel:REGION_LABELS[countyToRegion(effCounty)]||'Other TX',
+    txCounties,
     oosHq, hqState, hqCity,
     assetM, assetBucket:assetBucket(assetM), assetLbl:assetLabel(assetBucket(assetM)),
     charterType:ct, charterGroup:charterGroup(ct),
@@ -1586,7 +1614,11 @@ function buildScrapedRows(banks) {
 }
 
 // Market Opportunity Score weights (default; max pts per component)
-const MKT_OPP_DEFAULTS = { lowApy: 40, marketSize: 30, productVariety: 30 };
+// County Entry Opportunity weights. The two complete, FDIC-based signals
+// (low marginal rate + low competition) carry the score; market size is a
+// secondary modifier. Advertised-rate coverage is too sparse to anchor a
+// county score, so it's shown but not weighted.
+const MKT_OPP_DEFAULTS = { lowRate: 45, lowCompetition: 35, marketSize: 20 };
 const MKT_OPP_WEIGHTS = Object.assign({}, MKT_OPP_DEFAULTS);
 const MKT_OPP_BANDS_DEFAULTS = { hot_pct: 0.93, warm_pct: 0.75, mod_pct: 0.35 };
 const MKT_OPP_BANDS = Object.assign({}, MKT_OPP_BANDS_DEFAULTS);
@@ -1613,75 +1645,111 @@ function mktSizeFrac(n) {
   if (n <= 12) return 0.85;
   return 0.55;        // diminishing returns past 12
 }
+// Low marginal-rate curve: lower county cost of funds = cheaper for a new
+// entrant to compete = more attractive. 1.0 well below the county median,
+// 0.5 at median, → 0 at 2x median. Neutral 0.5 when rate is unknown.
+function lowRateFrac(rate, refMed){
+  if(rate==null || refMed==null || refMed<=0) return 0.5;
+  return Math.max(0, Math.min(1, 1 - rate/(2*refMed)));
+}
+// Low-competition curve: fewer aggressive incumbents (Hot/Warm on Competitor
+// Watch) operating in the county = easier to enter = more attractive.
+function lowCompFrac(aggr){
+  if(aggr==null) return 0.6;
+  if(aggr<=0) return 1.0;
+  if(aggr===1) return 0.75;
+  if(aggr===2) return 0.55;
+  if(aggr===3) return 0.38;
+  if(aggr<=5) return 0.22;
+  return 0.10;
+}
+
+// County-grained market builder. Backbone = the full TX branch footprint of
+// every filtered bank (complete FDIC coverage), so every county where we have
+// a bank gets a score regardless of advertised-rate coverage. Advertised rates
+// are layered on where available. `rows` = filtered scraped product rows.
 function buildMarkets(rows) {
   const w = MKT_OPP_WEIGHTS;
-  // Cert → IB cost-of-funds lookup, built across ALL banks in the city (not just
-  // the scraped subset). The marginal rate to win a city's rate-sensitive
-  // depositor is the IB COF of the banks operating there.
-  const cofIbByCert = {};
-  const banksByCity = {};
-  (S && S.banks ? S.banks : []).forEach(b => {
-    if (b.cofIB != null) cofIbByCert[b.cert] = b.cofIB;
-    const cty = b.city;
-    if (!banksByCity[cty]) banksByCity[cty] = [];
-    if (b.cofIB != null) banksByCity[cty].push(b.cofIB);
-  });
+  const banks = (S && S.filtBanks) ? S.filtBanks : ((S && S.banks) || []);
   const median = arr => { if(!arr||!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); return parseFloat(s[Math.floor(s.length/2)].toFixed(2)); };
+  const maxOf  = arr => (arr && arr.length) ? parseFloat(Math.max(...arr).toFixed(2)) : null;
+  const warmCut = (typeof _compBandCuts!=='undefined' && _compBandCuts.warm!=null) ? _compBandCuts.warm : 999;
 
-  const map={};
-  for(const r of rows){
-    if(!map[r.city])map[r.city]={city:r.city,region:r.region,regionLabel:r.regionLabel,banks:new Set(),rows:[]};
-    map[r.city].banks.add(r.cert); map[r.city].rows.push(r);
+  // County backbone from branch footprint.
+  const map = {};
+  const ensure = cty => map[cty] || (map[cty] = {
+    county:cty, region:countyToRegion(cty),
+    regionLabel:REGION_LABELS[countyToRegion(cty)]||'Other TX',
+    certs:new Set(), cofIBs:[], aggressive:0, rows:[]
+  });
+  const certCounties = {};
+  for(const b of banks){
+    const counties = (b.txCounties && b.txCounties.length) ? b.txCounties : (b.county ? [b.county] : []);
+    certCounties[b.cert] = counties;
+    for(const cty of counties){
+      if(!cty) continue;
+      const m = ensure(cty);
+      if(!m.certs.has(b.cert)){
+        m.certs.add(b.cert);
+        if(b.cofIB!=null) m.cofIBs.push(b.cofIB);
+        if(b.compScore!=null && b.compScore>=warmCut) m.aggressive++;
+      }
+    }
   }
+  // Layer advertised-rate rows onto every county their bank operates in.
+  for(const r of rows){
+    const counties = certCounties[r.cert] || [];
+    for(const cty of counties){ const m=map[cty]; if(m) m.rows.push(r); }
+  }
+
+  const avg = arr => arr.length ? parseFloat((arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(2)) : null;
+  const best = arr => arr.length ? parseFloat(Math.max(...arr).toFixed(2)) : null;
   const markets = Object.values(map).map(m=>{
+    const all=m.rows.map(r=>r.apy);
     const cd12=m.rows.filter(r=>r.productType==='cd'&&r.termMonths===12).map(r=>r.apy);
     const sav=m.rows.filter(r=>r.productType==='savings').map(r=>r.apy);
     const mm=m.rows.filter(r=>r.productType==='mmkt').map(r=>r.apy);
-    const all=m.rows.map(r=>r.apy);
-    const avg=arr=>arr.length?parseFloat((arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(2)):null;
-    const best=arr=>arr.length?parseFloat(Math.max(...arr).toFixed(2)):null;
     const types=[...new Set(m.rows.map(r=>r.productType))];
     const avgAll=avg(all);
-    const level=avgAll===null?'unknown':avgAll<1.5?'soft':avgAll<3?'mod':'hot';
-    // Marginal rate to win: median IB COF of ALL banks headquartered in this city.
-    // This is the FDIC-derived rate floor a new entrant must beat to capture the
-    // rate-sensitive (marginal) depositor — NIB relationship deposits don't move.
-    const marginalRate = median(banksByCity[m.city]);
-    return{city:m.city,region:m.region,regionLabel:m.regionLabel,
-      bankCount:m.banks.size,productCount:m.rows.length,
-      avgApy:avgAll,bestApy:best(all),avgCd12:avg(cd12),avgSavings:avg(sav),avgMmkt:avg(mm),
-      marginalRate,
-      products:types,level,
-      // Opportunity score + components computed AFTER we know the TX median
-      opportunity: null, _oppComponents: null};
+    // County marginal rate to win: median (typical floor) + max (most aggressive
+    // incumbent) of IB COF across banks operating in the county.
+    const marginalRate    = median(m.cofIBs);
+    const marginalRateMax = maxOf(m.cofIBs);
+    const level = marginalRate==null ? 'unknown' : marginalRate<1.5 ? 'soft' : marginalRate<2.5 ? 'mod' : 'hot';
+    return {
+      county:m.county, city:titleCase(m.county),  // `city` alias keeps shared renderers/sort happy
+      region:m.region, regionLabel:m.regionLabel,
+      bankCount:m.certs.size, _compPressure:m.aggressive,
+      scrapedBankCount:new Set(m.rows.map(r=>r.cert)).size, productCount:m.rows.length,
+      avgApy:avgAll, bestApy:best(all), avgCd12:avg(cd12), avgSavings:avg(sav), avgMmkt:avg(mm),
+      marginalRate, marginalRateMax,
+      products:types, level,
+      opportunity:null, _oppComponents:null, _hasRateData: marginalRate!=null
+    };
   });
-  // Compute TX median across markets (for the triangular curve)
-  const avgs = markets.map(m => m.avgApy).filter(v => v != null).sort((a,b)=>a-b);
-  const txMedian = avgs.length ? avgs[Math.floor(avgs.length/2)] : null;
-  // Compute hi-APY market threshold (top 10%) — penalty
-  const top10pctApy = avgs.length ? avgs[Math.floor(avgs.length * 0.90)] : null;
-  // Per-market score
-  markets.forEach(m => {
-    if (m.avgApy == null) return;
-    const lowApy = lowApyFrac(m.avgApy, txMedian) * w.lowApy;
-    const mktSize = mktSizeFrac(m.bankCount) * w.marketSize;
-    const prodVar = Math.min(m.products.length / 4, 1) * w.productVariety;
-    const gross = lowApy + mktSize + prodVar;
-    // Cross-signal bonus (3+ premium signals)
-    let signals = 0;
-    if (txMedian != null && m.avgApy < txMedian) signals++;
-    if (m.bankCount >= 3 && m.bankCount <= 8) signals++;
-    if (m.products.length === 4) signals++;
-    if (m.bestApy != null && txMedian != null && m.bestApy > txMedian * 1.20) signals++;  // at least one aggressive grower
-    const bonus = signals >= 3 ? (signals - 2) : 0;
-    // Penalty: market in top 10% of TX APY (war already won by aggressive incumbent)
-    const penalty = (top10pctApy != null && m.avgApy >= top10pctApy) ? 10 : 0;
+
+  // Reference median of county marginal rates (anchors the low-rate curve).
+  const rates = markets.map(m=>m.marginalRate).filter(v=>v!=null).sort((a,b)=>a-b);
+  const refMed = rates.length ? rates[Math.floor(rates.length/2)] : null;
+
+  markets.forEach(m=>{
+    const lowRate = lowRateFrac(m.marginalRate, refMed) * w.lowRate;
+    const lowComp = lowCompFrac(m._compPressure) * w.lowCompetition;
+    const size    = mktSizeFrac(m.bankCount) * w.marketSize;
+    const gross = lowRate + lowComp + size;
+    // Bonus: genuinely soft + uncontested + real market depth
+    let signals=0;
+    if(refMed!=null && m.marginalRate!=null && m.marginalRate < refMed) signals++;
+    if(m._compPressure===0) signals++;
+    if(m.bankCount>=3 && m.bankCount<=10) signals++;
+    const bonus = signals>=3 ? 3 : (signals===2 ? 1 : 0);
+    // Penalty: rate war already underway (many aggressive incumbents)
+    const penalty = m._compPressure>=4 ? 10 : (m._compPressure===3 ? 5 : 0);
     m._oppComponents = {
-      lowApy: +lowApy.toFixed(1),
-      marketSize: +mktSize.toFixed(1),
-      productVariety: +prodVar.toFixed(1),
-      bonus,
-      penalty,
+      lowRate: +lowRate.toFixed(1),
+      lowCompetition: +lowComp.toFixed(1),
+      marketSize: +size.toFixed(1),
+      bonus, penalty,
     };
     m.opportunity = Math.round(Math.max(0, Math.min(100, gross + bonus - penalty)));
   });
@@ -1709,12 +1777,12 @@ function mktOppBadge(m) {
   const c = m._oppComponents || {};
   const w = MKT_OPP_WEIGHTS;
   const comps = [
-    { label:'Low APY (sweet spot)',    value: c.lowApy||0,         max: w.lowApy,         color: '#3182ce' },
-    { label:'Market Size (U-curve)',   value: c.marketSize||0,     max: w.marketSize,     color: '#38a169' },
-    { label:'Product Variety',         value: c.productVariety||0, max: w.productVariety, color: '#805ad5' },
+    { label:'Low marginal rate (county IB COF)', value: c.lowRate||0,        max: w.lowRate,        color: '#3182ce' },
+    { label:'Low competition (few aggressors)',  value: c.lowCompetition||0, max: w.lowCompetition, color: '#38a169' },
+    { label:'Market size (U-curve)',             value: c.marketSize||0,     max: w.marketSize,     color: '#805ad5' },
   ];
-  if (c.bonus) comps.push({ label:'Premium-signal bonus', value: c.bonus, max: 5, color: '#22c55e' });
-  if (c.penalty) comps.push({ label:'− Saturated market', value: c.penalty, max: c.penalty, color:'#e53e3e' });
+  if (c.bonus) comps.push({ label:'Soft+uncontested bonus', value: c.bonus, max: 3, color: '#22c55e' });
+  if (c.penalty) comps.push({ label:'− Rate war underway', value: c.penalty, max: c.penalty, color:'#e53e3e' });
   const arr = (S && S.filtMarkets) || [];
   const n = arr.length;
   let rank = null;
@@ -1833,30 +1901,16 @@ function applyFilters() {
   updateFilterCount();
 }
 
-// Annotate each market with its aggressive-competitor pressure, and each bank
-// with whether it sits in a high-opportunity market. Uses the already-computed
-// _compBandCuts (banks) and _mktBandCuts (markets).
+// County markets already carry _compPressure (computed in buildMarkets from the
+// branch footprint). Here we annotate each BANK with whether its home county is
+// a Hot/Warm Entry Opportunity county — the offensive/defensive overlap signal.
 function computeCrossLinks() {
-  // Map city → set of aggressive banks (Hot/Warm on the Competitor lens)
-  const aggByCity = {};
+  const oppByCounty = {};
+  S.filtMarkets.forEach(m => { oppByCounty[m.county] = m.opportunity; });
+  const warmCut = (_mktBandCuts && _mktBandCuts.warm != null) ? _mktBandCuts.warm : 999;
   S.filtBanks.forEach(b => {
-    const aggressive = b.compScore != null && b.compScore >= (_compBandCuts.warm || 999);
-    if (!aggByCity[b.city]) aggByCity[b.city] = { total: 0, hot: 0 };
-    aggByCity[b.city].total++;
-    if (aggressive) aggByCity[b.city].hot++;
-  });
-  // Map city → market Entry Opportunity score (for the bank-side flag)
-  const oppByCity = {};
-  S.filtMarkets.forEach(m => { oppByCity[m.city] = m.opportunity; });
-
-  // Annotate markets with competitor pressure
-  S.filtMarkets.forEach(m => {
-    m._compPressure = (aggByCity[m.city] && aggByCity[m.city].hot) || 0;
-  });
-  // Annotate banks with target-market flag (their city is a Hot/Warm opportunity market)
-  S.filtBanks.forEach(b => {
-    const opp = oppByCity[b.city];
-    b._inTargetMkt = (opp != null && opp >= (_mktBandCuts.warm || 999));
+    const opp = oppByCounty[b.county];
+    b._inTargetMkt = (opp != null && opp >= warmCut);
     b._mktOpp = opp != null ? opp : null;
   });
 }
@@ -1873,8 +1927,11 @@ function updateFilterCount() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function renderStats() {
   const banks=S.filtBanks;
-  const withCof=banks.filter(b=>b.impliedRate!==null);
-  const cofs=withCof.map(b=>b.impliedRate);
+  // Headline COF stats track the MARGINAL (interest-bearing) rate, not the
+  // blended total — that's the rate that determines who wins rate-sensitive
+  // deposits. Banks with no IB COF are excluded (not coerced to 0).
+  const withCof=banks.filter(b=>b.cofIB!=null);
+  const cofs=withCof.map(b=>b.cofIB);
   const avgCof=cofs.length?(cofs.reduce((s,v)=>s+v,0)/cofs.length).toFixed(2):null;
   const maxCof=cofs.length?Math.max(...cofs).toFixed(2):null;
   const scrapedBanks=new Set(S.filtScraped.map(r=>r.cert)).size;
@@ -1910,18 +1967,19 @@ function renderMarkets() {
     const label=n===0?'Clean':n+' aggr.';
     return `<span class="xlink-pill ${cls}" title="${n} aggressive competitor(s) (Hot/Warm on Competitor Watch) operate in this market">${label}</span>`;
   };
+  // Marginal-rate cell: lower = greener (cheaper to compete).
+  const rateCell=v=>v!=null?`<span style="font-weight:700;color:${v>=3?'#c53030':v>=2?'#dd6b20':'#276749'}">${v.toFixed(2)}%</span>`:'<span style="color:#a0aec0" title="No interest-bearing COF data for banks in this county">—</span>';
   qs('#mkt-body').innerHTML=rows.map(m=>{
-    const types=m.products.map(t=>`<span class="pp pp-${t}">${PRODUCT_LABELS[t]||t}</span>`).join(' ');
+    const types=m.products.length?m.products.map(t=>`<span class="pp pp-${t}">${PRODUCT_LABELS[t]||t}</span>`).join(' '):'<span style="color:#a0aec0;font-size:10px">no adv. rates</span>';
     return`<tr>
       <td class="right">${mktOppBadge(m)}</td>
-      <td><strong>${esc(titleCase(m.city))}</strong></td>
+      <td><strong>${esc(titleCase(m.county))}</strong></td>
       <td style="font-size:12px;color:var(--muted)">${m.regionLabel}</td>
       <td class="right">${m.bankCount}</td>
       <td class="right">${pressureCell(m._compPressure)}</td>
-      <td class="right">${m.marginalRate!=null?`<span style="font-weight:700;color:${m.marginalRate>=3?'#c53030':m.marginalRate>=2?'#dd6b20':'#276749'}">${m.marginalRate.toFixed(2)}%</span>`:'<span style="color:#a0aec0">—</span>'}</td>
+      <td class="right">${rateCell(m.marginalRate)}</td>
+      <td class="right">${rateCell(m.marginalRateMax)}</td>
       <td class="right">${apyCell(m.avgCd12)}</td>
-      <td class="right">${apyCell(m.avgSavings)}</td>
-      <td class="right">${apyCell(m.avgMmkt)}</td>
       <td class="right">${apyCell(m.bestApy)}</td>
       <td class="right">${apyCell(m.avgApy)}</td>
       <td style="font-size:11px">${types}</td>
@@ -2285,8 +2343,82 @@ function renderCharts() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function cofColor(cof){if(cof===null)return'#a0aec0';if(cof>=3)return'#276749';if(cof>=2)return'#38a169';if(cof>=1)return'#68d391';return'#d69e2e';}
 
+// Diverging green→red scale for county entry attractiveness (0–100 opportunity).
+function attractivenessColor(score){
+  if(score==null) return '#e2e8f0';                 // no data → gray
+  if(score>=75) return '#1a9850';                   // best
+  if(score>=60) return '#91cf60';
+  if(score>=45) return '#fee08b';                   // moderate
+  if(score>=30) return '#fc8d59';
+  return '#d73027';                                 // avoid
+}
+
+// ── County choropleth ──────────────────────────────────────────────────────
+function renderCountyChoropleth() {
+  if(!S.map || !S.countyGeo) return;
+  if(S.countyLayer){ S.map.removeLayer(S.countyLayer); S.countyLayer=null; }
+  // county (UPPERCASE) → market record (has opportunity, marginalRate, etc.)
+  const byCounty={};
+  (S.filtMarkets||[]).forEach(m=>{ byCounty[m.county]=m; });
+  S.countyLayer=L.geoJSON(S.countyGeo,{
+    style: feat=>{
+      const m=byCounty[(feat.properties.county||'').toUpperCase()];
+      const score=m?m.opportunity:null;
+      return { fillColor:attractivenessColor(score), weight:0.7, color:'#fff',
+               fillOpacity: m?0.72:0.25 };
+    },
+    onEachFeature:(feat,layer)=>{
+      const name=feat.properties.name||titleCase(feat.properties.county||'');
+      const m=byCounty[(feat.properties.county||'').toUpperCase()];
+      if(!m){
+        layer.bindPopup(`<div style="min-width:180px;font-size:13px"><div style="font-weight:700">${esc(name)} County</div><div style="color:#718096;font-size:11px;margin-top:3px">No bank with a TX branch matched here — insufficient data.</div></div>`,{maxWidth:280});
+      } else {
+        const med=m.marginalRate!=null?m.marginalRate.toFixed(2)+'%':'—';
+        const mx =m.marginalRateMax!=null?m.marginalRateMax.toFixed(2)+'%':'—';
+        const adv=m.avgApy!=null?m.avgApy.toFixed(2)+'%':'no scraped rates';
+        layer.bindPopup(`<div style="min-width:230px;font-size:13px">
+          <div style="font-weight:700;font-size:14px">${esc(name)} County</div>
+          <div style="color:#718096;font-size:11px;margin-bottom:6px">${m.regionLabel}</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Entry Opportunity</span><strong style="color:${attractivenessColor(m.opportunity)==='#fee08b'?'#b7791f':attractivenessColor(m.opportunity)}">${m.opportunity!=null?m.opportunity:'—'}</strong></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Competitors / aggressive</span><strong>${m.bankCount} / ${m._compPressure}</strong></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Marginal rate (median / max)</span><strong>${med} / ${mx}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Avg advertised APY</span><strong>${adv}</strong></div>
+        </div>`,{maxWidth:300});
+      }
+      layer.on({
+        mouseover:e=>e.target.setStyle({weight:2,color:'#1B365D'}),
+        mouseout:e=>S.countyLayer.resetStyle(e.target),
+      });
+    },
+  }).addTo(S.map);
+}
+
+// Switch between the county choropleth and the bank-marker cluster.
+function setMapView(view){
+  S.mapView=view;
+  const onCounties=view==='counties';
+  qs('#mapview-counties').classList.toggle('active',onCounties);
+  qs('#mapview-banks').classList.toggle('active',!onCounties);
+  qs('#mapview-counties').style.background=onCounties?'var(--navy)':'#fff';
+  qs('#mapview-counties').style.color=onCounties?'#fff':'var(--navy)';
+  qs('#mapview-banks').style.background=onCounties?'#fff':'var(--navy)';
+  qs('#mapview-banks').style.color=onCounties?'var(--navy)':'#fff';
+  qs('#legend-counties').style.display=onCounties?'':'none';
+  qs('#legend-banks').style.display=onCounties?'none':'';
+  qs('#map-sub').textContent=onCounties?'County entry attractiveness · green = enter, red = avoid':'Click markers for details · Size ∝ assets';
+  if(onCounties){
+    if(S.cluster) S.map.removeLayer(S.cluster);
+    renderCountyChoropleth();
+  } else {
+    if(S.countyLayer){ S.map.removeLayer(S.countyLayer); S.countyLayer=null; }
+    if(S.cluster) S.map.addLayer(S.cluster);
+  }
+}
+
 function renderMap() {
   if(!S.map)return;
+  // Refresh whichever layer is active.
+  if(S.mapView==='counties'){ renderCountyChoropleth(); return; }
   S.cluster.clearLayers();
   const scrapedByBank=new Map();
   if(SCRAPED_RATES?.rates){
@@ -2328,8 +2460,20 @@ function initMap() {
     attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19,
   }).addTo(S.map);
   S.cluster=L.markerClusterGroup({chunkedLoading:true,maxClusterRadius:50,showCoverageOnHover:false});
-  S.map.addLayer(S.cluster);
-  renderMap();
+  // Build the marker cluster now (so the Bank Markers view is instant), but
+  // default the displayed view to the county attractiveness choropleth.
+  renderMap();   // mapView is undefined here → fills the cluster
+  // Wire the view toggle.
+  qs('#mapview-counties').addEventListener('click',()=>setMapView('counties'));
+  qs('#mapview-banks').addEventListener('click',()=>setMapView('banks'));
+  // Load the TX counties GeoJSON once, then show the county view by default.
+  if(S.countyGeo){ setMapView('counties'); }
+  else {
+    fetch('tx-counties.geojson').then(r=>r.ok?r.json():null).then(g=>{
+      if(g){ S.countyGeo=g; setMapView('counties'); }
+      else { setMapView('banks'); }  // fallback to markers if GeoJSON missing
+    }).catch(()=>{ setMapView('banks'); });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2337,7 +2481,7 @@ function initMap() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function renderActiveTab() {
   const active=qs('.tab-btn.active')?.dataset.tab;
-  if(active==='charts')renderCharts();
+  if(active==='charts'){ renderCharts(); if(S.map) renderMap(); }   // refresh map layer on filter change
   if(active==='cdmatrix')renderCdMatrix();
   if(active==='map'){initMap();setTimeout(()=>S.map?.invalidateSize(),80);}
 }
@@ -3116,9 +3260,10 @@ function renderOverview() {
   const banks = S.filtBanks || S.banks;
   const markets = S.filtMarkets || S.markets;
   const rows = S.filtRows || S.rows;
-  const withCof = banks.filter(b=>b.impliedRate!==null);
-  const avgCof = withCof.length ? (withCof.reduce((s,b)=>s+b.impliedRate,0)/withCof.length).toFixed(2) : '—';
-  const maxCof = withCof.length ? Math.max(...withCof.map(b=>b.impliedRate)).toFixed(2) : '—';
+  // Overview COF headline tracks the MARGINAL (interest-bearing) rate.
+  const withCof = banks.filter(b=>b.cofIB!=null);
+  const avgCof = withCof.length ? (withCof.reduce((s,b)=>s+b.cofIB,0)/withCof.length).toFixed(2) : '—';
+  const maxCof = withCof.length ? Math.max(...withCof.map(b=>b.cofIB)).toFixed(2) : '—';
   const scrapedBanks = banks.filter(b=>b.hasScraped).length;
   const topMarket = markets.length ? [...markets].sort((a,b)=>(b.opportunity||0)-(a.opportunity||0))[0] : null;
   const topComp = [...banks].sort((a,b)=>(b.compScore||0)-(a.compScore||0))[0];
@@ -3169,8 +3314,8 @@ function renderOverview() {
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px">
       <div class="stat-card blue"><div class="stat-label">TX-Active Banks</div><div class="stat-value">${banks.length}</div><div class="stat-note">≥1 TX branch (any size / HQ)</div></div>
       <div class="stat-card green"><div class="stat-label">Markets Covered</div><div class="stat-value">${markets.length}</div><div class="stat-note">Cities with scraped rates</div></div>
-      <div class="stat-card teal"><div class="stat-label">Avg Cost of Funds</div><div class="stat-value">${avgCof}%</div><div class="stat-note">EINTEXP ÷ DEPI (FDIC)</div></div>
-      <div class="stat-card orange"><div class="stat-label">Highest COF</div><div class="stat-value">${maxCof}%</div><div class="stat-note">Most aggressive competitor</div></div>
+      <div class="stat-card teal"><div class="stat-label">Avg Interest-Bearing COF</div><div class="stat-value">${avgCof}%</div><div class="stat-note">Marginal rate (excl. NIB)</div></div>
+      <div class="stat-card orange"><div class="stat-label">Highest IB COF</div><div class="stat-value">${maxCof}%</div><div class="stat-note">Most aggressive marginal bidder</div></div>
       <div class="stat-card purple"><div class="stat-label">Banks Scraped</div><div class="stat-value">${scrapedBanks}</div><div class="stat-note">With advertised rates</div></div>
       <div class="stat-card" style="border-left-color:var(--gold)"><div class="stat-label">Fed Funds Rate</div><div class="stat-value">${S.treasury?.fedFunds||'—'}</div><div class="stat-note">Current benchmark</div></div>
     </div>
@@ -3325,13 +3470,13 @@ if (window.ScoreWeights) {
       },
       {
         id: 'mktOpp',
-        label: 'Market Opportunity Score (max 100 pts)',
-        tabLabel: 'Market Opp',
+        label: 'County Entry Opportunity Score (max 100 pts)',
+        tabLabel: 'Entry Opp',
         normalizeTo: 100,
         components: [
-          { key: 'lowApy',         label: 'Low Avg APY (Ease of Entry)', desc: 'Lower existing rates = easier entry', default: 40, min: 0, max: 80 },
-          { key: 'marketSize',     label: 'Market Size (Bank Count)',    desc: 'More banks = bigger deposit market',  default: 30, min: 0, max: 80 },
-          { key: 'productVariety', label: 'Product Variety',             desc: 'More product types = mature market',  default: 30, min: 0, max: 80 },
+          { key: 'lowRate',        label: 'Low Marginal Rate (county IB COF)', desc: 'Lower cost of funds = cheaper to compete', default: 45, min: 0, max: 80 },
+          { key: 'lowCompetition', label: 'Low Competition',                   desc: 'Fewer aggressive incumbents = easier entry', default: 35, min: 0, max: 80 },
+          { key: 'marketSize',     label: 'Market Size (Bank Count)',          desc: '3–10 banks = sweet spot; crowded = harder',  default: 20, min: 0, max: 80 },
         ],
       },
     ],
