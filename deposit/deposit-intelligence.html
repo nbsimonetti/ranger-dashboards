@@ -664,7 +664,8 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
             <th data-col="city" data-tbl="bank">City</th>
             <th data-col="regionLabel" data-tbl="bank">Region</th>
             <th data-col="_inTargetMkt" data-tbl="bank" title="Is this competitor operating in a market that scores high on Entry Opportunity? If yes, it's both a threat and a signpost to a market we want.">In Target Mkt?</th>
-            <th data-col="impliedRate" data-tbl="bank" >Cost of Funds</th>
+            <th data-col="cofTotal" data-tbl="bank" title="Total / blended cost of funds (FDIC INTEXPY). The bank's all-in funding cost, including cheap relationship NIB deposits.">Total COF</th>
+            <th data-col="cofIB" data-tbl="bank" title="Marginal rate — interest expense ÷ interest-bearing deposits. What this competitor pays to win a rate shopper. This is the rate Ranger must beat; relationship NIB deposits don't move on rate.">IB COF (marginal)</th>
             <th data-col="eintexpM" data-tbl="bank">Int. Expense</th>
             <th data-col="depM" data-tbl="bank">Deposits</th>
             <th data-col="assetM" data-tbl="bank">Assets</th>
@@ -701,6 +702,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
             <th data-col="regionLabel" data-tbl="mkt">Region</th>
             <th data-col="bankCount" data-tbl="mkt">Competitors</th>
             <th data-col="_compPressure" data-tbl="mkt" title="Number of banks in this market that land in the Competitor Watch Hot/Warm bands. Fewer = cleaner entry.">Comp. Pressure</th>
+            <th data-col="marginalRate" data-tbl="mkt" title="Median interest-bearing cost of funds of banks operating in this market — the FDIC-derived rate floor you must beat to win the marginal (rate-sensitive) depositor. NIB relationship deposits don't move on rate.">Marginal Rate to Win</th>
             <th data-col="avgCd12" data-tbl="mkt">Avg 12mo CD</th>
             <th data-col="avgSavings" data-tbl="mkt">Avg Savings</th>
             <th data-col="avgMmkt" data-tbl="mkt">Avg Money Mkt</th>
@@ -766,9 +768,9 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
             <th data-col="name" data-tbl="cof">Bank</th>
             <th data-col="city" data-tbl="cof">City</th>
             <th data-col="regionLabel" data-tbl="cof">Region</th>
-            <th data-col="impliedRate" data-tbl="cof" class="sort-desc" title="FDIC's published annualized Cost of Funds (INTEXPY) — interest expense ÷ earning assets. Industry-standard COF.">Cost of Funds (FDIC)</th>
-            <th data-col="cofIbDep" data-tbl="cof" title="Our calculation: annualized EINTEXP ÷ interest-bearing deposits. Higher than FDIC COF because the denominator is smaller.">COF on IB Deposits</th>
-            <th data-col="cofPctile" data-tbl="cof">COF %ile</th>
+            <th data-col="cofTotal" data-tbl="cof" class="sort-desc" title="TOTAL / BLENDED cost of funds — FDIC INTEXPY (interest expense ÷ earning assets). Includes the benefit of cheap non-interest-bearing relationship deposits. The bank's all-in funding cost.">Total COF</th>
+            <th data-col="cofIB" data-tbl="cof" title="MARGINAL rate — annualized interest expense ÷ interest-bearing deposits only. The rate this bank pays to win rate-sensitive money. This is what you must beat to capture the marginal depositor; NIB relationship deposits don't move on rate.">IB COF (marginal)</th>
+            <th data-col="cofPctile" data-tbl="cof">Total COF %ile</th>
             <th data-col="eintexpM" data-tbl="cof">Ann. Int. Expense</th>
             <th data-col="depiM" data-tbl="cof">Int-Bearing Deposits</th>
             <th data-col="depM" data-tbl="cof">Total Deposits</th>
@@ -912,7 +914,16 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
           </div>
           <div style="background:#fdecec;border:1px solid #fc8181;border-left:4px solid #c53030;border-radius:8px;padding:14px 16px">
             <div style="font-weight:700;color:#b91c1c;font-size:13.5px;margin-bottom:4px">🔴 Competitor Watch (defensive)</div>
-            <div style="font-size:12px;color:#7b241c;line-height:1.5"><strong>Higher = bigger threat to DEFEND against.</strong> Scores individual <em>banks</em>. A high score means an aggressive competitor paying up for funds and growing — likely to pull a rate-sensitive Ranger customer. Red = a threat, not a model to copy.</div>
+            <div style="font-size:12px;color:#7b241c;line-height:1.5"><strong>Higher = bigger threat to DEFEND against.</strong> Scores individual <em>banks</em>. The "Rate Aggressiveness" component ranks on <strong>interest-bearing cost of funds</strong> — the rate a bank pays to win rate-sensitive money — because that, not the blended total, is what determines who out-bids us for the marginal depositor. Red = a threat, not a model to copy.</div>
+          </div>
+        </div>
+
+        <!-- Two cost-of-funds measures explainer -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:20px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Two cost-of-funds measures — when to use which</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.6">
+            <strong>Total COF (blended)</strong> = FDIC INTEXPY, interest expense ÷ earning assets. The bank's all-in funding cost. A low Total COF usually signals a strong non-interest-bearing (NIB) relationship book — cheap, sticky deposits that <em>don't move on rate</em>. Use it to gauge a bank's structural funding advantage.<br><br>
+            <strong>IB COF (marginal rate)</strong> = annualized interest expense ÷ interest-bearing deposits. The rate a bank pays <em>only</em> on rate-sensitive money. <strong>This is the number that matters when competing on rate.</strong> NIB deposits are relationship-driven and won't follow a rate offer, so the marginal depositor is captured at the IB rate — and a bank with a high IB COF will out-bid you for that depositor even if its Total COF looks low. The Competitor Aggressiveness score ranks on IB COF for exactly this reason, and the Market Entry tab's "Marginal Rate to Win" column shows the median IB COF of banks in each market — the rate floor a new entrant must beat.
           </div>
         </div>
         <div style="background:#fffbea;border-left:3px solid var(--gold);padding:11px 15px;border-radius:0 6px 6px 0;font-size:12.5px;color:#5a4a1e;line-height:1.55;margin-bottom:20px">
@@ -927,7 +938,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
           <h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px">🔴 Competitor Watch — Aggressiveness Score (0-100)</h3>
           <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Visible in the <strong>Competitor Watch</strong> tab. Identifies which banks are most aggressively competing for deposits — the threats to defend against. Bands are percentile-based on the filtered set (Hot = top 7%). Weights below reflect your current settings <span id="meth-weights-note" style="color:var(--muted);font-style:italic"></span> — adjust via the score-weights drawer.</p>
           <div id="meth-weights" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;font-size:11px;text-align:center">
-            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="cof">35</div>Cost of Funds<br><span style="color:var(--muted)">EINTEXP ÷ DEPI</span></div>
+            <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="cof">35</div>Rate Aggressiveness<br><span style="color:var(--muted)">IB COF peer-rank (marginal rate)</span></div>
             <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="growth">20</div>Growth Proxy<br><span style="color:var(--muted)">IntExp / Assets</span></div>
             <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="assetFit">15</div>Asset Size Fit<br><span style="color:var(--muted)">$100M-$1B sweet spot</span></div>
             <div style="background:var(--surface);padding:8px;border-radius:6px"><div style="font-weight:700;color:var(--navy);font-size:16px" data-w="web">10</div>Web Presence<br><span style="color:var(--muted)">Has FDIC website</span></div>
@@ -1411,14 +1422,24 @@ function normalizeBank(d, finResults, branchMap) {
   const depni=fin?.depni||0;
   let depi=fin?.depi||0;
   if(depi<=0 && dep>0 && depni>0) depi=dep-depni;
-  // PRIMARY cost-of-funds metric: prefer FDIC's published annualized ratio
-  // INTEXPY ("Interest expense to earning assets") — the industry-standard
-  // "Cost of Funds" definition every banker recognizes. FDIC already
-  // annualizes it, so no multiplier is needed. Fall back to our own
-  // EINTEXP/DEPI calculation only if FDIC didn't publish the ratio.
-  const cofFdic   = (fin?.intexpy != null) ? parseFloat(Number(fin.intexpy).toFixed(3)) : null;
-  const cofIbDep  = (depi>0 && eintexp>0) ? parseFloat((eintexp/depi*100).toFixed(3)) : null;
-  const cof       = cofFdic != null ? cofFdic : cofIbDep;
+  // TWO cost-of-funds measures, both useful for different questions:
+  //
+  // cofTotal = FDIC's published INTEXPY (interest expense ÷ earning assets,
+  //   already annualized). The all-in / BLENDED funding cost. Includes the
+  //   benefit of cheap non-interest-bearing (NIB) relationship deposits, so
+  //   a bank with a big NIB checking book shows a low total COF. Answers:
+  //   "what does this bank's whole funding base cost?"
+  //
+  // cofIB = annualized EINTEXP ÷ interest-bearing deposits (DEPI). The rate
+  //   paid ONLY on rate-sensitive money. This is the MARGINAL deposit rate —
+  //   what a competitor actually pays to win a rate shopper. NIB deposits are
+  //   relationship-driven and don't move on rate, so when competing on RATE
+  //   this is the number that matters. Answers: "what rate must I beat to
+  //   capture the marginal depositor this bank is bidding for?"
+  const cofTotal = (fin?.intexpy != null) ? parseFloat(Number(fin.intexpy).toFixed(3)) : null;
+  const cofIB    = (depi>0 && eintexp>0) ? parseFloat((eintexp/depi*100).toFixed(3)) : null;
+  // Headline `impliedRate` stays the blended total COF (FDIC-standard).
+  const cof      = cofTotal != null ? cofTotal : cofIB;
 
   // Derived health metrics — INTINC also needs YTD annualization
   const intinc=(fin?.intinc||0) * annMult;
@@ -1451,7 +1472,7 @@ function normalizeBank(d, finResults, branchMap) {
     lat:parseFloat(d.LATITUDE)||null, lng:parseFloat(d.LONGITUDE)||null,
     established:d.ESTYMD?d.ESTYMD.slice(-4):null,
     repdte:d.REPDTE||null, finRepdte:fin?.repdte||null,
-    impliedRate:cof, cofFdic, cofIbDep, eintexpM:eintexp/1000, depM:dep/1000, depiM:depi/1000, depniM:depni/1000,
+    impliedRate:cof, cofTotal, cofIB, eintexpM:eintexp/1000, depM:dep/1000, depiM:depi/1000, depniM:depni/1000,
     ltd, texasRatio, nim, roa, roe, depGrowth,
     numemp:fin?.numemp||0, netincM:(fin?.netinc||0)/1000,
     branchCount:branchMap.get(cert)||0,
@@ -1541,6 +1562,19 @@ function mktSizeFrac(n) {
 }
 function buildMarkets(rows) {
   const w = MKT_OPP_WEIGHTS;
+  // Cert → IB cost-of-funds lookup, built across ALL banks in the city (not just
+  // the scraped subset). The marginal rate to win a city's rate-sensitive
+  // depositor is the IB COF of the banks operating there.
+  const cofIbByCert = {};
+  const banksByCity = {};
+  (S && S.banks ? S.banks : []).forEach(b => {
+    if (b.cofIB != null) cofIbByCert[b.cert] = b.cofIB;
+    const cty = b.city;
+    if (!banksByCity[cty]) banksByCity[cty] = [];
+    if (b.cofIB != null) banksByCity[cty].push(b.cofIB);
+  });
+  const median = arr => { if(!arr||!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); return parseFloat(s[Math.floor(s.length/2)].toFixed(2)); };
+
   const map={};
   for(const r of rows){
     if(!map[r.city])map[r.city]={city:r.city,region:r.region,regionLabel:r.regionLabel,banks:new Set(),rows:[]};
@@ -1556,9 +1590,14 @@ function buildMarkets(rows) {
     const types=[...new Set(m.rows.map(r=>r.productType))];
     const avgAll=avg(all);
     const level=avgAll===null?'unknown':avgAll<1.5?'soft':avgAll<3?'mod':'hot';
+    // Marginal rate to win: median IB COF of ALL banks headquartered in this city.
+    // This is the FDIC-derived rate floor a new entrant must beat to capture the
+    // rate-sensitive (marginal) depositor — NIB relationship deposits don't move.
+    const marginalRate = median(banksByCity[m.city]);
     return{city:m.city,region:m.region,regionLabel:m.regionLabel,
       bankCount:m.banks.size,productCount:m.rows.length,
       avgApy:avgAll,bestApy:best(all),avgCd12:avg(cd12),avgSavings:avg(sav),avgMmkt:avg(mm),
+      marginalRate,
       products:types,level,
       // Opportunity score + components computed AFTER we know the TX median
       opportunity: null, _oppComponents: null};
@@ -1826,6 +1865,7 @@ function renderMarkets() {
       <td style="font-size:12px;color:var(--muted)">${m.regionLabel}</td>
       <td class="right">${m.bankCount}</td>
       <td class="right">${pressureCell(m._compPressure)}</td>
+      <td class="right">${m.marginalRate!=null?`<span style="font-weight:700;color:${m.marginalRate>=3?'#c53030':m.marginalRate>=2?'#dd6b20':'#276749'}">${m.marginalRate.toFixed(2)}%</span>`:'<span style="color:#a0aec0">—</span>'}</td>
       <td class="right">${apyCell(m.avgCd12)}</td>
       <td class="right">${apyCell(m.avgSavings)}</td>
       <td class="right">${apyCell(m.avgMmkt)}</td>
@@ -1900,12 +1940,13 @@ function renderCofTable() {
   const sh=S.showHealth?'':'display:none';
 
   qs('#cof-body').innerHTML=rows.map(b=>{
-    const cofCell=b.impliedRate!==null
-      ?`<span class="${cofClass(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><span class="cof-sub" title="FDIC INTEXPY ${b.finRepdte||''}">${b.finRepdte?formatRepdte(b.finRepdte):''}</span>`
+    const cofCell=b.cofTotal!=null
+      ?`<span class="${cofClass(b.cofTotal)}">${b.cofTotal.toFixed(2)}%</span><span class="cof-sub" title="FDIC INTEXPY (total/blended) ${b.finRepdte||''}">${b.finRepdte?formatRepdte(b.finRepdte):''}</span>`
       :`<span class="cof-na">—</span>`;
-    // Secondary "Cost of Interest-Bearing Deposits" cell — our own calculation
-    const ibCell = b.cofIbDep != null
-      ? `<span style="font-size:12px;color:var(--muted)">${b.cofIbDep.toFixed(2)}%</span>`
+    // IB COF (marginal rate) — the rate paid to win rate-sensitive money.
+    // Colored to its own scale; this is the "rate to beat" number.
+    const ibCell = b.cofIB != null
+      ? `<span class="${cofClass(b.cofIB)}" title="Marginal rate — what this bank pays on interest-bearing money">${b.cofIB.toFixed(2)}%</span>`
       : `<span class="cof-na">—</span>`;
     const pctCell=b.cofPctile!=null?`<span style="font-size:12px;font-weight:600;color:${b.cofPctile>=75?'#276749':b.cofPctile>=50?'#2b6cb0':'#a0aec0'}">${b.cofPctile}th</span>`:'<span style="color:#a0aec0">—</span>';
     const intExp=b.eintexpM>0?`$${b.eintexpM<1?(b.eintexpM*1000).toFixed(0)+'K':b.eintexpM.toFixed(2)+'M'}`:'—';
@@ -2255,8 +2296,8 @@ function exportCsv() {
   const active=qs('.tab-btn.active')?.dataset.tab;
   let headers,rows;
   if(active==='cof'){
-    headers=['Bank','City','Region','Cost of Funds (FDIC INTEXPY) %','COF on IB Deposits %','COF Percentile','Ann. Int Expense ($M)','Int-Bearing Deposits ($M)','Total Deposits ($M)','Assets ($M)','Branches','LTD Ratio %','ROA %','Texas Ratio %','NIM Proxy %','Dep Growth %','Charter'];
-    rows=S.filtBanks.map(b=>[b.name,b.city,b.regionLabel,b.impliedRate??'',b.cofIbDep??'',b.cofPctile??'',b.eintexpM.toFixed(2),b.depiM.toFixed(0),b.depM.toFixed(0),b.assetM,b.branchCount,b.ltd??'',b.roa??'',b.texasRatio??'',b.nim??'',b.depGrowth??'',b.charterType]);
+    headers=['Bank','City','Region','Total COF (FDIC INTEXPY) %','IB COF marginal-rate %','Total COF Percentile','Ann. Int Expense ($M)','Int-Bearing Deposits ($M)','Total Deposits ($M)','Assets ($M)','Branches','LTD Ratio %','ROA %','Texas Ratio %','NIM Proxy %','Dep Growth %','Charter'];
+    rows=S.filtBanks.map(b=>[b.name,b.city,b.regionLabel,b.cofTotal??'',b.cofIB??'',b.cofPctile??'',b.eintexpM.toFixed(2),b.depiM.toFixed(0),b.depM.toFixed(0),b.assetM,b.branchCount,b.ltd??'',b.roa??'',b.texasRatio??'',b.nim??'',b.depGrowth??'',b.charterType]);
   } else if(active==='scanner'){
     headers=['Bank','City','Region','Product','Term (mo)','APY %','Min Balance','Assets ($M)'];
     rows=S.filtScraped.map(r=>[r.bankName,r.city,r.regionLabel,r.productName,r.termMonths||'',r.apy,r.minBalance||'',r.assetM]);
@@ -2509,6 +2550,7 @@ async function updateData(opts={}) {
     setUpdateBtnLabel('Recomputing…');
     S.banks=raw.map(d=>normalizeBank(d,finResults,branchMap));
     computeCofPercentiles(S.banks);
+    _cofIbUniverse=null; _cofTotalUniverse=null; _bestApyUniverse=null; if(S) S._growthUniverse=null;
     S.banks.forEach(computeCompScore);
     S.allScraped=buildScrapedRows(S.banks);
     S.currentRepdte = finResults.currentRepdte || discovered || null;
@@ -2815,23 +2857,28 @@ function _pctRank(val, arr) {
   for (let i=0;i<arr.length;i++) if (arr[i] != null && arr[i] <= val) c++;
   return c / arr.length;
 }
-let _cofUniverse = null, _bestApyUniverse = null;
+let _cofIbUniverse = null, _cofTotalUniverse = null, _bestApyUniverse = null;
 function refreshCompUniverses() {
   if (!S || !S.banks) return;
-  _cofUniverse     = S.banks.map(b => b.impliedRate).filter(v => v != null);
-  _bestApyUniverse = S.banks.map(b => b._bestApy).filter(v => v != null);
+  _cofIbUniverse    = S.banks.map(b => b.cofIB).filter(v => v != null);
+  _cofTotalUniverse = S.banks.map(b => b.cofTotal).filter(v => v != null);
+  _bestApyUniverse  = S.banks.map(b => b._bestApy).filter(v => v != null);
 }
 
 function computeCompScore(b) {
   const w = COMP_WEIGHTS, pen = COMP_PENALTIES;
   const c = {};
-  if (!_cofUniverse) refreshCompUniverses();
-  // 1. Cost of funds — percentile rank within TX peer set (the higher COF,
-  //    the more aggressively a bank is paying for deposits = the more
-  //    competitive). Replaces the old "impliedRate / 3 × w" scaling.
-  c.cof = b.impliedRate != null
-    ? +(_pctRank(b.impliedRate, _cofUniverse) * w.cof).toFixed(1)
-    : 0;
+  if (!_cofIbUniverse) refreshCompUniverses();
+  // 1. RATE AGGRESSIVENESS — percentile rank of INTEREST-BEARING cost of funds.
+  //    When competing on rate, the marginal (rate-sensitive) depositor is won
+  //    at the IB rate; non-interest-bearing relationship deposits don't move.
+  //    So a bank paying up on its IB book is the real rate-competition threat —
+  //    even if its blended Total COF looks low thanks to a big NIB base.
+  //    Falls back to Total COF rank when IB is unavailable.
+  const cofRankBasis = b.cofIB != null ? _pctRank(b.cofIB, _cofIbUniverse)
+                     : b.cofTotal != null ? _pctRank(b.cofTotal, _cofTotalUniverse)
+                     : null;
+  c.cof = cofRankBasis != null ? +(cofRankBasis * w.cof).toFixed(1) : 0;
   // 2. Growth proxy — keep the existing eintexp/asset ratio but rank within peers
   const growth_raw = (b.eintexpM > 0 && b.assetM > 0) ? (b.eintexpM / b.assetM * 100) : null;
   if (growth_raw != null && S.banks) {
@@ -2852,7 +2899,7 @@ function computeCompScore(b) {
   const gross = c.cof + c.growth + c.assetFit + c.web + c.scraped;
   // Cross-signal bonus — 3+ premium signals lining up
   let signals = 0;
-  if (b.impliedRate != null && _pctRank(b.impliedRate, _cofUniverse) >= 0.75) signals++;       // top-quartile COF
+  if (b.cofIB != null && _pctRank(b.cofIB, _cofIbUniverse) >= 0.75) signals++;       // top-quartile IB COF (rate aggressiveness)
   if (growth_raw != null && S._growthUniverse && _pctRank(growth_raw, S._growthUniverse) >= 0.75) signals++;  // top-quartile growth
   if (b.assetM >= 300 && b.assetM <= 2000) signals++;   // sweet spot for aggressive community growth
   if (b._bestApy != null && _bestApyUniverse.length && b._bestApy >= _bestApyUniverse.sort((a,c)=>a-c)[Math.floor(_bestApyUniverse.length/2)]) signals++; // best APY above peer median
@@ -2892,11 +2939,11 @@ function compBadge(s, bank) {
   const c = (bank && bank._compComponents) || {};
   const w = COMP_WEIGHTS;
   const comps = [
-    { label: 'Cost of Funds (peer-rank)',  value: c.cof||0,      max: w.cof,      color: '#3182ce' },
-    { label: 'Growth Proxy (peer-rank)',   value: c.growth||0,   max: w.growth,   color: '#38a169' },
-    { label: 'Asset Size Fit',             value: c.assetFit||0, max: w.assetFit, color: '#319795' },
-    { label: 'Web Presence',               value: c.web||0,      max: w.web,      color: '#dd6b20' },
-    { label: 'Best APY (peer-rank)',       value: c.scraped||0,  max: w.scraped,  color: '#805ad5' },
+    { label: 'Rate aggressiveness (IB COF peer-rank)', value: c.cof||0,      max: w.cof,      color: '#c53030' },
+    { label: 'Growth proxy (peer-rank)',   value: c.growth||0,   max: w.growth,   color: '#38a169' },
+    { label: 'Asset size fit',             value: c.assetFit||0, max: w.assetFit, color: '#319795' },
+    { label: 'Web presence',               value: c.web||0,      max: w.web,      color: '#dd6b20' },
+    { label: 'Best advertised APY (peer-rank)', value: c.scraped||0,  max: w.scraped,  color: '#805ad5' },
   ];
   if (c.bonus) comps.push({ label:'Premium-signal bonus', value:c.bonus, max:5, color:'#22c55e' });
   const penaltyLabels = { mega_bank:'− Mega bank (>$5B)', micro_bank:'− Sub-scale (<$50M)' };
@@ -2934,8 +2981,14 @@ function renderBankDirectory() {
   const isRanger = S.ranger && S.ranger.cd12;
 
   qs('#bank-body').innerHTML = rows.map(b => {
-    const cofCell = b.impliedRate!==null
-      ? `<span style="font-weight:700;font-size:14px;${cofC(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><br><span style="font-size:10px;color:var(--muted)" title="FDIC ${b.finRepdte||''}">${b.finRepdte?formatRepdte(b.finRepdte):''}</span>`
+    // Total (blended) COF — all-in funding cost
+    const cofCell = b.cofTotal!=null
+      ? `<span style="font-weight:700;font-size:14px;${cofC(b.cofTotal)}">${b.cofTotal.toFixed(2)}%</span><br><span style="font-size:10px;color:var(--muted)" title="FDIC INTEXPY ${b.finRepdte||''}">${b.finRepdte?formatRepdte(b.finRepdte):''}</span>`
+      : '<span style="color:#a0aec0">—</span>';
+    // IB COF — marginal rate; the number Ranger must beat to win a rate shopper.
+    // Bolder/red-leaning because this is the rate-competition signal.
+    const ibCofCell = b.cofIB!=null
+      ? `<span style="font-weight:700;font-size:14px;color:${b.cofIB>=4?'#c53030':b.cofIB>=2.5?'#dd6b20':'#4a5568'}">${b.cofIB.toFixed(2)}%</span>`
       : '<span style="color:#a0aec0">—</span>';
     const rateLink = b.websiteUrl
       ? `<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#ebf4ff;color:#2b6cb0;border:1px solid #bee3f8;text-decoration:none;white-space:nowrap">Visit ↗</a>`
@@ -2951,6 +3004,7 @@ function renderBankDirectory() {
       <td style="font-size:12px;color:var(--muted)">${b.regionLabel}</td>
       <td class="right">${inTgt}</td>
       <td class="right">${cofCell}</td>
+      <td class="right">${ibCofCell}</td>
       <td class="right" style="font-size:12px;color:var(--muted)">${b.eintexpM>0?(b.eintexpM<1?'$'+(b.eintexpM*1000).toFixed(0)+'K':'$'+b.eintexpM.toFixed(1)+'M'):'—'}</td>
       <td class="right" style="font-size:12px;color:var(--muted)">${fmtM(b.depM)}</td>
       <td class="right" style="font-size:12px;color:var(--muted)">${fmtM(b.assetM)}</td>
@@ -3098,6 +3152,7 @@ async function main() {
     ]);
     S.banks = raw.map(d => normalizeBank(d, finResults, branchMap));
     computeCofPercentiles(S.banks);
+    _cofIbUniverse=null; _cofTotalUniverse=null; _bestApyUniverse=null; if(S) S._growthUniverse=null;
     S.banks.forEach(computeCompScore);
     S.allScraped = buildScrapedRows(S.banks);
     S.lastRefresh = new Date();
