@@ -755,9 +755,9 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
         </table>
       </div>
       <div class="tbl-note">
-        <strong>Cost of Funds</strong> = FDIC EINTEXP ÷ DEPI × 100 (Interest Expense ÷ Interest-Bearing Deposits). <strong>COF %ile</strong> = rank among all TX banks.
+        <strong>Cost of Funds</strong> = (annualized EINTEXP) ÷ DEPI × 100. FDIC EINTEXP is YTD cumulative on each call report (Q1 = 3mo, Q2 = 6mo, Q3 = 9mo, Q4 = 12mo); we annualize by ×4 / ×2 / ×(4/3) / ×1 so all banks are on a common 12-month basis regardless of which quarter we read. <strong>COF %ile</strong> = rank among all TX banks.
         <strong>LTD</strong> = Loans ÷ Deposits. <strong>Texas Ratio</strong> = Noncurrent loans ÷ (Equity + Loan loss reserves).
-        <strong>NIM Proxy</strong> = (Int Income − Int Expense) ÷ Assets. <strong>Dep Growth</strong> = QoQ change in deposits.
+        <strong>NIM Proxy</strong> = (annualized Int Income − annualized Int Expense) ÷ Assets. <strong>Dep Growth</strong> = QoQ change in deposits.
       </div>
       <div class="pgbar">
         <div class="pgsize">Rows: <select id="cof-pg-size"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></div>
@@ -1348,17 +1348,29 @@ function normalizeBank(d, finResults, branchMap) {
   const cert=d.CERT;
   const fin=finResults.current.get(cert);
   const finPrior=finResults.prior.get(cert);
-  const eintexp=fin?.eintexp||0;
+  // FDIC call-report flow fields (EINTEXP, INTINC, NETINC) are reported as
+  // YEAR-TO-DATE cumulatives, not annualized. A Q1 (3/31) filing carries
+  // only Jan-Mar interest expense; Q2 has Jan-Jun; Q3 has Jan-Sep; Q4 is
+  // full-year. Annualize by multiplying by 4 / 2 / (4/3) / 1 based on the
+  // quarter-ending month of the REPDTE.
+  // Without this fix, banks reported on Q1 data looked 4x more expensive
+  // than they actually are.
+  const qtrMonth = (fin?.repdte || '').slice(4, 6);
+  const annMult = qtrMonth === '03' ? 4 :
+                  qtrMonth === '06' ? 2 :
+                  qtrMonth === '09' ? (4/3) : 1;
+  const eintexpRaw = fin?.eintexp || 0;
+  const eintexp = eintexpRaw * annMult;   // annualized
   const dep=fin?.dep||d.DEP||0;
-  // Cost of Funds = Interest Expense / Interest-Bearing Deposits (DEPI)
+  // Cost of Funds = (annualized Interest Expense) / (Interest-Bearing Deposits)
   // Fallback: if DEPI not available, derive as DEP - DEPNI (total deposits minus non-interest-bearing)
   const depni=fin?.depni||0;
   let depi=fin?.depi||0;
   if(depi<=0 && dep>0 && depni>0) depi=dep-depni;
   const cof=(depi>0&&eintexp>0)?parseFloat((eintexp/depi*100).toFixed(3)):null;
 
-  // Derived health metrics
-  const intinc=fin?.intinc||0;
+  // Derived health metrics — INTINC also needs YTD annualization
+  const intinc=(fin?.intinc||0) * annMult;
   const lnlsnet=fin?.lnlsnet||0;
   const eqtot=fin?.eqtot||0;
   const nclnls=fin?.nclnls||0;
