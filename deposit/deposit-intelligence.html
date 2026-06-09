@@ -301,6 +301,9 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
 .insight-opportunity strong { color:#15803d; }
 .insight-threat { background:#fdecec; color:#7b241c; border-bottom:2px solid #c53030; }
 .insight-threat strong { color:#b91c1c; }
+/* Dashboard-managed sortable headers (markets/scanner/cof) */
+th.dash-sortable { cursor:pointer; user-select:none; }
+th.dash-sortable:hover { background:#eef3f8; }
 /* Cross-link cell pills */
 .xlink-pill { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10.5px; font-weight:700; }
 .xlink-clean { background:#c6f6d5; color:#22543d; }
@@ -677,7 +680,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
         </table>
       </div>
       <div class="tbl-note">
-        <strong>Competitor Aggressiveness Score</strong>: Composite of cost of funds (peer-rank, 35pts), deposit growth proxy (20pts), asset size fit (15pts), web presence (10pts), best advertised APY (20pts). <strong>Higher = more aggressive competitor to defend against</strong> — this is a threat lens, not a target list. Bands are percentile-based on the filtered set (Hot = top 7%). Click a score badge for the full breakdown.
+        <strong>Competitor Aggressiveness Score</strong>: Composite of <strong>rate aggressiveness</strong> (interest-bearing COF peer-rank, 35pts — the marginal rate paid to win rate-sensitive money), deposit growth proxy (20pts), asset size fit (15pts), web presence (10pts), best advertised APY (20pts). <strong>Higher = more aggressive competitor to defend against</strong> — this is a threat lens, not a target list. The COF component uses the marginal (IB) rate, not the blended total, because that's who out-bids us for the marginal depositor. Bands are percentile-based on the filtered set (Hot = top 7%). Click a score badge for the full breakdown.
       </div>
       <div class="pgbar">
         <div class="pgsize">Rows: <select id="bank-pg-size"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></div>
@@ -770,7 +773,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
             <th data-col="regionLabel" data-tbl="cof">Region</th>
             <th data-col="cofTotal" data-tbl="cof" class="sort-desc" title="TOTAL / BLENDED cost of funds — FDIC INTEXPY (interest expense ÷ earning assets). Includes the benefit of cheap non-interest-bearing relationship deposits. The bank's all-in funding cost.">Total COF</th>
             <th data-col="cofIB" data-tbl="cof" title="MARGINAL rate — annualized interest expense ÷ interest-bearing deposits only. The rate this bank pays to win rate-sensitive money. This is what you must beat to capture the marginal depositor; NIB relationship deposits don't move on rate.">IB COF (marginal)</th>
-            <th data-col="cofPctile" data-tbl="cof">Total COF %ile</th>
+            <th data-col="cofPctile" data-tbl="cof" title="Competitive percentile rank on the MARGINAL (interest-bearing) cost of funds — how aggressively this bank pays for rate-sensitive money vs all TX peers. 90th = pays up more than 90% of peers.">IB COF %ile (marginal)</th>
             <th data-col="eintexpM" data-tbl="cof">Ann. Int. Expense</th>
             <th data-col="depiM" data-tbl="cof">Int-Bearing Deposits</th>
             <th data-col="depM" data-tbl="cof">Total Deposits</th>
@@ -1492,11 +1495,19 @@ function normalizeBank(d, finResults, branchMap) {
 }
 
 function computeCofPercentiles(banks) {
-  const withCof=banks.filter(b=>b.impliedRate!==null).map(b=>b.impliedRate).sort((a,b)=>a-b);
+  // Rank on the MARGINAL (interest-bearing) cost of funds, not the blended
+  // total. The percentile is a competitive-positioning metric — it answers
+  // "how aggressively is this bank paying for rate-sensitive money relative
+  // to peers" — so it must use the marginal rate, consistent with the
+  // Competitor Aggressiveness score. Falls back to total COF only if a bank
+  // has no IB COF.
+  const basisOf = b => (b.cofIB != null ? b.cofIB : b.cofTotal);
+  const withCof=banks.map(basisOf).filter(v=>v!=null).sort((a,b)=>a-b);
   if(!withCof.length) return;
   for(const b of banks){
-    if(b.impliedRate===null){b.cofPctile=null;continue;}
-    const rank=withCof.filter(v=>v<=b.impliedRate).length;
+    const v=basisOf(b);
+    if(v==null){b.cofPctile=null;continue;}
+    const rank=withCof.filter(x=>x<=v).length;
     b.cofPctile=Math.round(rank/withCof.length*100);
   }
 }
@@ -2296,7 +2307,7 @@ function exportCsv() {
   const active=qs('.tab-btn.active')?.dataset.tab;
   let headers,rows;
   if(active==='cof'){
-    headers=['Bank','City','Region','Total COF (FDIC INTEXPY) %','IB COF marginal-rate %','Total COF Percentile','Ann. Int Expense ($M)','Int-Bearing Deposits ($M)','Total Deposits ($M)','Assets ($M)','Branches','LTD Ratio %','ROA %','Texas Ratio %','NIM Proxy %','Dep Growth %','Charter'];
+    headers=['Bank','City','Region','Total COF (FDIC INTEXPY) %','IB COF marginal-rate %','IB COF Percentile (marginal)','Ann. Int Expense ($M)','Int-Bearing Deposits ($M)','Total Deposits ($M)','Assets ($M)','Branches','LTD Ratio %','ROA %','Texas Ratio %','NIM Proxy %','Dep Growth %','Charter'];
     rows=S.filtBanks.map(b=>[b.name,b.city,b.regionLabel,b.cofTotal??'',b.cofIB??'',b.cofPctile??'',b.eintexpM.toFixed(2),b.depiM.toFixed(0),b.depM.toFixed(0),b.assetM,b.branchCount,b.ltd??'',b.roa??'',b.texasRatio??'',b.nim??'',b.depGrowth??'',b.charterType]);
   } else if(active==='scanner'){
     headers=['Bank','City','Region','Product','Term (mo)','APY %','Min Balance','Assets ($M)'];
@@ -2370,21 +2381,27 @@ function attachListeners() {
   });
 
   // Column sorts
-  function setupSort(tblId,sortObj,renderFn,pageProp) {
-    qs(`#tab-${tblId}`).querySelectorAll(`th[data-tbl="${tblId}"]`).forEach(th=>{
+  // tblId = the tab container suffix (#tab-<tblId>); dataTbl = the value of the
+  // <th data-tbl="..."> attribute. These differ for markets ('markets' vs 'mkt')
+  // and scanner ('scanner' vs 'scan'), so they must be passed separately —
+  // otherwise the click handlers never bind and the table won't sort.
+  function setupSort(tblId,dataTbl,sortObj,renderFn,pageProp) {
+    const hdrs = qs(`#tab-${tblId}`).querySelectorAll(`th[data-tbl="${dataTbl}"]`);
+    hdrs.forEach(th=>{
+      th.classList.add('dash-sortable');
       th.addEventListener('click',()=>{
         const col=th.dataset.col;
         sortObj.dir=sortObj.col===col?(sortObj.dir==='asc'?'desc':'asc'):'desc';
         sortObj.col=col;
-        qs(`#tab-${tblId}`).querySelectorAll(`th[data-tbl="${tblId}"]`).forEach(t=>t.classList.remove('sort-asc','sort-desc'));
+        qs(`#tab-${tblId}`).querySelectorAll(`th[data-tbl="${dataTbl}"]`).forEach(t=>t.classList.remove('sort-asc','sort-desc'));
         th.classList.add(sortObj.dir==='asc'?'sort-asc':'sort-desc');
         S[pageProp]=0;applyFilters();
       });
     });
   }
-  setupSort('markets',S.mktSort,renderMarkets,'mktPage');
-  setupSort('scanner',S.scanSort,renderScanner,'scanPage');
-  setupSort('cof',S.cofSort,renderCofTable,'cofPage');
+  setupSort('markets','mkt',S.mktSort,renderMarkets,'mktPage');
+  setupSort('scanner','scan',S.scanSort,renderScanner,'scanPage');
+  setupSort('cof','cof',S.cofSort,renderCofTable,'cofPage');
 
   // Page sizes
   qs('#mkt-pg-size').addEventListener('change',()=>{S.pageSize=parseInt(qs('#mkt-pg-size').value);S.mktPage=0;renderMarkets();});

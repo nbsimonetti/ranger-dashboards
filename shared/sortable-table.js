@@ -46,6 +46,7 @@
   function isHeaderOptedOut(th) {
     if (!th) return true;
     if (th.hasAttribute('data-no-sort')) return true;
+    if (th.classList && th.classList.contains('nosort')) return true; // explicit "don't sort" convention
     if (th.hasAttribute('data-tbl')) return true;     // Deposit existing-sort marker
     if (th.hasAttribute('data-key')) return true;     // M&A existing-sort marker
     if (th.hasAttribute('data-col')) return true;     // Deposit per-col marker
