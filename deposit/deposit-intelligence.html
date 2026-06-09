@@ -503,9 +503,9 @@ th.dash-sortable:hover { background:#eef3f8; }
     <!-- Stat cards -->
     <div class="stat-grid" id="stat-grid">
       <div class="stat-card navy">
-        <div class="stat-label">TX Banks</div>
+        <div class="stat-label">TX-Active Banks</div>
         <div class="stat-value" id="s-banks">—</div>
-        <div class="stat-note">Active community banks</div>
+        <div class="stat-note">≥1 TX branch (any size / HQ)</div>
       </div>
       <div class="stat-card gold">
         <div class="stat-label">With FDIC COF</div>
@@ -603,6 +603,9 @@ th.dash-sortable:hover { background:#eef3f8; }
             <option value="100to500">$100M – $500M</option>
             <option value="500to1b">$500M – $1B</option>
             <option value="1bto3b">$1B – $3B</option>
+            <option value="3bto10b">$3B – $10B</option>
+            <option value="10bto100b">$10B – $100B</option>
+            <option value="over100b">$100B+</option>
           </select>
         </div>
         <div class="fi">
@@ -1138,8 +1141,8 @@ function specGrpToCharter(sg) {
   return {2:'State Member Bank',4:'State Non-Member Bank',5:'National Bank',7:'Federal Savings Bank',8:'National Bank',9:'State Savings Bank'}[+sg]||'State Bank';
 }
 function charterGroup(ct) { if(!ct)return'state'; if(ct.includes('National'))return'national'; if(ct.includes('Savings'))return'savings'; return'state'; }
-function assetBucket(m) { if(m<100)return'under100'; if(m<500)return'100to500'; if(m<1000)return'500to1b'; return'1bto3b'; }
-function assetLabel(b) { return{under100:'Under $100M','100to500':'$100M–$500M','500to1b':'$500M–$1B','1bto3b':'$1B–$3B'}[b]||b; }
+function assetBucket(m) { if(m<100)return'under100'; if(m<500)return'100to500'; if(m<1000)return'500to1b'; if(m<3000)return'1bto3b'; if(m<10000)return'3bto10b'; if(m<100000)return'10bto100b'; return'over100b'; }
+function assetLabel(b) { return{under100:'Under $100M','100to500':'$100M–$500M','500to1b':'$500M–$1B','1bto3b':'$1B–$3B','3bto10b':'$3B–$10B','10bto100b':'$10B–$100B','over100b':'$100B+'}[b]||b; }
 function mkBtn(label,disabled,onclick) { const b=document.createElement('button'); b.textContent=label; b.disabled=disabled; b.onclick=onclick; return b; }
 function paginatePages(cur,total) {
   if(total<=7)return Array.from({length:total},(_,i)=>i);
@@ -1176,21 +1179,26 @@ const BENCHMARKS = {
   treasuryAvg: { bills: 4.21, notes: 3.88, bonds: 3.99 },
 };
 
-async function fetchInstitutions(offset=0, limit=300) {
+async function fetchInstitutions(offset=0, limit=10000) {
+  // Universe = ALL active FDIC institutions (no state, no size cap). We later
+  // keep only those with at least one TX branch (see fetchBranchData). This
+  // pulls in out-of-state-HQ banks that compete for deposits in Texas
+  // (national/regional players) and TX banks of every size.
   const url = `${BASE}/institutions?`+new URLSearchParams({
-    filters:'STALP:TX AND ACTIVE:1 AND ASSET:[1 TO 3000000]',
+    filters:'ACTIVE:1',
     fields:INST_FIELDS, sort_by:'ASSET', sort_order:'DESC', output:'json', limit, offset,
   });
   return fetch(url).then(r=>{if(!r.ok)throw new Error(`FDIC ${r.status}`);return r.json();});
 }
 
 async function fetchAllInstitutions() {
-  setLoad('Fetching TX bank list from FDIC…','Page 1');
+  setLoad('Fetching national bank list from FDIC…','Page 1');
   const first = await fetchInstitutions(0);
   const total = first.meta.total;
   let raw = first.data.map(d=>d.data);
-  for(let off=300;off<total;off+=300) {
-    setLoad('Fetching TX bank list from FDIC…',`${Math.min(off+300,total)} of ${total}`);
+  // ~4,300 active institutions fit in one 10k page; loop guards against growth.
+  for(let off=10000;off<total;off+=10000) {
+    setLoad('Fetching national bank list from FDIC…',`${Math.min(off+10000,total)} of ${total}`);
     raw = raw.concat((await fetchInstitutions(off)).data.map(d=>d.data));
   }
   return raw;
@@ -1344,7 +1352,7 @@ async function fetchFinancials(opts={}) {
       const map=new Map();
       for(const item of json.data){
         const d=item.data;
-        if(d.CERT) map.set(d.CERT,{
+        if(d.CERT!=null) map.set(String(d.CERT),{
           eintexp:d.EINTEXP||0, intexpy:d.INTEXPY||null, dep:d.DEP||0,
           depi:d.DEPI||0, depni:d.DEPNI||0,
           intinc:d.INTINC||0,
@@ -1364,23 +1372,39 @@ async function fetchFinancials(opts={}) {
   return results;
 }
 
-async function fetchBranchCounts() {
+// Returns Map<certString, {count, city, county, cities:{}, counties:{}}>.
+// This is BOTH the TX-presence universe (its key set) and the per-bank TX
+// branch geography. `city`/`county` are the bank's dominant (most-branches)
+// TX location — used to place out-of-state-HQ banks into a TX region/market.
+async function fetchBranchData() {
   setLoad('Fetching TX branch locations…','');
   const map = new Map();
+  const bump=(obj,k)=>{ if(!k)return; obj[k]=(obj[k]||0)+1; };
+  const dominant=obj=>{ let best=null,bc=-1; for(const k in obj){ if(obj[k]>bc){bc=obj[k];best=k;} } return best; };
   try {
-    const PAGE=1000;
+    const PAGE=10000;
     function url(off){ return `${BASE}/locations?`+new URLSearchParams({
-      filters:'STALP:TX',fields:'CERT',limit:PAGE,offset:off,output:'json',
+      filters:'STALP:TX',fields:'CERT,CITY,COUNTY',limit:PAGE,offset:off,output:'json',
     }); }
     const first=await fetch(url(0)).then(r=>r.json());
     const total=first.meta.total;
-    first.data.forEach(d=>{ const c=d.data.CERT; map.set(c,(map.get(c)||0)+1); });
+    const ingest=rows=>rows.forEach(d=>{
+      const c=String(d.data.CERT);
+      let e=map.get(c); if(!e){ e={count:0,cities:{},counties:{}}; map.set(c,e); }
+      e.count++;
+      bump(e.cities,(d.data.CITY||'').trim().toUpperCase());
+      bump(e.counties,(d.data.COUNTY||'').trim().toUpperCase());
+    });
+    ingest(first.data);
     for(let off=PAGE;off<total;off+=PAGE){
       setLoad('Fetching TX branch locations…',`${Math.min(off+PAGE,total)} of ${total}`);
       const page=await fetch(url(off)).then(r=>r.json());
-      page.data.forEach(d=>{ const c=d.data.CERT; map.set(c,(map.get(c)||0)+1); });
+      ingest(page.data);
     }
-  } catch(e){ console.warn('Branch count fetch failed',e); }
+    // Freeze the dominant TX city/county per bank.
+    for(const e of map.values()){ e.city=dominant(e.cities); e.county=dominant(e.counties); }
+  } catch(e){ console.warn('Branch data fetch failed',e); }
+  console.log(`TX branch universe: ${map.size} banks with >=1 TX branch`);
   return map;
 }
 
@@ -1408,8 +1432,10 @@ function normalizeBank(d, finResults, branchMap) {
   const assetM=parseFloat(((d.ASSET||0)/1000).toFixed(1));
   const ct=specGrpToCharter(d.SPECGRP);
   const cert=d.CERT;
-  const fin=finResults.current.get(cert);
-  const finPrior=finResults.prior.get(cert);
+  const certKey=String(cert);   // canonical key — locations use string CERTs, institutions use ints
+  const fin=finResults.current.get(certKey);
+  const finPrior=finResults.prior.get(certKey);
+  const branch=branchMap.get(certKey)||null;
   // Annualize YTD-cumulative FDIC flow fields by REPDTE quarter month.
   // FDIC publishes EINTEXP / INTINC / NETINC as year-to-date totals on
   // each call report; Q1 = 3mo, Q2 = 6mo, Q3 = 9mo, Q4 = 12mo. Multiply
@@ -1464,21 +1490,37 @@ function normalizeBank(d, finResults, branchMap) {
 
   let websiteUrl=null;
   if(d.WEBADDR){const wa=d.WEBADDR.trim().replace(/^https?:\/\//i,'');if(wa.length>3&&wa.includes('.'))websiteUrl=`https://${wa}`;}
+
+  // Geography: TX-HQ banks use their HQ city/county. Out-of-state-HQ banks
+  // (national/regional players with TX branches) are placed into the TX
+  // market where they have the MOST branches, so they land in a real TX
+  // region instead of "Other TX". We keep the true HQ for display.
+  const hqState=(d.STALP||'').trim().toUpperCase();
+  const oosHq = hqState!=='' && hqState!=='TX';
+  const hqCity=(d.CITY||'').trim().toUpperCase();
+  const hqCounty=(d.COUNTY||'').trim().toUpperCase();
+  const effCity   = oosHq ? (branch?.city   || hqCity)   : hqCity;
+  const effCounty = oosHq ? (branch?.county || hqCounty) : hqCounty;
+
   return {
     cert, name:d.NAME,
-    city:(d.CITY||'').trim().toUpperCase(),
-    county:(d.COUNTY||'').trim().toUpperCase(),
-    region:countyToRegion(d.COUNTY),
-    regionLabel:REGION_LABELS[countyToRegion(d.COUNTY)]||'Other TX',
+    city:effCity,
+    county:effCounty,
+    region:countyToRegion(effCounty),
+    regionLabel:REGION_LABELS[countyToRegion(effCounty)]||'Other TX',
+    oosHq, hqState, hqCity,
     assetM, assetBucket:assetBucket(assetM), assetLbl:assetLabel(assetBucket(assetM)),
     charterType:ct, charterGroup:charterGroup(ct),
-    lat:parseFloat(d.LATITUDE)||null, lng:parseFloat(d.LONGITUDE)||null,
+    // Only plot TX-HQ banks at their HQ coords; an out-of-state HQ point would
+    // land outside Texas and mislead. OOS banks still appear in every table/score.
+    lat: oosHq ? null : (parseFloat(d.LATITUDE)||null),
+    lng: oosHq ? null : (parseFloat(d.LONGITUDE)||null),
     established:d.ESTYMD?d.ESTYMD.slice(-4):null,
     repdte:d.REPDTE||null, finRepdte:fin?.repdte||null,
     impliedRate:cof, cofTotal, cofIB, eintexpM:eintexp/1000, depM:dep/1000, depiM:depi/1000, depniM:depni/1000,
     ltd, texasRatio, nim, roa, roe, depGrowth,
     numemp:fin?.numemp||0, netincM:(fin?.netinc||0)/1000,
-    branchCount:branchMap.get(cert)||0,
+    branchCount:branch?.count||0,
     cofPctile:null, // computed after all banks loaded
     websiteUrl,
     hasScraped: SCRAPED_RATES?.rates?.[String(cert)] ? true : false,
@@ -2167,11 +2209,11 @@ function renderCharts() {
   // 6. COF by asset size
   dc('cofAsset');
   if(withRate.length){
-    const buckets=['under100','100to500','500to1b','1bto3b'];
-    const bLabels=['< $100M','$100M–$500M','$500M–$1B','$1B–$3B'];
+    const buckets=['under100','100to500','500to1b','1bto3b','3bto10b','10bto100b','over100b'];
+    const bLabels=['< $100M','$100M–$500M','$500M–$1B','$1B–$3B','$3B–$10B','$10B–$100B','$100B+'];
     const bAvgs=buckets.map(bk=>{const items=withRate.filter(b=>b.assetBucket===bk);return items.length?parseFloat((items.reduce((s,b)=>s+b.impliedRate,0)/items.length).toFixed(2)):null;});
     S.charts.cofAsset=new Chart(qs('#ch-cof-asset'),{type:'bar',
-      data:{labels:bLabels,datasets:[{data:bAvgs,backgroundColor:['#bee3f8','#90cdf4','#63b3ed','#3182ce'],borderRadius:5}]},
+      data:{labels:bLabels,datasets:[{data:bAvgs,backgroundColor:['#bee3f8','#90cdf4','#63b3ed','#3182ce','#2b6cb0','#2c5282','#1a365d'],borderRadius:5}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'% avg COF':'No data'}}},
         scales:{y:{beginAtZero:false,ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
   }
@@ -2557,15 +2599,17 @@ async function updateData(opts={}) {
 
     // Step B — fetch institutions + financials (for the discovered period) + branches in parallel
     setUpdateBtnLabel(discovered ? `Loading ${formatRepdte(discovered)}…` : 'Loading FDIC data…');
-    const [raw, finResults, branchMap] = await Promise.all([
+    const [rawAll, finResults, branchData] = await Promise.all([
       fetchAllInstitutions(),
       fetchFinancials({currentRepdte: discovered || undefined}),
-      fetchBranchCounts(),
+      fetchBranchData(),
     ]);
+    // Universe = active institutions that have >=1 TX branch (any HQ state, any size).
+    const raw = rawAll.filter(d => branchData.has(String(d.CERT)));
 
     // Step C — recompute
     setUpdateBtnLabel('Recomputing…');
-    S.banks=raw.map(d=>normalizeBank(d,finResults,branchMap));
+    S.banks=raw.map(d=>normalizeBank(d,finResults,branchData));
     computeCofPercentiles(S.banks);
     _cofIbUniverse=null; _cofTotalUniverse=null; _bestApyUniverse=null; if(S) S._growthUniverse=null;
     S.banks.forEach(computeCompScore);
@@ -2758,7 +2802,7 @@ function renderMethodology(){
         <div>${dot(cofCls)}<strong>FDIC Cost of Funds:</strong> ${repdteTxt}${repdteFiled?` <span style="color:var(--muted)">· filed ${repdteFiledTxt}${repdteDays!=null?` · ${repdteDays}d ago`:''}</span>`:''}</div>
         <div>${dot(rateCls)}<strong>Advertised rates:</strong> scraped ${scrapedAtTxt}${scrapeDays!=null?` <span style="color:var(--muted)">· ${scrapeDays}d ago</span>`:''}</div>
       </div>
-      <div style="margin-top:8px;color:var(--muted);font-size:11.5px">Coverage: <strong>${banksRated}</strong> of <strong>${universe}</strong> TX community banks (${coveragePct}%) with advertised rates · <strong>${productRows}</strong> product rows tracked</div>`;
+      <div style="margin-top:8px;color:var(--muted);font-size:11.5px">Coverage: <strong>${banksRated}</strong> of <strong>${universe}</strong> banks with TX branches (${coveragePct}%) carry advertised rates · <strong>${productRows}</strong> product rows tracked. Advertised-rate scraping targets community banks; FDIC cost-of-funds covers the full universe.</div>`;
   }
 
   // ── Live competitiveness weights
@@ -2815,7 +2859,7 @@ function renderMethodology(){
           : `Advertised rates are ${scrapeDays} day${scrapeDays===1?'':'s'} old`)
       : 'Advertised rate scrape age unknown';
     limEl.innerHTML = `
-      &bull; Advertised rates cover <strong>${banksRated} of ${universe}</strong> TX community banks (${coveragePct}%) — market scores are based on available data, not the full competitive field<br>
+      &bull; Advertised rates cover <strong>${banksRated} of ${universe}</strong> banks with TX branches (${coveragePct}%) — the universe now includes all sizes and out-of-state-HQ banks, so advertised-rate coverage (community banks) is a smaller share; FDIC cost-of-funds covers every bank<br>
       &bull; FDIC cost-of-funds is a blended average from quarterly call reports (current period: <strong>${repdteTxt}</strong>), not current advertised rates<br>
       &bull; ${ageNote}<br>
       &bull; Market boundaries are based on FDIC-recorded city, not MSA or trade area definitions<br>
@@ -2832,7 +2876,7 @@ function updateNotice() {
   if(hasScraped){
     const d=new Date(m.scraped_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     qs('#notice-inner').innerHTML=`<span class="badge badge-green">● LIVE DATA</span>
-      FDIC data: <strong>${S.banks.length}</strong> TX banks.
+      FDIC data: <strong>${S.banks.length}</strong> banks with TX branches (all sizes, incl. out-of-state HQ).
       Scraped rates from <strong>${m.banks_with_rates}</strong> banks (<strong>${m.product_rows}</strong> products) as of <strong>${d}</strong>.
       ${S.lastRefresh?`FDIC refreshed: <strong>${S.lastRefresh.toLocaleTimeString()}</strong>`:''}`;
   }
@@ -3014,10 +3058,14 @@ function renderBankDirectory() {
     const inTgt = b._inTargetMkt
       ? `<span class="xlink-pill xlink-yes" title="This competitor operates in ${esc(titleCase(b.city))}, a Hot/Warm Entry Opportunity market (score ${b._mktOpp!=null?Math.round(b._mktOpp):'—'}). Highest-priority watch item — they're in a market we'd want.">⚑ Yes (${b._mktOpp!=null?Math.round(b._mktOpp):'—'})</span>`
       : '<span class="xlink-pill xlink-no">—</span>';
+    // Out-of-state HQ tag: show the bank's TX footprint city + HQ-state chip.
+    const oosTag = b.oosHq
+      ? ` <span title="Headquartered in ${esc(b.hqState)} (${esc(titleCase(b.hqCity||''))}). Shown at its largest TX branch market." style="display:inline-block;font-size:9px;font-weight:700;background:#edf2f7;color:#4a5568;border-radius:8px;padding:0 5px;vertical-align:middle">HQ ${esc(b.hqState)}</span>`
+      : '';
     return `<tr data-cert="${b.cert}">
       <td style="position:relative">${compBadge(b.compScore, b)}</td>
       <td><div style="font-weight:600;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(b.name)}">${esc(b.name)}</div></td>
-      <td>${b.city}</td>
+      <td>${titleCase(b.city)}${oosTag}</td>
       <td style="font-size:12px;color:var(--muted)">${b.regionLabel}</td>
       <td class="right">${inTgt}</td>
       <td class="right">${cofCell}</td>
@@ -3119,7 +3167,7 @@ function renderOverview() {
   qs('#overview-content').innerHTML = `
     ${rangerSection}
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px">
-      <div class="stat-card blue"><div class="stat-label">TX Banks</div><div class="stat-value">${banks.length}</div><div class="stat-note">Active community banks</div></div>
+      <div class="stat-card blue"><div class="stat-label">TX-Active Banks</div><div class="stat-value">${banks.length}</div><div class="stat-note">≥1 TX branch (any size / HQ)</div></div>
       <div class="stat-card green"><div class="stat-label">Markets Covered</div><div class="stat-value">${markets.length}</div><div class="stat-note">Cities with scraped rates</div></div>
       <div class="stat-card teal"><div class="stat-label">Avg Cost of Funds</div><div class="stat-value">${avgCof}%</div><div class="stat-note">EINTEXP ÷ DEPI (FDIC)</div></div>
       <div class="stat-card orange"><div class="stat-label">Highest COF</div><div class="stat-value">${maxCof}%</div><div class="stat-note">Most aggressive competitor</div></div>
@@ -3161,13 +3209,15 @@ async function main() {
     // On first page load this fires a small probe; on subsequent loads it's instant.
     const discovered = await discoverLatestRepdte();
 
-    // Fetch institutions, financials, and branches in parallel
-    const [raw, finResults, branchMap] = await Promise.all([
+    // Fetch institutions (all active, national), financials, and TX branch data in parallel
+    const [rawAll, finResults, branchData] = await Promise.all([
       fetchAllInstitutions(),
       fetchFinancials({currentRepdte: discovered || undefined}),
-      fetchBranchCounts(),
+      fetchBranchData(),
     ]);
-    S.banks = raw.map(d => normalizeBank(d, finResults, branchMap));
+    // Universe = active institutions that have >=1 TX branch (any HQ state, any size).
+    const raw = rawAll.filter(d => branchData.has(String(d.CERT)));
+    S.banks = raw.map(d => normalizeBank(d, finResults, branchData));
     computeCofPercentiles(S.banks);
     _cofIbUniverse=null; _cofTotalUniverse=null; _bestApyUniverse=null; if(S) S._growthUniverse=null;
     S.banks.forEach(computeCompScore);
