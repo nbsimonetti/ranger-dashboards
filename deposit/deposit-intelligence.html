@@ -736,7 +736,8 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
             <th data-col="name" data-tbl="cof">Bank</th>
             <th data-col="city" data-tbl="cof">City</th>
             <th data-col="regionLabel" data-tbl="cof">Region</th>
-            <th data-col="impliedRate" data-tbl="cof" class="sort-desc">Cost of Funds</th>
+            <th data-col="impliedRate" data-tbl="cof" class="sort-desc" title="FDIC's published annualized Cost of Funds (INTEXPY) — interest expense ÷ earning assets. Industry-standard COF.">Cost of Funds (FDIC)</th>
+            <th data-col="cofIbDep" data-tbl="cof" title="Our calculation: annualized EINTEXP ÷ interest-bearing deposits. Higher than FDIC COF because the denominator is smaller.">COF on IB Deposits</th>
             <th data-col="cofPctile" data-tbl="cof">COF %ile</th>
             <th data-col="eintexpM" data-tbl="cof">Ann. Int. Expense</th>
             <th data-col="depiM" data-tbl="cof">Int-Bearing Deposits</th>
@@ -755,7 +756,9 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
         </table>
       </div>
       <div class="tbl-note">
-        <strong>Cost of Funds</strong> = (annualized EINTEXP) ÷ DEPI × 100. FDIC EINTEXP is YTD cumulative on each call report (Q1 = 3mo, Q2 = 6mo, Q3 = 9mo, Q4 = 12mo); we annualize by ×4 / ×2 / ×(4/3) / ×1 so all banks are on a common 12-month basis regardless of which quarter we read. <strong>COF %ile</strong> = rank among all TX banks.
+        <strong>Cost of Funds (FDIC)</strong> = FDIC's published <code>INTEXPY</code> field — interest expense to earning assets, already annualized by FDIC. This is the industry-standard COF measure every banker recognizes; typical TX community bank reads 1.0–2.5%.
+        <strong>COF on IB Deposits</strong> = our own calculation, (annualized EINTEXP) ÷ Interest-Bearing Deposits × 100. We annualize EINTEXP (which is YTD cumulative: Q1 = 3mo, Q2 = 6mo, Q3 = 9mo, Q4 = 12mo) by ×4 / ×2 / ×(4/3) / ×1. Higher than the FDIC measure because the denominator excludes non-interest-bearing checking; typical reads 1.5–3.5%. We fall back to this when FDIC's INTEXPY is missing.
+        <strong>COF %ile</strong> = rank by primary COF among all TX banks.
         <strong>LTD</strong> = Loans ÷ Deposits. <strong>Texas Ratio</strong> = Noncurrent loans ÷ (Equity + Loan loss reserves).
         <strong>NIM Proxy</strong> = (annualized Int Income − annualized Int Expense) ÷ Assets. <strong>Dep Growth</strong> = QoQ change in deposits.
       </div>
@@ -1104,7 +1107,7 @@ function renderPag(prefix,total,ps,pages,curPage,onPage) {
 // ═══════════════════════════════════════════════════════════════════════════════
 const BASE = 'https://banks.data.fdic.gov/api';
 const INST_FIELDS = 'NAME,CITY,COUNTY,STALP,ASSET,CERT,LATITUDE,LONGITUDE,SPECGRP,ESTYMD,REPDTE,WEBADDR,DEP';
-const FIN_FIELDS = 'CERT,EINTEXP,DEP,DEPI,DEPNI,INTINC,NETINC,LNLSNET,EQTOT,NCLNLS,LNATRES,ROA,ROE,NUMEMP,NONII,ASSET';
+const FIN_FIELDS = 'CERT,EINTEXP,DEP,DEPI,DEPNI,INTINC,INTEXPY,NETINC,LNLSNET,EQTOT,NCLNLS,LNATRES,ROA,ROE,NUMEMP,NONII,ASSET';
 
 // Embedded benchmark rates (update periodically)
 const BENCHMARKS = {
@@ -1283,7 +1286,7 @@ async function fetchFinancials(opts={}) {
       for(const item of json.data){
         const d=item.data;
         if(d.CERT) map.set(d.CERT,{
-          eintexp:d.EINTEXP||0, dep:d.DEP||0,
+          eintexp:d.EINTEXP||0, intexpy:d.INTEXPY||null, dep:d.DEP||0,
           depi:d.DEPI||0, depni:d.DEPNI||0,
           intinc:d.INTINC||0,
           netinc:d.NETINC||0, lnlsnet:d.LNLSNET||0, eqtot:d.EQTOT||0,
@@ -1348,26 +1351,29 @@ function normalizeBank(d, finResults, branchMap) {
   const cert=d.CERT;
   const fin=finResults.current.get(cert);
   const finPrior=finResults.prior.get(cert);
-  // FDIC call-report flow fields (EINTEXP, INTINC, NETINC) are reported as
-  // YEAR-TO-DATE cumulatives, not annualized. A Q1 (3/31) filing carries
-  // only Jan-Mar interest expense; Q2 has Jan-Jun; Q3 has Jan-Sep; Q4 is
-  // full-year. Annualize by multiplying by 4 / 2 / (4/3) / 1 based on the
-  // quarter-ending month of the REPDTE.
-  // Without this fix, banks reported on Q1 data looked 4x more expensive
-  // than they actually are.
-  const qtrMonth = (fin?.repdte || '').slice(4, 6);
+  // Annualize YTD-cumulative FDIC flow fields by REPDTE quarter month.
+  // FDIC publishes EINTEXP / INTINC / NETINC as year-to-date totals on
+  // each call report; Q1 = 3mo, Q2 = 6mo, Q3 = 9mo, Q4 = 12mo. Multiply
+  // by 4/2/(4/3)/1 to get a common 12-month basis. String() coerces in
+  // case the API ever returns repdte as a number.
+  const qtrMonth = String(fin?.repdte || '').slice(4, 6);
   const annMult = qtrMonth === '03' ? 4 :
                   qtrMonth === '06' ? 2 :
                   qtrMonth === '09' ? (4/3) : 1;
   const eintexpRaw = fin?.eintexp || 0;
   const eintexp = eintexpRaw * annMult;   // annualized
   const dep=fin?.dep||d.DEP||0;
-  // Cost of Funds = (annualized Interest Expense) / (Interest-Bearing Deposits)
-  // Fallback: if DEPI not available, derive as DEP - DEPNI (total deposits minus non-interest-bearing)
   const depni=fin?.depni||0;
   let depi=fin?.depi||0;
   if(depi<=0 && dep>0 && depni>0) depi=dep-depni;
-  const cof=(depi>0&&eintexp>0)?parseFloat((eintexp/depi*100).toFixed(3)):null;
+  // PRIMARY cost-of-funds metric: prefer FDIC's published annualized ratio
+  // INTEXPY ("Interest expense to earning assets") — the industry-standard
+  // "Cost of Funds" definition every banker recognizes. FDIC already
+  // annualizes it, so no multiplier is needed. Fall back to our own
+  // EINTEXP/DEPI calculation only if FDIC didn't publish the ratio.
+  const cofFdic   = (fin?.intexpy != null) ? parseFloat(Number(fin.intexpy).toFixed(3)) : null;
+  const cofIbDep  = (depi>0 && eintexp>0) ? parseFloat((eintexp/depi*100).toFixed(3)) : null;
+  const cof       = cofFdic != null ? cofFdic : cofIbDep;
 
   // Derived health metrics — INTINC also needs YTD annualization
   const intinc=(fin?.intinc||0) * annMult;
@@ -1400,7 +1406,7 @@ function normalizeBank(d, finResults, branchMap) {
     lat:parseFloat(d.LATITUDE)||null, lng:parseFloat(d.LONGITUDE)||null,
     established:d.ESTYMD?d.ESTYMD.slice(-4):null,
     repdte:d.REPDTE||null, finRepdte:fin?.repdte||null,
-    impliedRate:cof, eintexpM:eintexp/1000, depM:dep/1000, depiM:depi/1000, depniM:depni/1000,
+    impliedRate:cof, cofFdic, cofIbDep, eintexpM:eintexp/1000, depM:dep/1000, depiM:depi/1000, depniM:depni/1000,
     ltd, texasRatio, nim, roa, roe, depGrowth,
     numemp:fin?.numemp||0, netincM:(fin?.netinc||0)/1000,
     branchCount:branchMap.get(cert)||0,
@@ -1807,8 +1813,12 @@ function renderCofTable() {
 
   qs('#cof-body').innerHTML=rows.map(b=>{
     const cofCell=b.impliedRate!==null
-      ?`<span class="${cofClass(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><span class="cof-sub" title="FDIC ${b.finRepdte||''}">${b.finRepdte?formatRepdte(b.finRepdte):''}</span>`
+      ?`<span class="${cofClass(b.impliedRate)}">${b.impliedRate.toFixed(2)}%</span><span class="cof-sub" title="FDIC INTEXPY ${b.finRepdte||''}">${b.finRepdte?formatRepdte(b.finRepdte):''}</span>`
       :`<span class="cof-na">—</span>`;
+    // Secondary "Cost of Interest-Bearing Deposits" cell — our own calculation
+    const ibCell = b.cofIbDep != null
+      ? `<span style="font-size:12px;color:var(--muted)">${b.cofIbDep.toFixed(2)}%</span>`
+      : `<span class="cof-na">—</span>`;
     const pctCell=b.cofPctile!=null?`<span style="font-size:12px;font-weight:600;color:${b.cofPctile>=75?'#276749':b.cofPctile>=50?'#2b6cb0':'#a0aec0'}">${b.cofPctile}th</span>`:'<span style="color:#a0aec0">—</span>';
     const intExp=b.eintexpM>0?`$${b.eintexpM<1?(b.eintexpM*1000).toFixed(0)+'K':b.eintexpM.toFixed(2)+'M'}`:'—';
     const depiCell=b.depiM>0?`$${b.depiM>=1000?(b.depiM/1000).toFixed(2)+'B':b.depiM.toFixed(0)+'M'}`:'—';
@@ -1822,6 +1832,7 @@ function renderCofTable() {
       <td>${b.city}</td>
       <td style="font-size:11.5px;color:var(--muted)">${b.regionLabel}</td>
       <td class="right">${cofCell}</td>
+      <td class="right">${ibCell}</td>
       <td class="right">${pctCell}</td>
       <td class="right" style="font-size:12px;color:var(--muted)">${intExp}</td>
       <td class="right" style="font-size:12px;color:var(--muted)">${depiCell}</td>
@@ -2156,8 +2167,8 @@ function exportCsv() {
   const active=qs('.tab-btn.active')?.dataset.tab;
   let headers,rows;
   if(active==='cof'){
-    headers=['Bank','City','Region','Cost of Funds % (EINTEXP/DEPI)','COF Percentile','Int Expense ($M)','Int-Bearing Deposits ($M)','Total Deposits ($M)','Assets ($M)','Branches','LTD Ratio %','ROA %','Texas Ratio %','NIM Proxy %','Dep Growth %','Charter'];
-    rows=S.filtBanks.map(b=>[b.name,b.city,b.regionLabel,b.impliedRate??'',b.cofPctile??'',b.eintexpM.toFixed(2),b.depiM.toFixed(0),b.depM.toFixed(0),b.assetM,b.branchCount,b.ltd??'',b.roa??'',b.texasRatio??'',b.nim??'',b.depGrowth??'',b.charterType]);
+    headers=['Bank','City','Region','Cost of Funds (FDIC INTEXPY) %','COF on IB Deposits %','COF Percentile','Ann. Int Expense ($M)','Int-Bearing Deposits ($M)','Total Deposits ($M)','Assets ($M)','Branches','LTD Ratio %','ROA %','Texas Ratio %','NIM Proxy %','Dep Growth %','Charter'];
+    rows=S.filtBanks.map(b=>[b.name,b.city,b.regionLabel,b.impliedRate??'',b.cofIbDep??'',b.cofPctile??'',b.eintexpM.toFixed(2),b.depiM.toFixed(0),b.depM.toFixed(0),b.assetM,b.branchCount,b.ltd??'',b.roa??'',b.texasRatio??'',b.nim??'',b.depGrowth??'',b.charterType]);
   } else if(active==='scanner'){
     headers=['Bank','City','Region','Product','Term (mo)','APY %','Min Balance','Assets ($M)'];
     rows=S.filtScraped.map(r=>[r.bankName,r.city,r.regionLabel,r.productName,r.termMonths||'',r.apy,r.minBalance||'',r.assetM]);
