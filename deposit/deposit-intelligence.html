@@ -641,7 +641,8 @@ th.dash-sortable:hover { background:#eef3f8; }
       <button class="tab-btn" data-tab="scanner" role="tab">Rate Scanner</button>
       <button class="tab-btn" data-tab="cof" role="tab">Cost of Funds</button>
       <button class="tab-btn" data-tab="cdmatrix" role="tab">CD Analysis</button>
-      <button class="tab-btn" data-tab="charts" role="tab">Charts & Map</button>
+      <button class="tab-btn" data-tab="map" role="tab" title="Texas county map — entry attractiveness choropleth + competitor branch markers.">🗺️ County Map</button>
+      <button class="tab-btn" data-tab="charts" role="tab">Charts</button>
       <button class="tab-btn" data-tab="methodology" role="tab">Methodology</button>
     </div>
 
@@ -886,7 +887,10 @@ th.dash-sortable:hover { background:#eef3f8; }
         </div>
       </div>
 
-      <!-- Map section (within Charts & Map tab) -->
+    </div><!-- /#tab-charts -->
+
+    <!-- COUNTY MAP — its own tab (moved out of Charts) -->
+    <div class="tabcontent" id="tab-map" role="tabpanel">
       <div style="padding:20px">
         <div class="clabel" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <span>Geographic Distribution <span id="map-sub">County entry attractiveness · green = enter, red = avoid</span></span>
@@ -2518,9 +2522,11 @@ function initMap() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function renderActiveTab() {
   const active=qs('.tab-btn.active')?.dataset.tab;
-  if(active==='charts'){ renderCharts(); if(S.map) renderMap(); }   // refresh map layer on filter change
+  if(active==='charts') renderCharts();
   if(active==='cdmatrix')renderCdMatrix();
-  if(active==='map'){initMap();setTimeout(()=>S.map?.invalidateSize(),80);}
+  // County Map is its own tab now: init once, then refresh the layer on every
+  // filter change so the choropleth/markers track the filtered set.
+  if(active==='map'){ initMap(); if(S.map) renderMap(); setTimeout(()=>S.map?.invalidateSize(),80); }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2646,7 +2652,8 @@ function attachListeners() {
       qsa('.tabcontent').forEach(c=>c.classList.remove('active'));
       btn.classList.add('active');
       qs('#tab-'+btn.dataset.tab).classList.add('active');
-      if(btn.dataset.tab==='charts'){renderCharts();initMap();setTimeout(()=>S.map?.invalidateSize(),80);}
+      if(btn.dataset.tab==='charts') renderCharts();
+      if(btn.dataset.tab==='map'){initMap(); if(S.map) renderMap(); setTimeout(()=>S.map?.invalidateSize(),80);}
       if(btn.dataset.tab==='cdmatrix')renderCdMatrix();
       if(btn.dataset.tab==='overview')renderOverview();
       if(btn.dataset.tab==='banks')renderBankDirectory();
@@ -2811,7 +2818,8 @@ async function updateData(opts={}) {
     // are not touched by applyFilters; they only redraw when the tab is activated
     // or explicitly re-rendered).
     const activeTab = qs('.tab-btn.active')?.dataset.tab;
-    if(activeTab==='charts'){ renderCharts(); renderMap(); }
+    if(activeTab==='charts') renderCharts();
+    if(activeTab==='map'){ initMap(); if(S.map) renderMap(); }
     if(activeTab==='cdmatrix') renderCdMatrix();
     if(activeTab==='overview') renderOverview();
     if(activeTab==='banks')    renderBankDirectory();
