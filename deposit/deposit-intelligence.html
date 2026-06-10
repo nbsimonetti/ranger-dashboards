@@ -839,50 +839,37 @@ th.dash-sortable:hover { background:#eef3f8; }
     <!-- CHARTS tab -->
     <div class="tabcontent" id="tab-charts" role="tabpanel">
       <div class="charts-wrap">
+        <div style="font-size:12px;color:var(--muted);padding:0 4px 12px;line-height:1.5">
+          <strong style="color:var(--navy)">ALCO view.</strong> Each chart answers a committee question — where our market's funding cost sits and where it's headed, what it costs to grow, how we're priced vs the field, and where the pressure is. Trends use a real 8-quarter FDIC pull for the TX-branch footprint (no interpolation).
+        </div>
         <div class="cgrid">
           <div class="ccard wide">
-            <div class="clabel">Top 30 Highest Advertised Rates <span>scraped from bank websites</span></div>
-            <div style="position:relative;height:400px"><canvas id="ch-top"></canvas></div>
+            <div class="clabel">Footprint Cost of Funds — 8-Quarter Trend <span>FDIC · median of TX-branch banks · is funding cost rising or easing?</span></div>
+            <div style="position:relative;height:300px"><canvas id="ch-cof-trend"></canvas></div>
           </div>
           <div class="ccard">
-            <div class="clabel">Top 30 Banks by Cost of Funds <span>FDIC EINTEXP ÷ DEPI (Interest-Bearing Deposits)</span></div>
-            <div style="position:relative;height:400px"><canvas id="ch-cof-top"></canvas></div>
+            <div class="clabel">TX Deposit Base — 8-Quarter Trend <span>FDIC · footprint banks &lt;$50B · growing or running off?</span></div>
+            <div style="position:relative;height:300px"><canvas id="ch-dep-trend"></canvas></div>
           </div>
           <div class="ccard">
-            <div class="clabel">Average APY by Product Type <span>scraped rates</span></div>
-            <div style="position:relative;height:260px"><canvas id="ch-type"></canvas></div>
+            <div class="clabel">Cost of Funds vs Macro Backdrop <span>footprint median vs FDIC national avg, Treasury, Fed funds</span></div>
+            <div style="position:relative;height:300px"><canvas id="ch-macro"></canvas></div>
           </div>
           <div class="ccard">
-            <div class="clabel">Cost of Funds Distribution <span>banks by rate band</span></div>
-            <div style="position:relative;height:260px"><canvas id="ch-cof-dist"></canvas></div>
+            <div class="clabel">Rate Gap by Product — Ranger vs Market vs National <span>set Ranger rates to plot your line</span></div>
+            <div style="position:relative;height:300px"><canvas id="ch-gap"></canvas></div>
           </div>
           <div class="ccard">
-            <div class="clabel">Rate Environment by Region <span>avg advertised APY</span></div>
-            <div style="position:relative;height:260px"><canvas id="ch-region"></canvas></div>
+            <div class="clabel">Marginal Cost of Funds (IB) — Distribution <span>FDIC · median &amp; quartiles marked</span></div>
+            <div style="position:relative;height:300px"><canvas id="ch-cof-dist"></canvas></div>
           </div>
           <div class="ccard">
-            <div class="clabel">Avg COF by Asset Size <span>FDIC data</span></div>
-            <div style="position:relative;height:260px"><canvas id="ch-cof-asset"></canvas></div>
-          </div>
-          <div class="ccard">
-            <div class="clabel">Competitor Count by Market <span>banks with scraped rates</span></div>
-            <div style="position:relative;height:260px"><canvas id="ch-mkt-count"></canvas></div>
-          </div>
-          <div class="ccard">
-            <div class="clabel">Charter Type Breakdown <span>all TX banks</span></div>
-            <div style="position:relative;height:260px"><canvas id="ch-charter"></canvas></div>
-          </div>
-          <div class="ccard">
-            <div class="clabel">Loan-to-Deposit Ratio Distribution <span>FDIC data</span></div>
-            <div style="position:relative;height:260px"><canvas id="ch-ltd-dist"></canvas></div>
-          </div>
-          <div class="ccard">
-            <div class="clabel">Bank Health: ROA Distribution <span>FDIC data</span></div>
-            <div style="position:relative;height:260px"><canvas id="ch-roa-dist"></canvas></div>
+            <div class="clabel">Competitive Pressure by Footprint Region <span>aggressive (Hot/Warm) competitors per region</span></div>
+            <div style="position:relative;height:300px"><canvas id="ch-pressure"></canvas></div>
           </div>
           <div class="ccard wide">
-            <div class="clabel">Treasury Avg Interest Rates <span>U.S. Treasury Fiscal Data API</span></div>
-            <div style="position:relative;height:220px"><canvas id="ch-treasury"></canvas></div>
+            <div class="clabel">Liquidity — Loan-to-Deposit with Prudential Bands <span>FDIC · footprint median marked</span></div>
+            <div style="position:relative;height:280px"><canvas id="ch-ltd-dist"></canvas></div>
           </div>
         </div>
       </div>
@@ -922,7 +909,6 @@ th.dash-sortable:hover { background:#eef3f8; }
           </div>
           <div id="map"></div>
         </div>
-      </div>
       </div>
     </div>
 
@@ -1216,6 +1202,13 @@ const BENCHMARKS = {
   nationalAvgSource: { name: 'FDIC National Rates & Rate Caps', url: 'https://www.fdic.gov/national-rates-and-rate-caps', asOf: '2026-06-09' },
   treasuryAvg: { bills: 4.21, notes: 3.88, bonds: 3.99 },
 };
+
+// 8-quarter FDIC history for the TX-branch footprint (baked from a per-quarter
+// BankFind pull, 2026-06-09). med_*_cof = footprint medians (IB annualized per
+// quarter; total = INTEXPY). dep_ex_mega_b = summed deposits of footprint banks
+// under $50B assets ($B) so the national giants don't swamp the TX base.
+// Real data, no interpolation — drives the Funding-Cost and Deposit-Base trends.
+const DEPOSIT_HISTORY = {"source":"FDIC BankFind financials per quarter; footprint = TX-branch banks","history":[{"repdte":"20240630","label":"Q2 2024","med_ib_cof":3.118,"med_total_cof":2.001,"dep_ex_mega_b":982.9,"n_banks":455,"dep_qoq_pct":null},{"repdte":"20240930","label":"Q3 2024","med_ib_cof":3.125,"med_total_cof":2.025,"dep_ex_mega_b":959.3,"n_banks":455,"dep_qoq_pct":-2.4},{"repdte":"20241231","label":"Q4 2024","med_ib_cof":2.996,"med_total_cof":2.039,"dep_ex_mega_b":933.2,"n_banks":456,"dep_qoq_pct":-2.72},{"repdte":"20250331","label":"Q1 2025","med_ib_cof":2.786,"med_total_cof":1.881,"dep_ex_mega_b":862.1,"n_banks":456,"dep_qoq_pct":-7.62},{"repdte":"20250630","label":"Q2 2025","med_ib_cof":2.779,"med_total_cof":1.892,"dep_ex_mega_b":870.4,"n_banks":456,"dep_qoq_pct":0.96},{"repdte":"20250930","label":"Q3 2025","med_ib_cof":2.761,"med_total_cof":1.895,"dep_ex_mega_b":920.8,"n_banks":456,"dep_qoq_pct":5.79},{"repdte":"20251231","label":"Q4 2025","med_ib_cof":2.68,"med_total_cof":1.856,"dep_ex_mega_b":894.9,"n_banks":456,"dep_qoq_pct":-2.81},{"repdte":"20260331","label":"Q1 2026","med_ib_cof":2.516,"med_total_cof":1.663,"dep_ex_mega_b":915.3,"n_banks":456,"dep_qoq_pct":2.28}]};
 
 async function fetchInstitutions(offset=0, limit=10000) {
   // Universe = ALL active FDIC institutions (no state, no size cap). We later
@@ -2229,153 +2222,139 @@ function _subtitleCfg(text){
 }
 
 function renderCharts() {
-  // 1. Top 30 scraped rates
-  dc('top');
-  if(S.filtScraped.length){
-    const top30=[...S.filtScraped].sort((a,b)=>b.apy-a.apy).slice(0,30);
-    S.charts.top=new Chart(qs('#ch-top'),{type:'bar',
-      data:{labels:top30.map(r=>{const n=r.bankName.length>20?r.bankName.slice(0,18)+'…':r.bankName;return n+(r.termMonths?` (${r.termMonths}mo)`:'');}),
-        datasets:[{label:'APY%',data:top30.map(r=>r.apy),backgroundColor:top30.map(r=>PRODUCT_COLORS[r.productType]||'#4a5568'),borderRadius:4}]},
-      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},subtitle:_subtitleCfg(_scrapedSub()),tooltip:{callbacks:{label:ctx=>{const r=top30[ctx.dataIndex];return[`APY: ${r.apy.toFixed(2)}%`,r.productName.slice(0,40),`${titleCase(r.city)}, TX`];}}}},
-        scales:{x:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
-  }
+  const H = (typeof DEPOSIT_HISTORY!=='undefined' && DEPOSIT_HISTORY.history) ? DEPOSIT_HISTORY.history : [];
+  const banks = S.filtBanks || [];
+  const grid = '#f0f4f8';
+  const med = arr => { const a=arr.filter(v=>v!=null).sort((x,y)=>x-y); return a.length? a[Math.floor(a.length/2)] : null; };
+  const FDIC = 'FDIC BankFind · ' + (S.currentRepdte ? formatRepdte(S.currentRepdte) : 'current');
 
-  // 2. Top 30 COF
-  dc('cofTop');
-  const withRate=S.filtBanks.filter(b=>b.impliedRate!==null);
-  if(withRate.length){
-    const top30c=[...withRate].sort((a,b)=>b.impliedRate-a.impliedRate).slice(0,30);
-    S.charts.cofTop=new Chart(qs('#ch-cof-top'),{type:'bar',
-      data:{labels:top30c.map(b=>b.name.length>28?b.name.slice(0,26)+'…':b.name),
-        datasets:[{label:'COF%',data:top30c.map(b=>b.impliedRate),
-          backgroundColor:top30c.map(b=>b.impliedRate>=3?'#276749':b.impliedRate>=2?'#38a169':b.impliedRate>=1?'#68d391':'#d69e2e'),borderRadius:4}]},
-      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>{const b=top30c[ctx.dataIndex];return[`COF: ${b.impliedRate.toFixed(2)}%`,`${b.city}, TX`,`Assets: ${fmtM(b.assetM)}`];}}}},
-        scales:{x:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
-  }
-
-  // 3. Avg APY by product type
-  dc('type');
-  if(S.filtScraped.length){
-    const ptypes=['cd','savings','mmkt','ichk','ira'];
-    const ptAvgs=ptypes.map(t=>{const i=S.filtScraped.filter(r=>r.productType===t);return i.length?parseFloat((i.reduce((s,r)=>s+r.apy,0)/i.length).toFixed(2)):null;});
-    const ptCts=ptypes.map(t=>S.filtScraped.filter(r=>r.productType===t).length);
-    S.charts.type=new Chart(qs('#ch-type'),{type:'bar',
-      data:{labels:ptypes.map((t,i)=>`${PRODUCT_LABELS[t]} (${ptCts[i]})`),
-        datasets:[{data:ptAvgs,backgroundColor:ptypes.map(t=>PRODUCT_COLORS[t]),borderRadius:5}]},
+  // 1. Footprint Cost of Funds — real 8-quarter trend
+  dc('cofTrend');
+  if(H.length){
+    S.charts.cofTrend=new Chart(qs('#ch-cof-trend'),{type:'line',
+      data:{labels:H.map(h=>h.label),datasets:[
+        {label:'Marginal (IB) COF — median',data:H.map(h=>h.med_ib_cof),borderColor:'#c53030',backgroundColor:'rgba(197,48,48,.08)',borderWidth:2,tension:.3,pointRadius:3,fill:true},
+        {label:'Blended (Total) COF — median',data:H.map(h=>h.med_total_cof),borderColor:'#2b6cb0',backgroundColor:'rgba(43,108,176,.06)',borderWidth:2,tension:.3,pointRadius:3,fill:true},
+      ]},
       options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},subtitle:_subtitleCfg(_scrapedSub()),tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'% avg APY':'No data'}}},
-        scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
+        plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}},subtitle:_subtitleCfg('FDIC · median of '+(H[H.length-1].n_banks||'')+' TX-branch banks · Fed funds now '+BENCHMARKS.fedFundsLow+'–'+BENCHMARKS.fedFundsHigh+'%'),
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.raw.toFixed(2)+'%'}}},
+        scales:{y:{ticks:{callback:v=>v+'%'},grid:{color:grid}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
   }
 
-  // 4. COF distribution
+  // 2. TX Deposit Base — real 8-quarter trend (ex-mega so giants don't swamp)
+  dc('depTrend');
+  if(H.length){
+    S.charts.depTrend=new Chart(qs('#ch-dep-trend'),{
+      data:{labels:H.map(h=>h.label),datasets:[
+        {type:'bar',label:'Deposits ($B, ex-mega)',data:H.map(h=>h.dep_ex_mega_b),backgroundColor:'#90cdf4',borderRadius:4,yAxisID:'y',order:2},
+        {type:'line',label:'QoQ growth %',data:H.map(h=>h.dep_qoq_pct),borderColor:'#276749',borderWidth:2,tension:.3,pointRadius:3,yAxisID:'y1',order:1},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}},subtitle:_subtitleCfg('FDIC · summed deposits of footprint banks under $50B (TX community/regional base)'),
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.yAxisID==='y1'?(ctx.raw==null?'QoQ —':'QoQ '+ctx.raw+'%'):'$'+ctx.raw+'B'}}},
+        scales:{y:{position:'left',ticks:{callback:v=>'$'+v+'B'},grid:{color:grid}},y1:{position:'right',ticks:{callback:v=>v+'%'},grid:{display:false}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  }
+
+  // 3. Cost of Funds vs Macro Backdrop (current)
+  dc('macro');
+  {
+    const medIB=med(banks.map(b=>b.cofIB)), medTot=med(banks.map(b=>b.cofTotal));
+    const na=BENCHMARKS.nationalAvg||{};
+    const labels=['Footprint IB COF','Footprint Total COF','Natl avg savings','Natl avg 12-mo CD','Fed funds (upper)'];
+    const vals=[medIB,medTot,na.savings,na.cd12,BENCHMARKS.fedFundsHigh];
+    const cols=['#c53030','#2b6cb0','#a0aec0','#a0aec0','#1B365D'];
+    S.charts.macro=new Chart(qs('#ch-macro'),{type:'bar',
+      data:{labels,datasets:[{data:vals,backgroundColor:cols,borderRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},subtitle:_subtitleCfg('Footprint medians ('+FDIC+') vs FDIC national avg + Fed funds — where our market funding cost sits vs the curve'),
+          tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'%':'—'}}},
+        scales:{y:{ticks:{callback:v=>v+'%'},grid:{color:grid}},x:{grid:{display:false},ticks:{font:{size:9}}}}}});
+  }
+
+  // 4. Rate Gap by Product — Ranger vs Market vs National
+  dc('gap');
+  {
+    const rows=S.filtScraped||[];
+    const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null;
+    const na=BENCHMARKS.nationalAvg||{};
+    const prodDef=[{key:'cd',term:12,label:'12-mo CD',natl:'cd12',ranger:S.ranger&&S.ranger.cd12},
+                   {key:'savings',term:null,label:'Savings',natl:'savings',ranger:S.ranger&&S.ranger.savings},
+                   {key:'mmkt',term:null,label:'Money Mkt',natl:'mmkt',ranger:S.ranger&&S.ranger.mmkt}];
+    const labels=prodDef.map(p=>p.label);
+    const sub=p=>rows.filter(r=>r.productType===p.key&&(p.term==null||r.termMonths===p.term)).map(r=>r.apy);
+    const market=prodDef.map(p=>{const a=sub(p);return a.length?+avg(a).toFixed(2):null;});
+    const best=prodDef.map(p=>{const a=sub(p);return a.length?+Math.max(...a).toFixed(2):null;});
+    const ranger=prodDef.map(p=>p.ranger!=null?+(+p.ranger).toFixed(2):null);
+    const natl=prodDef.map(p=>na[p.natl]!=null?na[p.natl]:null);
+    const ds=[{label:'Market avg',data:market,backgroundColor:'#63b3ed',borderRadius:4},
+              {label:'Market best',data:best,backgroundColor:'#2b6cb0',borderRadius:4},
+              {label:'FDIC national avg',data:natl,backgroundColor:'#a0aec0',borderRadius:4}];
+    if(ranger.some(v=>v!=null)) ds.unshift({label:'Ranger',data:ranger,backgroundColor:'#C8A951',borderRadius:4});
+    const subtxt = ranger.some(v=>v!=null) ? 'Ranger vs market (scraped) vs FDIC national avg — gap to the field, by product'
+                 : 'Click "Set Ranger Rates" to overlay your line · market = scraped advertised, national = FDIC';
+    S.charts.gap=new Chart(qs('#ch-gap'),{type:'bar',
+      data:{labels,datasets:ds},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}},subtitle:_subtitleCfg(subtxt),
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+(ctx.raw!=null?ctx.raw.toFixed(2)+'%':'—')}}},
+        scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'%'},grid:{color:grid}},x:{grid:{display:false}}}}});
+  }
+
+  // 5. Marginal (IB) COF distribution — median + IQR marked
   dc('cofDist');
-  if(withRate.length){
-    const bands=['< 0.5%','0.5–1%','1–1.5%','1.5–2%','2–2.5%','2.5–3%','≥ 3%'];
-    const counts=[0,0,0,0,0,0,0];
-    withRate.forEach(b=>{const r=b.impliedRate;if(r<.5)counts[0]++;else if(r<1)counts[1]++;else if(r<1.5)counts[2]++;else if(r<2)counts[3]++;else if(r<2.5)counts[4]++;else if(r<3)counts[5]++;else counts[6]++;});
-    // Peer median COF — highlights which band the middle of the pack falls into,
-    // so the analyst can see at a glance whether any given target is above or below median.
-    const sortedCof = withRate.map(b=>b.impliedRate).sort((a,b)=>a-b);
-    const medianCof = sortedCof.length ? sortedCof[Math.floor(sortedCof.length/2)] : null;
-    const medianBandIdx = medianCof==null ? -1
-      : medianCof<.5?0:medianCof<1?1:medianCof<1.5?2:medianCof<2?3:medianCof<2.5?4:medianCof<3?5:6;
-    const barColors = counts.map((_,i)=> i===medianBandIdx ? '#c8a951' : '#63b3ed');
-    const subText = (medianCof!=null
-      ? `${_fdicSub()} · gold bar = peer median (${medianCof.toFixed(2)}%)`
-      : _fdicSub());
-    S.charts.cofDist=new Chart(qs('#ch-cof-dist'),{type:'bar',
-      data:{labels:bands,datasets:[{data:counts,backgroundColor:barColors,borderColor:'#2b6cb0',borderWidth:1,borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(subText),tooltip:{callbacks:{
-        label:ctx=>`${ctx.raw} banks`,
-        afterLabel:ctx=>ctx.dataIndex===medianBandIdx?`(contains peer median ${medianCof.toFixed(2)}%)`:''
-      }}},
-        scales:{y:{title:{display:true,text:'Bank count',font:{size:10},color:'#718096'},grid:{color:'#f0f4f8'}},x:{title:{display:true,text:'Cost of Funds band',font:{size:10},color:'#718096'},grid:{display:false}}}}});
+  {
+    const ib=banks.map(b=>b.cofIB).filter(v=>v!=null).sort((a,b)=>a-b);
+    if(ib.length){
+      const bands=['<0.5%','0.5–1%','1–1.5%','1.5–2%','2–2.5%','2.5–3%','3–3.5%','≥3.5%'];
+      const bandIdx=r=>r<.5?0:r<1?1:r<1.5?2:r<2?3:r<2.5?4:r<3?5:r<3.5?6:7;
+      const counts=new Array(bands.length).fill(0); ib.forEach(r=>counts[bandIdx(r)]++);
+      const q=p=>ib[Math.min(ib.length-1,Math.floor(p*ib.length))];
+      const m=q(.5),q1=q(.25),q3=q(.75),mi=bandIdx(m);
+      const cols=counts.map((_,i)=> i===mi?'#c8a951':'#63b3ed');
+      S.charts.cofDist=new Chart(qs('#ch-cof-dist'),{type:'bar',
+        data:{labels:bands,datasets:[{data:counts,backgroundColor:cols,borderColor:'#2b6cb0',borderWidth:1,borderRadius:4}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},subtitle:_subtitleCfg(FDIC+' · gold = median band '+m.toFixed(2)+'% · IQR '+q1.toFixed(2)+'–'+q3.toFixed(2)+'%'),tooltip:{callbacks:{label:ctx=>ctx.raw+' banks'}}},
+          scales:{y:{title:{display:true,text:'Bank count',font:{size:10},color:'#718096'},grid:{color:grid}},x:{title:{display:true,text:'Marginal (IB) cost of funds',font:{size:10},color:'#718096'},grid:{display:false}}}}});
+    }
   }
 
-  // 5. Region radar
-  dc('region');
-  if(S.filtScraped.length){
+  // 6. Competitive pressure by footprint region
+  dc('pressure');
+  {
+    const warm = (typeof _compBandCuts!=='undefined' && _compBandCuts.warm!=null) ? _compBandCuts.warm : 999;
     const regKeys=Object.keys(REGION_LABELS).filter(k=>k!=='other');
-    const regAvgs=regKeys.map(r=>{const i=S.filtScraped.filter(b=>b.region===r);return i.length?parseFloat((i.reduce((s,b)=>s+b.apy,0)/i.length).toFixed(2)):null;});
-    S.charts.region=new Chart(qs('#ch-region'),{type:'radar',
-      data:{labels:regKeys.map(r=>REGION_LABELS[r].replace('/ ','/')),datasets:[{label:'Avg APY%',data:regAvgs,backgroundColor:'rgba(49,130,206,.15)',borderColor:'#3182ce',pointBackgroundColor:'#3182ce',pointRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_scrapedSub())},
-        scales:{r:{beginAtZero:false,ticks:{callback:v=>v+'%',font:{size:9}},grid:{color:'#e2e8f0'},pointLabels:{font:{size:9}}}}}});
+    const aggr=regKeys.map(rk=>banks.filter(b=>b.region===rk && b.compScore!=null && b.compScore>=warm).length);
+    const tot =regKeys.map(rk=>banks.filter(b=>b.region===rk).length);
+    S.charts.pressure=new Chart(qs('#ch-pressure'),{type:'bar',
+      data:{labels:regKeys.map(rk=>REGION_LABELS[rk].replace('/ ','/')),datasets:[
+        {label:'Aggressive (Hot/Warm)',data:aggr,backgroundColor:'#c53030',borderRadius:4},
+        {label:'All competitors',data:tot,backgroundColor:'#e2e8f0',borderRadius:4},
+      ]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}},subtitle:_subtitleCfg('Aggressive = Hot/Warm on Competitor Watch · '+FDIC),
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.raw}}},
+        scales:{x:{grid:{color:grid},ticks:{stepSize:1}},y:{grid:{display:false},ticks:{font:{size:9}}}}}});
   }
 
-  // 6. COF by asset size
-  dc('cofAsset');
-  if(withRate.length){
-    const buckets=['under100','100to500','500to1b','1bto3b','3bto10b','10bto100b','over100b'];
-    const bLabels=['< $100M','$100M–$500M','$500M–$1B','$1B–$3B','$3B–$10B','$10B–$100B','$100B+'];
-    const bAvgs=buckets.map(bk=>{const items=withRate.filter(b=>b.assetBucket===bk);return items.length?parseFloat((items.reduce((s,b)=>s+b.impliedRate,0)/items.length).toFixed(2)):null;});
-    S.charts.cofAsset=new Chart(qs('#ch-cof-asset'),{type:'bar',
-      data:{labels:bLabels,datasets:[{data:bAvgs,backgroundColor:['#bee3f8','#90cdf4','#63b3ed','#3182ce','#2b6cb0','#2c5282','#1a365d'],borderRadius:5}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(2)+'% avg COF':'No data'}}},
-        scales:{y:{beginAtZero:false,ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
-  }
-
-  // 7. Competitor count by market
-  dc('mktCount');
-  if(S.filtMarkets.length){
-    const mktSorted=[...S.filtMarkets].sort((a,b)=>b.bankCount-a.bankCount).slice(0,15);
-    S.charts.mktCount=new Chart(qs('#ch-mkt-count'),{type:'bar',
-      data:{labels:mktSorted.map(m=>titleCase(m.city)),datasets:[{data:mktSorted.map(m=>m.bankCount),backgroundColor:'#63b3ed',borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_scrapedSub())},
-        scales:{y:{ticks:{stepSize:1},grid:{color:'#f0f4f8'}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
-  }
-
-  // 8. Charter breakdown
-  dc('charter');
-  const cgKeys=['state','national','savings'];
-  const cgLabels=['State Bank','National Bank','Savings Bank'];
-  const cgCounts=cgKeys.map(k=>S.filtBanks.filter(b=>b.charterGroup===k).length);
-  if(cgCounts.some(c=>c>0)){
-    S.charts.charter=new Chart(qs('#ch-charter'),{type:'doughnut',
-      data:{labels:cgLabels,datasets:[{data:cgCounts,backgroundColor:['#4299e1','#48bb78','#ed8936'],borderColor:'#fff',borderWidth:2}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12}},subtitle:_subtitleCfg(_fdicSub())}}});
-  }
-
-  // 9. LTD distribution
+  // 7. Liquidity — Loan-to-Deposit with prudential bands + median
   dc('ltdDist');
-  const ltdVals=S.filtBanks.map(b=>b.ltd).filter(v=>v!=null);
-  if(ltdVals.length){
-    const ltdBands=['<50%','50–65%','65–80%','80–90%','90–100%','>100%'];
-    const ltdCounts=[0,0,0,0,0,0];
-    ltdVals.forEach(v=>{if(v<50)ltdCounts[0]++;else if(v<65)ltdCounts[1]++;else if(v<80)ltdCounts[2]++;else if(v<90)ltdCounts[3]++;else if(v<100)ltdCounts[4]++;else ltdCounts[5]++;});
-    S.charts.ltdDist=new Chart(qs('#ch-ltd-dist'),{type:'bar',
-      data:{labels:ltdBands,datasets:[{data:ltdCounts,backgroundColor:['#c6f6d5','#9ae6b4','#68d391','#fefcbf','#fed7d7','#fc8181'],borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
-        scales:{y:{grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
-  }
-
-  // 10. ROA distribution
-  dc('roaDist');
-  const roaVals=S.filtBanks.map(b=>b.roa).filter(v=>v!=null&&v!==0);
-  if(roaVals.length){
-    const roaBands=['<0%','0–0.5%','0.5–1%','1–1.5%','1.5–2%','>2%'];
-    const roaCounts=[0,0,0,0,0,0];
-    roaVals.forEach(v=>{if(v<0)roaCounts[0]++;else if(v<.5)roaCounts[1]++;else if(v<1)roaCounts[2]++;else if(v<1.5)roaCounts[3]++;else if(v<2)roaCounts[4]++;else roaCounts[5]++;});
-    S.charts.roaDist=new Chart(qs('#ch-roa-dist'),{type:'bar',
-      data:{labels:roaBands,datasets:[{data:roaCounts,backgroundColor:['#fc8181','#fed7d7','#fefcbf','#9ae6b4','#68d391','#276749'],borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:_subtitleCfg(_fdicSub()),tooltip:{callbacks:{label:ctx=>`${ctx.raw} banks`}}},
-        scales:{y:{grid:{color:'#f0f4f8'}},x:{grid:{display:false}}}}});
-  }
-
-  // 11. Treasury rates
-  dc('treasury');
-  if(S.treasury?.rates){
-    const tLabels=Object.keys(S.treasury.rates);
-    const tValues=Object.values(S.treasury.rates).map(v=>v.rate);
-    S.charts.treasury=new Chart(qs('#ch-treasury'),{type:'bar',
-      data:{labels:tLabels.map(l=>l.replace('Treasury ','')),
-        datasets:[{label:'Avg Rate %',data:tValues,backgroundColor:tLabels.map((_,i)=>['#1B365D','#254a7a','#3182ce','#63b3ed','#C8A951','#d69e2e'][i%6]),borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw.toFixed(3)}% avg rate`}},
-          subtitle:{display:true,text:`Source: U.S. Treasury Fiscal Data API · ${S.treasury.date}`,font:{size:10},color:'#a0aec0'}},
-        scales:{y:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  {
+    const ltd=banks.map(b=>b.ltd).filter(v=>v!=null).sort((a,b)=>a-b);
+    if(ltd.length){
+      const bands=['<50%','50–65%','65–80%','80–90%','90–100%','>100%'];
+      const bi=v=>v<50?0:v<65?1:v<80?2:v<90?3:v<100?4:5;
+      const counts=new Array(6).fill(0); ltd.forEach(v=>counts[bi(v)]++);
+      const m=ltd[Math.floor(ltd.length/2)],mi=bi(m);
+      const base=['#c6f6d5','#9ae6b4','#68d391','#fefcbf','#fed7d7','#fc8181'];
+      const cols=base.map((c,i)=> i===mi?'#c8a951':c);
+      S.charts.ltdDist=new Chart(qs('#ch-ltd-dist'),{type:'bar',
+        data:{labels:bands,datasets:[{data:counts,backgroundColor:cols,borderRadius:4}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},subtitle:_subtitleCfg(FDIC+' · green ≤80% liquid · red >100% loaned-up · gold = footprint median '+m.toFixed(0)+'%'),tooltip:{callbacks:{label:ctx=>ctx.raw+' banks'}}},
+          scales:{y:{title:{display:true,text:'Bank count',font:{size:10},color:'#718096'},grid:{color:grid}},x:{grid:{display:false}}}}});
+    }
   }
 }
 
