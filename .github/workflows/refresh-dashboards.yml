@@ -1,0 +1,69 @@
+name: Refresh dashboard data
+
+# Auto-refresh for the public-data dashboards. Each dashboard folder exposes a
+# standardized `refresh.py` that pulls live data and injects it into its HTML.
+# This job runs them on a schedule (and on demand), then commits any changes so
+# GitHub Pages redeploys automatically. New dashboards are picked up as soon as
+# they add a `refresh.py` — no edits to this file required.
+
+on:
+  schedule:
+    - cron: '17 9 * * 1'      # every Monday 09:17 UTC
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Run only this dashboard folder (e.g. deposit-share). Blank = all.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-dashboards
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      # Optional API keys — set as repo secrets. Scripts that need them read
+      # these env vars; scripts that don't simply ignore them.
+      CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+      BEA_API_KEY: ${{ secrets.BEA_API_KEY }}
+      BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run dashboard refresh scripts
+        run: |
+          set +e
+          only="${{ github.event.inputs.only }}"
+          fail=0
+          for script in */refresh.py; do
+            dir=$(dirname "$script")
+            if [ -n "$only" ] && [ "$dir" != "$only" ]; then continue; fi
+            echo "::group::refresh $dir"
+            python "$script"
+            rc=$?
+            echo "exit=$rc for $dir"
+            [ $rc -ne 0 ] && fail=1
+            echo "::endgroup::"
+          done
+          exit 0   # never fail the job on a single flaky source; report below
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name  "ranger-refresh-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No data changes this run."
+          else
+            git commit -m "Auto-refresh dashboard data ($(date -u +%Y-%m-%d))"
+            git push
+          fi
