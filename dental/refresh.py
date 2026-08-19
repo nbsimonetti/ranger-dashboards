@@ -1,114 +1,196 @@
 """
-Dental & Allied Practice BD - data refresh.
+Dental & Allied Practice BD - data refresh (NPPES bulk file).
 
-Pulls Texas dental (and allied: optometry) providers from the NPPES NPI Registry
-and scores them as business-development prospects for practice loans, deposits,
-equipment finance, and treasury - mirroring the physician BD dashboard for an
-adjacent, high-value practice-lending segment.
+Pulls Texas dental and optometry providers from the monthly NPPES Data
+Dissemination file and scores them as business-development prospects.
 
-Public source: NPPES API (npiregistry.cms.gov/api) - free, no key.
-Note: npiregistry.cms.gov is not resolvable from some sandboxes; this script is
-designed to run in the scheduled GitHub Action, where it resolves normally.
-The NPPES API caps each query at 1,200 records (limit<=200, skip<=1000), so we
-bucket by taxonomy x ZIP-prefix and de-duplicate by NPI.
+Why the bulk file and not the API: the NPPES query API (npiregistry.cms.gov) is
+DNS-unreachable from both the Claude sandbox and GitHub Actions runners. The
+monthly full-file dissemination on download.cms.gov IS reachable, so we stream it
+instead. It is ~1.15 GB zipped / ~10 GB CSV, so:
+  * we auto-discover the current month's file from the NPPES listing,
+  * stream the main CSV (never loading it all into memory),
+  * and skip the download entirely if the dashboard already holds fresh data
+    (< SKIP_DAYS old) - keeping the weekly workflow cheap since the source is
+    only updated monthly.
 
-Run:  python dental/refresh.py            (full pull + inject)
-      python dental/refresh.py --selftest (validate scoring/aggregation offline)
+Public source: NPPES Data Dissemination (download.cms.gov) - free, no key.
+Run:  python dental/refresh.py              (download + parse + inject)
+      python dental/refresh.py --force      (ignore the freshness skip)
+      python dental/refresh.py --selftest   (validate parse/score offline)
 """
 import sys
-import time
+import io
+import csv
+import zipfile
+import tempfile
 import datetime as dt
+import re
+import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
-from footprint import http_get_json, inject_data, stamp  # noqa: E402
+from footprint import http_get, inject_data, stamp, USER_AGENT, DATA_START, DATA_END  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 HTML = HERE / "dental-tx.html"
-API = "https://npiregistry.cms.gov/api/"
+LISTING = "https://download.cms.gov/nppes/NPI_Files.html"
+BASE = "https://download.cms.gov/nppes/"
+SKIP_DAYS = 25
 
-# Dental + allied taxonomy descriptions (NPPES `taxonomy_description`).
-TAXONOMIES = [
-    ("Dentist", "General Dentistry"),
-    ("Orthodontics and Dentofacial Orthopedics", "Orthodontics"),
-    ("Oral and Maxillofacial Surgery", "Oral Surgery"),
-    ("Endodontics", "Endodontics"),
-    ("Periodontics", "Periodontics"),
-    ("Pediatric Dentistry", "Pediatric Dentistry"),
-    ("Prosthodontics", "Prosthodontics"),
-    ("Optometrist", "Optometry"),
-]
-# TX ZIP prefixes covering the footprint metros (DFW/East, FtWorth/West-central,
-# Houston/SE, San Antonio/Austin/South, Far-West). Keeps each query < 1,200.
-ZIP_PREFIXES = ["75", "76", "77", "78", "79"]
-
-METRO_BY_ZIP3 = None  # (kept simple: we group by city)
-
-
-def fetch_bucket(desc, zip_prefix):
-    out = []
-    for skip in range(0, 1001, 200):
-        url = ("%s?version=2.1&country_code=US&state=TX"
-               "&taxonomy_description=%s&postal_code=%s*&limit=200&skip=%d"
-               % (API, urllib_quote(desc), zip_prefix, skip))
-        data = http_get_json(url, headers={"User-Agent": "Mozilla/5.0 ranger-dashboards"})
-        results = data.get("results") or []
-        out.extend(results)
-        if len(results) < 200:
-            break
-        time.sleep(0.3)
-    return out
+# Taxonomy family -> label. We match dental by the 1223* prefix and optometry by
+# 152W*, and refine common dental specialties by exact code.
+DENTAL_LABEL = {
+    "122300000X": "General Dentistry", "1223G0001X": "General Dentistry",
+    "1223X0400X": "Orthodontics", "1223X2210X": "Orofacial Pain",
+    "1223S0112X": "Oral & Maxillofacial Surgery", "1223E0200X": "Endodontics",
+    "1223P0221X": "Pediatric Dentistry", "1223P0300X": "Periodontics",
+    "1223P0700X": "Prosthodontics", "1223D0001X": "Dental Public Health",
+    "1223D0004X": "Dentist Anesthesiologist", "1223X0008X": "Oral & Maxillofacial Radiology",
+    "1223P0106X": "Oral & Maxillofacial Pathology",
+}
+NOW = dt.date.today()
+csv.field_size_limit(10 ** 7)
 
 
-def urllib_quote(s):
-    import urllib.parse
-    return urllib.parse.quote(s)
+def label_for(code):
+    if not code:
+        return None
+    if code in DENTAL_LABEL:
+        return DENTAL_LABEL[code]
+    if code.startswith("1223") or code == "122300000X":
+        return "Dentistry (other)"
+    if code.startswith("152W"):
+        return "Optometry"
+    return None
 
 
-def parse_provider(rec, specialty_label):
-    basic = rec.get("basic", {}) or {}
-    loc = next((a for a in rec.get("addresses", [])
-                if a.get("address_purpose") == "LOCATION"), {}) or {}
-    org = basic.get("organization_name")
-    name = org or (" ".join(x for x in [basic.get("first_name"), basic.get("last_name")] if x)).strip()
-    enum = basic.get("enumeration_date") or ""
-    tenure = None
-    if enum[:4].isdigit():
-        tenure = dt.date.today().year - int(enum[:4])
-    solo = str(basic.get("sole_proprietor", "")).upper() == "YES"
-    return {
-        "npi": rec.get("number"),
-        "name": name,
-        "cred": basic.get("credential") or "",
-        "specialty": specialty_label,
-        "city": (loc.get("city") or "").title(),
-        "zip": (loc.get("postal_code") or "")[:5],
-        "phone": loc.get("telephone_number") or "",
-        "tenure": tenure,
-        "solo": solo,
-        "is_org": bool(org),
-    }
+def latest_file_url():
+    html = http_get(LISTING, retries=3).decode("utf-8", "replace")
+    files = re.findall(r"NPPES_Data_Dissemination_[A-Za-z]+_\d{4}_V\d+\.zip", html)
+    monthly = sorted(set(f for f in files if "Weekly" not in f))
+    if not monthly:
+        raise SystemExit("no monthly NPPES file found in listing")
+    # newest by (year, month)
+    months = {m: i for i, m in enumerate(
+        ["january", "february", "march", "april", "may", "june", "july",
+         "august", "september", "october", "november", "december"], 1)}
+
+    def key(f):
+        mo, yr = re.search(r"_([A-Za-z]+)_(\d{4})_", f).groups()
+        return (int(yr), months.get(mo.lower(), 0))
+    return BASE + max(monthly, key=key)
+
+
+def existing_fresh():
+    if not HTML.exists():
+        return False
+    txt = HTML.read_text(encoding="utf-8")
+    m = re.search(re.escape(DATA_START) + r"(.*?)" + re.escape(DATA_END), txt, re.S)
+    if not m or m.group(1).strip() in ("", "null"):
+        return False
+    import json
+    try:
+        d = json.loads(m.group(1))
+    except ValueError:
+        return False
+    meta = d.get("_meta", {})
+    if not d.get("providers"):
+        return False
+    try:
+        gen = dt.datetime.strptime(meta["generated_at"], "%Y-%m-%dT%H:%M:%SZ").date()
+    except (KeyError, ValueError):
+        return False
+    return (NOW - gen).days < SKIP_DAYS
+
+
+def download(url):
+    tmp = Path(tempfile.gettempdir()) / "nppes_full.zip"
+    print("downloading", url)
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(req, timeout=120) as r, open(tmp, "wb") as f:
+        total = 0
+        while True:
+            chunk = r.read(1 << 20)
+            if not chunk:
+                break
+            f.write(chunk)
+            total += len(chunk)
+            if total % (100 << 20) < (1 << 20):
+                print("  ...%d MB" % (total >> 20))
+    print("downloaded %d MB" % (tmp.stat().st_size >> 20))
+    return tmp
+
+
+def main_csv_name(zf):
+    for n in zf.namelist():
+        low = n.lower()
+        if low.startswith("npidata_pfile") and low.endswith(".csv") and "fileheader" not in low:
+            return n
+    raise SystemExit("main npidata CSV not found in zip")
+
+
+def parse_rows(row_iter):
+    """row_iter yields CSV rows (lists); first is the header. Yields provider dicts."""
+    header = next(row_iter)
+    idx = {name: i for i, name in enumerate(header)}
+
+    def col(row, name):
+        i = idx.get(name)
+        return row[i] if i is not None and i < len(row) else ""
+
+    tax_cols = [("Healthcare Provider Taxonomy Code_%d" % k,
+                 "Healthcare Provider Primary Taxonomy Switch_%d" % k) for k in range(1, 16)]
+
+    for row in row_iter:
+        # pick primary taxonomy (or first dental/optometry one present)
+        primary, any_match = None, None
+        for code_c, sw_c in tax_cols:
+            code = col(row, code_c).strip()
+            if not code:
+                continue
+            lab = label_for(code)
+            if lab and any_match is None:
+                any_match = (code, lab)
+            if col(row, sw_c).strip().upper() == "Y" and label_for(code):
+                primary = (code, lab)
+                break
+        chosen = primary or any_match
+        if not chosen:
+            continue
+        state = col(row, "Provider Business Practice Location Address State Name").strip().upper()
+        if state != "TX":
+            continue
+        org = col(row, "Provider Organization Name (Legal Business Name)").strip()
+        name = org or (" ".join(x for x in [
+            col(row, "Provider First Name").strip(),
+            col(row, "Provider Last Name (Legal Name)").strip()] if x)).title()
+        enum = col(row, "Provider Enumeration Date").strip()  # MM/DD/YYYY
+        yr = enum[-4:] if len(enum) >= 4 and enum[-4:].isdigit() else ""
+        tenure = NOW.year - int(yr) if yr else None
+        yield {
+            "npi": col(row, "NPI").strip(),
+            "name": name, "cred": col(row, "Provider Credential Text").strip(),
+            "specialty": chosen[1],
+            "city": col(row, "Provider Business Practice Location Address City Name").strip().title(),
+            "zip": col(row, "Provider Business Practice Location Address Postal Code").strip()[:5],
+            "phone": col(row, "Provider Business Practice Location Address Telephone Number").strip(),
+            "tenure": tenure,
+            "solo": col(row, "Is Sole Proprietor").strip().upper() == "Y",
+        }
 
 
 def score(p):
-    """Simple 0-100 BD prospect score; mirrors the physician-BD idiom."""
     s = 40
     t = p.get("tenure")
     if t is not None:
-        if 5 <= t <= 25:
-            s += 25          # established but not near-retirement
-        elif t < 3:
-            s += 5           # brand-new practice = startup-loan candidate
-        elif t > 35:
-            s += 8           # succession candidate
-        else:
-            s += 15
+        s += 25 if 5 <= t <= 25 else (5 if t < 3 else (8 if t > 35 else 15))
     if p.get("solo"):
-        s += 20              # solo practice = the target relationship
+        s += 20
     if p.get("phone"):
-        s += 8               # contactable
-    if p.get("specialty") in ("Oral Surgery", "Orthodontics", "Periodontics"):
-        s += 7               # higher-capex specialties
+        s += 8
+    if p.get("specialty") in ("Oral & Maxillofacial Surgery", "Orthodontics", "Periodontics"):
+        s += 7
     return max(0, min(100, s))
 
 
@@ -121,10 +203,10 @@ def build(providers):
         by_spec[p["specialty"]] = by_spec.get(p["specialty"], 0) + 1
         if p["city"]:
             by_city[p["city"]] = by_city.get(p["city"], 0) + 1
-    solo_n = sum(1 for p in providers if p["solo"])
     return {
-        "_meta": stamp("NPPES NPI Registry API", {
-            "providers": len(providers), "solo": solo_n,
+        "_meta": stamp("NPPES Data Dissemination (download.cms.gov, monthly bulk file)", {
+            "providers": len(providers),
+            "solo": sum(1 for p in providers if p["solo"]),
             "specialties": len(by_spec),
         }),
         "providers": providers,
@@ -134,18 +216,27 @@ def build(providers):
 
 
 def selftest():
-    rec = {"number": "1234567890",
-           "basic": {"first_name": "Jane", "last_name": "Doe", "credential": "DDS",
-                     "enumeration_date": "2009-05-01", "sole_proprietor": "YES"},
-           "addresses": [{"address_purpose": "LOCATION", "city": "DALLAS",
-                          "state": "TX", "postal_code": "75201-1234",
-                          "telephone_number": "214-555-0100"}]}
-    p = parse_provider(rec, "General Dentistry")
+    header = (["NPI", "Entity Type Code", "Provider Organization Name (Legal Business Name)",
+               "Provider Last Name (Legal Name)", "Provider First Name", "Provider Credential Text",
+               "Provider Business Practice Location Address City Name",
+               "Provider Business Practice Location Address State Name",
+               "Provider Business Practice Location Address Postal Code",
+               "Provider Business Practice Location Address Telephone Number",
+               "Provider Enumeration Date", "Is Sole Proprietor"]
+              + ["Healthcare Provider Taxonomy Code_%d" % k for k in range(1, 16)]
+              + ["Healthcare Provider Primary Taxonomy Switch_%d" % k for k in range(1, 16)])
+    row = ["1234567890", "1", "", "DOE", "JANE", "DDS", "DALLAS", "TX", "75201-1234",
+           "214-555-0100", "05/01/2009", "Y"] + ["1223X0400X"] + [""] * 14 + ["Y"] + [""] * 14
+    non_tx = ["9", "1", "", "SMITH", "AL", "OD", "RENO", "NV", "89501", "", "01/01/2015", "N"] \
+        + ["152W00000X"] + [""] * 14 + ["Y"] + [""] * 14
+    provs = list(parse_rows(iter([header, row, non_tx])))
+    assert len(provs) == 1, provs                          # NV row filtered out
+    p = provs[0]
     p["score"] = score(p)
-    data = build([p])
-    assert p["npi"] == "1234567890" and p["solo"] and p["tenure"] == dt.date.today().year - 2009
-    assert p["city"] == "Dallas" and p["score"] > 60, p
-    assert data["_meta"]["providers"] == 1 and data["by_specialty"][0]["k"] == "General Dentistry"
+    assert p["specialty"] == "Orthodontics" and p["solo"] and p["city"] == "Dallas"
+    assert p["tenure"] == NOW.year - 2009 and p["score"] >= 90, p
+    d = build([p])
+    assert d["_meta"]["providers"] == 1 and d["by_specialty"][0]["k"] == "Orthodontics"
     print("selftest OK:", {k: p[k] for k in ("name", "specialty", "city", "tenure", "solo", "score")})
 
 
@@ -153,25 +244,28 @@ def main():
     if "--selftest" in sys.argv:
         selftest()
         return
-    seen, providers = set(), []
-    for desc, label in TAXONOMIES:
-        for zp in ZIP_PREFIXES:
-            try:
-                recs = fetch_bucket(desc, zp)
-            except Exception as exc:  # noqa: BLE001
-                print("WARN %s/%s: %s" % (label, zp, exc))
-                continue
-            for rec in recs:
-                npi = rec.get("number")
-                if npi in seen:
-                    continue
-                seen.add(npi)
-                providers.append(parse_provider(rec, label))
-            print("  %-22s zip %s* -> %d (running total %d)" % (label, zp, len(recs), len(providers)))
-    print("total unique providers:", len(providers))
+    if "--force" not in sys.argv and existing_fresh():
+        print("dental data is fresh (< %d days) - skipping bulk download." % SKIP_DAYS)
+        return
+    url = latest_file_url()
+    zpath = download(url)
+    try:
+        with zipfile.ZipFile(zpath) as zf:
+            csv_name = main_csv_name(zf)
+            print("parsing", csv_name)
+            with zf.open(csv_name) as raw:
+                reader = csv.reader(io.TextIOWrapper(raw, encoding="utf-8", errors="replace", newline=""))
+                providers = list(parse_rows(reader))
+    finally:
+        try:
+            zpath.unlink()
+        except OSError:
+            pass
+    print("TX dental/optometry providers:", len(providers))
     data = build(providers)
     size = inject_data(HTML, data)
-    print("injected %.0f KB into %s" % (size / 1024, HTML.name))
+    print("injected %.0f KB into %s (providers=%d, solo=%d)"
+          % (size / 1024, HTML.name, data["_meta"]["providers"], data["_meta"]["solo"]))
 
 
 if __name__ == "__main__":

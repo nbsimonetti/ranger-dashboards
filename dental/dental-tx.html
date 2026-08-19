@@ -97,7 +97,7 @@
     <div class="panel prose">
       <h3>Methodology &amp; sources</h3>
       <h4>Data source</h4>
-      <p><strong>NPPES NPI Registry</strong> — the national provider registry (CMS), pulled live from the public API (<code>npiregistry.cms.gov/api</code>); free, no key. Texas dental taxonomies (general dentistry, orthodontics, oral surgery, endodontics, periodontics, pediatric, prosthodontics) plus optometry, bucketed by ZIP prefix to work around the API's 1,200-record-per-query cap and de-duplicated by NPI.</p>
+      <p><strong>NPPES Data Dissemination</strong> — the monthly national provider bulk file from CMS (<code>download.cms.gov/nppes</code>); free, no key. The pipeline auto-discovers the current month's file, streams the ~10&nbsp;GB provider CSV, and keeps Texas providers whose taxonomy is dental (<code>1223*</code>) or optometry (<code>152W*</code>). We use the bulk file rather than the NPPES query API because <code>npiregistry.cms.gov</code> is DNS-unreachable from the automated build and CI environments, while the bulk host is reachable. The weekly job skips the download when the dashboard already holds fresh data (the source updates monthly).</p>
       <h4>Prospect score (0–100)</h4>
       <p>A transparent heuristic: base 40, plus practice tenure (sweet spot 5–25 years), solo-proprietor status (the target relationship, +20), contactability (a listed phone), and higher-capex specialties (oral surgery, orthodontics, periodontics). New practices (&lt;3 yrs) and long-tenured ones (&gt;35 yrs) are flagged for startup and succession lending respectively.</p>
       <h4>Limitations</h4>
@@ -106,7 +106,7 @@
         <li>Tenure is inferred from NPI enumeration date, not actual practice-opening date.</li>
         <li>Dentists bill little Medicare, so (unlike the physician dashboard) there is no Medicare-volume signal; scoring is registry-based.</li>
       </ul>
-      <p class="small">Refresh: <code>python dental/refresh.py</code>. Requires network access to <code>npiregistry.cms.gov</code>, which is presently DNS-unreachable from the CI runner — populate from a network that can reach it. The scheduled workflow retries weekly.</p>
+      <p class="small">Refresh: <code>python dental/refresh.py</code> (auto-discovers the current monthly file; <code>--force</code> ignores the freshness skip). Scheduled weekly via GitHub Actions.</p>
     </div>
   </section>
 </div>
@@ -170,7 +170,7 @@ function renderSpecialty(){
 }
 function boot(){
   if(!D||!D.providers||!D.providers.length){
-    $('#empty-note').innerHTML='<div class="empty"><b>Awaiting data.</b> The pipeline is complete, but the data source — NPPES (<code>npiregistry.cms.gov</code>) — is currently DNS-unreachable from both this project’s build sandbox and GitHub Actions runners (every request fails to resolve). Run <code>python dental/refresh.py</code> from a network that can reach npiregistry.cms.gov (the same source the physician dataset was built from) to populate this dashboard; the scheduled workflow will pick it up automatically once the host resolves.</div>';
+    $('#empty-note').innerHTML='<div class="empty"><b>Awaiting first data load.</b> The pipeline streams the monthly NPPES bulk file (~1.15&nbsp;GB) from <code>download.cms.gov</code> and filters it to Texas dental &amp; optometry providers. Trigger the <b>Refresh dashboard data</b> workflow with <code>only=dental</code>, or run <code>python dental/refresh.py</code>, to populate it.</div>';
     $('#stamp').textContent='Awaiting first data refresh.';
     return;
   }

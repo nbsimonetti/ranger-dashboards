@@ -53,6 +53,8 @@ LAUS_URL = "https://api.bls.gov/publicAPI/v2/timeseries/data/"
 ACS_YEAR = 2022
 ACS_URL = ("https://api.census.gov/data/%d/acs/acs5"
            "?get=NAME,B19013_001E,B01003_001E&for=county:*&in=state:48&key=%s")
+BEA_URL = ("https://apps.bea.gov/api/data?&UserID=%s&method=GetData&datasetname=Regional"
+           "&TableName=CAINC1&LineCode=3&GeoFips=COUNTY&Year=LAST5&ResultFormat=json")
 
 # Documented market-vitality weights (percentile blend, sum need not be 100).
 VITALITY_WEIGHTS = {
@@ -242,6 +244,41 @@ def fetch_acs():
     return out
 
 
+# ------------------------------------------------------------------- BEA ----
+def fetch_bea():
+    """{fips: per_capita_personal_income} or {} when no key / unavailable.
+
+    BEA Regional table CAINC1, LineCode 3 (per-capita personal income), latest of
+    the last five years per county. Gated on BEA_API_KEY; never fails the refresh.
+    """
+    key = os.environ.get("BEA_API_KEY")
+    if not key:
+        print("  BEA: BEA_API_KEY not set - skipping per-capita income")
+        return {}
+    try:
+        raw = json.loads(http_get(BEA_URL % key).decode("utf-8", "replace"))
+        rows = raw["BEAAPI"]["Results"]["Data"]
+    except Exception as exc:  # noqa: BLE001 - never fail the whole refresh on BEA
+        print("  BEA: request failed (%s) - skipping" % exc)
+        return {}
+    best = {}
+    fset = set(FIPS_LIST)
+    for r in rows:
+        fips = (r.get("GeoFips") or "").strip()
+        if fips not in fset:
+            continue
+        try:
+            yr = int(r.get("TimePeriod"))
+            val = int(str(r.get("DataValue")).replace(",", "").strip())
+        except (TypeError, ValueError):
+            continue
+        if fips not in best or yr > best[fips][0]:
+            best[fips] = (yr, val)
+    out = {f: v for f, (y, v) in best.items()}
+    print("  BEA: %d footprint counties with per-capita income" % len(out))
+    return out
+
+
 # ------------------------------------------------------------- vitality ----
 def pct_rank(values):
     """{fips: value|None} -> {fips: percentile 0-100|None}, higher value=higher.
@@ -281,7 +318,7 @@ def blend(pcts, weights):
 
 
 # ------------------------------------------------------------------ build ---
-def build(year, qcew, laus, acs, laus_period):
+def build(year, qcew, laus, acs, bea, laus_period):
     counties = {}
     for fips in FIPS_LIST:
         name, lat, lng = GEO.get(fips, (fips, None, None))
@@ -300,6 +337,7 @@ def build(year, qcew, laus, acs, laus_period):
             "annual_pay": int(q["annual_pay"]) if q.get("annual_pay") is not None else None,
             "unemp": rate, "unemp_period": period,
             "med_income": inc, "population": pop,
+            "bea_pci": bea.get(fips),
         }
 
     # percentile ranks across the footprint (weight-independent)
@@ -329,15 +367,19 @@ def build(year, qcew, laus, acs, laus_period):
     wage_wtd = round(sum(w * e for w, e in ww) / sum(e for _, e in ww)) if ww else None
     top = rows[0] if rows and rows[0]["vitality"] is not None else None
     has_income = any(c["med_income"] is not None for c in rows)
+    has_bea = any(c["bea_pci"] is not None for c in rows)
 
     src = "BLS QCEW (annual) + BLS LAUS (monthly)"
     if has_income:
         src += " + Census ACS 5-year"
+    if has_bea:
+        src += " + BEA per-capita income"
     meta = stamp(src, {
         "qcew_year": year,
         "laus_period": laus_period or None,
         "acs_year": ACS_YEAR if has_income else None,
         "has_income": has_income,
+        "has_bea": has_bea,
         "footprint_counties": len(rows),
         "total_employment": sum(emps),
         "total_establishments": sum(ests),
@@ -361,8 +403,9 @@ def main():
     laus, laus_period = fetch_laus(cal_year)
     print("LAUS counties with data:", len(laus), "| latest period:", laus_period or "n/a")
     acs = fetch_acs()
+    bea = fetch_bea()
 
-    data = build(year, qcew, laus, acs, laus_period)
+    data = build(year, qcew, laus, acs, bea, laus_period)
     m = data["_meta"]
     print("footprint counties: %d | total employment: %s | median unemployment: %s%%"
           % (m["footprint_counties"], format(m["total_employment"], ","),
