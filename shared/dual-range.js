@@ -55,8 +55,13 @@
       const span = max - min;
       const lp = ((lo - min) / span) * 100;
       const hp = ((hi - min) / span) * 100;
-      fill.style.left = lp + '%';
-      fill.style.right = (100 - hp) + '%';
+      // Align the fill edges to the thumb CENTERS. The native range thumbs are
+      // 16px wide and their centers travel from 8px to (trackWidth - 8px), so a
+      // raw left/right % overshoots each end by half a thumb (8px). Offset the
+      // fill by that inset so it lines up with the handles.
+      const R = 8; // half of the 16px thumb
+      fill.style.left = 'calc(' + lp + '% + ' + (R - 2 * R * (lp / 100)).toFixed(2) + 'px)';
+      fill.style.right = 'calc(' + (100 - hp) + '% + ' + (2 * R * (hp / 100) - R).toFixed(2) + 'px)';
       loRange.value = lo;
       hiRange.value = hi;
       loNum.value = lo;

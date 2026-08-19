@@ -349,8 +349,8 @@
 <section id="view-valuation" class="view">
   <div class="kpis">
     <div class="kpi"><div class="label">Banks valued</div><div class="value" id="val-kpi-n">—</div></div>
-    <div class="kpi"><div class="label">Aggregate TBVE</div><div class="value" id="val-kpi-tbve">—</div></div>
-    <div class="kpi"><div class="label">Total cost @ current x</div><div class="value" id="val-kpi-cost">—</div></div>
+    <div class="kpi"><div class="label">Average TBVE</div><div class="value" id="val-kpi-tbve">—</div></div>
+    <div class="kpi"><div class="label">Average cost @ current x</div><div class="value" id="val-kpi-cost">—</div></div>
     <div class="kpi"><div class="label">Capital-normalized total</div><div class="value" id="val-kpi-norm">—</div></div>
     <div class="kpi"><div class="label">FR Y-6 coverage</div><div class="value" id="val-kpi-y6">—</div></div>
   </div>
@@ -419,7 +419,7 @@
     <label>Target bank<br><select id="peerSelect"></select></label>
   </div>
   <div class="card">
-    <div id="peerChart" style="height:480px;"></div>
+    <div id="peerChart" style="height:560px;"></div>
   </div>
   <div class="card">
     <div class="table-wrap" style="max-height:none;">
@@ -468,7 +468,7 @@
       <label>Search<br><input type="text" id="mSearch" placeholder="bank or county"></label>
       <label>Min composite score: <span id="mScoreVal">0</span><br>
         <input type="range" id="mScore" min="0" max="100" value="0" style="width:100%;"></label>
-      <div style="min-width:240px"><div id="mapAssetSlider"></div></div>
+      <div style="grid-column:span 2; min-width:0"><div id="mapAssetSlider"></div></div>
       <label>Min geo fit: <span id="mGeoVal">1</span><br>
         <input type="range" id="mGeo" min="1" max="5" value="1" style="width:100%;"></label>
       <label><input type="checkbox" id="mPublicOnly"> Public filers only</label>
@@ -1194,17 +1194,50 @@ function renderPeer() {
     return DATA.medians[m[1]];
   });
 
-  Plotly.newPlot('peerChart', [
-    { x: labels, y: tVals, name: t.NAME, type: 'bar', marker: {color: '#5b8def'} },
-    { x: labels, y: rVals, name: 'RLSB', type: 'bar', marker: {color: '#e0a458'} },
-    { x: labels, y: mVals, name: 'TX <$200M Median', type: 'bar', marker: {color: '#3ea676'} },
-  ], {
+  // Route Tier 1 Leverage & L/D onto a secondary (right) axis — their large
+  // magnitudes (~10% and ~90%) were compressing the smaller percentile bars on
+  // the shared axis. Keep them at the right end, beside the axis they read against.
+  const SECONDARY_KEYS = ['leverage_ratio', 'loan_to_deposit'];
+  const isSec = i => SECONDARY_KEYS.includes(PEER_METRICS[i][1]);
+  const primIdx = PEER_METRICS.map((m, i) => i).filter(i => !isSec(i));
+  const secIdx  = PEER_METRICS.map((m, i) => i).filter(i =>  isSec(i));
+  const orderedLabels = primIdx.concat(secIdx).map(i => labels[i]);
+  const seriesDefs = [
+    { name: t.NAME,             vals: tVals, color: '#5b8def' },
+    { name: 'RLSB',             vals: rVals, color: '#e0a458' },
+    { name: 'TX <$200M Median', vals: mVals, color: '#3ea676' },
+  ];
+  const peerTraces = [];
+  seriesDefs.forEach(s => {
+    peerTraces.push({
+      x: primIdx.map(i => labels[i]), y: primIdx.map(i => s.vals[i]),
+      name: s.name, type: 'bar', marker: {color: s.color}, yaxis: 'y',
+      offsetgroup: s.name, alignmentgroup: 'peer', legendgroup: s.name,
+    });
+    peerTraces.push({
+      x: secIdx.map(i => labels[i]), y: secIdx.map(i => s.vals[i]),
+      name: s.name, type: 'bar', marker: {color: s.color}, yaxis: 'y2',
+      offsetgroup: s.name, alignmentgroup: 'peer', legendgroup: s.name, showlegend: false,
+    });
+  });
+
+  Plotly.newPlot('peerChart', peerTraces, {
     barmode: 'group',
     paper_bgcolor: '#131c2e', plot_bgcolor: '#131c2e',
     font: {color: '#e6ecf5'},
-    margin: {l: 60, r: 20, t: 20, b: 80},
-    yaxis: {gridcolor: '#2a3650'}, xaxis: {gridcolor: '#2a3650', tickangle: -25},
-    legend: {orientation: 'h'},
+    margin: {l: 60, r: 70, t: 48, b: 90},
+    xaxis: {
+      gridcolor: '#2a3650', tickangle: -30, automargin: true,
+      categoryorder: 'array', categoryarray: orderedLabels,
+    },
+    yaxis: {gridcolor: '#2a3650', rangemode: 'tozero', title: {text: 'Percent / $M', font: {size: 11}}},
+    yaxis2: {
+      overlaying: 'y', side: 'right', rangemode: 'tozero',
+      gridcolor: 'transparent', zeroline: false,
+      title: {text: 'Tier 1 Leverage · L/D (%)', font: {size: 11, color: '#d8bf83'}},
+      tickfont: {color: '#d8bf83'},
+    },
+    legend: {orientation: 'h', y: 1.1, yanchor: 'bottom', x: 0, xanchor: 'left'},
   }, {responsive: true, displayModeBar: false});
 
   const body = document.getElementById('peerBody');
@@ -1853,8 +1886,9 @@ function renderValuation() {
   const totalCost = valid.reduce((s, e) => s + (e.price_at_mult || 0), 0);
   const totalNorm = valid.reduce((s, e) => s + (e.normalized_price || 0), 0);
   document.getElementById('val-kpi-n').textContent = valid.length + ' / ' + enriched.length;
-  document.getElementById('val-kpi-tbve').textContent = '$' + fmtN(totalTbve / 1000, 0) + 'M';
-  document.getElementById('val-kpi-cost').textContent = '$' + fmtN(totalCost / 1000, 0) + 'M';
+  const nValid = valid.length;
+  document.getElementById('val-kpi-tbve').textContent = nValid ? '$' + fmtN((totalTbve / nValid) / 1000, 1) + 'M' : '—';
+  document.getElementById('val-kpi-cost').textContent = nValid ? '$' + fmtN((totalCost / nValid) / 1000, 1) + 'M' : '—';
   document.getElementById('val-kpi-norm').textContent = '$' + fmtN(totalNorm / 1000, 0) + 'M';
   const y6Count = enriched.filter(e => e.shareholder_status === 'private_holdco' || e.shareholder_status === 'public').length;
   document.getElementById('val-kpi-y6').textContent = y6Count + ' / ' + enriched.length;
