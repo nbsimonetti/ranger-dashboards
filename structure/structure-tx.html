@@ -130,7 +130,7 @@
   <!-- FOOTPRINT FOCUS -->
   <section class="view" id="v-foot">
     <div class="panel">
-      <h3>Footprint focus — the 33-county target market</h3>
+      <h3>Footprint focus — the statewide target market</h3>
       <div class="note">Bank structure inside the footprint only. Bubbles are placed at each county's centroid (mean of FDIC branch coordinates) and sized by the number of banks currently headquartered there — where the remaining independent charters actually sit. Click a county for detail.</div>
       <div id="map"></div>
       <div class="legend">
@@ -168,7 +168,7 @@
         <li>Counts are by <strong>headquarters</strong> county / state (<code>STALP</code>, <code>COUNTY</code>), so a multi-market bank appears only in its home county. Failure counties are recovered by a <code>CERT</code> join to the institutions file and are blank where no match exists.</li>
         <li><code>ASSET</code> for an inactive charter is its last reported figure before ceasing, not an inflation-adjusted value.</li>
       </ul>
-      <p class="small">Refresh: <code>python structure/refresh.py</code>. Scheduled weekly via GitHub Actions. Footprint = the 33-county RLSB / Ranger Bank target market.</p>
+      <p class="small">Refresh: <code>python structure/refresh.py</code>. Scheduled weekly via GitHub Actions. Footprint = the statewide RLSB / Ranger Bank target market.</p>
     </div>
   </section>
 </div>

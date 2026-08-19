@@ -152,7 +152,7 @@
       <h4>Data sources</h4>
       <ul>
         <li><strong>SBA 7(a) &amp; 504 FOIA borrowers</strong> — the in-repo <code>loan-maturity/loans.json</code>, the public SBA loan-approval disclosure already footprint-filtered to the Texas target counties. Filtered here to NAICS sector&nbsp;54 and tagged with a human subsector label from the 4-digit code. Each row is a real firm with a <em>known financing relationship</em> — the definition of a warm lead.</li>
-        <li><strong>BLS QCEW (Quarterly Census of Employment and Wages)</strong> — the near-census of establishments and employment covered by unemployment insurance. Pulled live from the QCEW Open Data CSV slices (<code>data.bls.gov/cew/data/api/{year}/a/area/{fips}.csv</code>), private ownership (<code>own_code=5</code>), county × 4-digit NAICS (<code>agglvl=76</code>). Provides the total addressable market — establishments and employment per subsector per county — for the 33-county footprint. Free, no key.</li>
+        <li><strong>BLS QCEW (Quarterly Census of Employment and Wages)</strong> — the near-census of establishments and employment covered by unemployment insurance. Pulled live from the QCEW Open Data CSV slices (<code>data.bls.gov/cew/data/api/{year}/a/area/{fips}.csv</code>), private ownership (<code>own_code=5</code>), county × 4-digit NAICS (<code>agglvl=76</code>). Provides the total addressable market — establishments and employment per subsector per county — for the statewide footprint (all 254 Texas counties). Free, no key.</li>
       </ul>
       <h4>Prospect score (0–100)</h4>
       <ul>

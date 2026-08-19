@@ -127,7 +127,7 @@
     <div class="kpis" id="fp-kpis"></div>
     <div class="panel">
       <h3>Footprint banks</h3>
-      <div class="note">Banks headquartered in the 33-county Ranger / RLSB footprint only — the in-market peers and acquisition candidates whose concentration profile shapes local competition and deal credit risk.</div>
+      <div class="note">Banks headquartered in the statewide Ranger / RLSB footprint only — the in-market peers and acquisition candidates whose concentration profile shapes local competition and deal credit risk.</div>
       <div class="controls">
         <label><input type="checkbox" id="fp-over-only"> Over guidance only</label>
       </div>
@@ -240,7 +240,7 @@ function renderKpis(){
     ['Over 100% C&D', fmtN(m.over_cd), pct(m.over_cd/m.banks_analyzed*100)+' of banks'],
     ['Median CRE ratio', ratio(m.median_cre), 'of capital'],
     ['Median C&D ratio', ratio(m.median_cd), 'of capital'],
-    ['Footprint banks', fmtN(m.footprint_banks), 'in 33-county market'],
+    ['Footprint banks', fmtN(m.footprint_banks), 'in statewide market'],
   ].map(x=>`<div class="kpi"><div class="label">${x[0]}</div><div class="value">${x[1]} <small>${x[2]||''}</small></div></div>`).join('');
 }
 let ovDrawn=false;
@@ -344,7 +344,7 @@ function renderFootprint(){
   const overCre=fp.filter(b=>b.overCre).length, overCd=fp.filter(b=>b.overCd).length;
   const med = arr => { if(!arr.length)return null; const s=arr.slice().sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
   $('#fp-kpis').innerHTML=[
-    ['Footprint banks', fmtN(fp.length), 'HQ in 33-county market'],
+    ['Footprint banks', fmtN(fp.length), 'HQ in statewide market'],
     ['Over 300% CRE', fmtN(overCre), pct(fp.length?overCre/fp.length*100:0)+' of footprint'],
     ['Over 100% C&D', fmtN(overCd), pct(fp.length?overCd/fp.length*100:0)+' of footprint'],
     ['Median CRE ratio', ratio(med(fp.map(b=>b.creRatio))), 'footprint banks'],

@@ -107,7 +107,7 @@
   <section class="view" id="v-inst">
     <div class="panel">
       <h3>Institution rankings</h3>
-      <div class="note">Institutions with a Texas branch, ranked by total TX deposits. Footprint columns isolate the 33-county target market. Deposits per branch is a rough productivity proxy.</div>
+      <div class="note">Institutions with a Texas branch, ranked by total TX deposits. Footprint columns isolate the statewide target market. Deposits per branch is a rough productivity proxy.</div>
       <div class="controls">
         <label>Filter<br><input type="text" id="inst-filter" placeholder="bank name…"></label>
         <label><input type="checkbox" id="inst-fp-only"> Footprint banks only</label>
@@ -149,7 +149,7 @@
     <div class="panel prose">
       <h3>Methodology &amp; sources</h3>
       <h4>Data source</h4>
-      <p><strong>FDIC Summary of Deposits (SOD)</strong> — the annual, branch-level census of deposits at every FDIC-insured branch, reported as of <strong>June&nbsp;30</strong> each year. Pulled live from the FDIC BankFind Suite API (<code>banks.data.fdic.gov/api/sod</code>); free, no key. This dashboard uses every Texas branch and focuses the tables and map on the 33-county footprint.</p>
+      <p><strong>FDIC Summary of Deposits (SOD)</strong> — the annual, branch-level census of deposits at every FDIC-insured branch, reported as of <strong>June&nbsp;30</strong> each year. Pulled live from the FDIC BankFind Suite API (<code>banks.data.fdic.gov/api/sod</code>); free, no key. This dashboard uses every Texas branch and focuses the tables and map on the statewide footprint (all 254 Texas counties).</p>
       <h4>Definitions</h4>
       <ul>
         <li><strong>Deposits</strong> — <code>DEPSUMBR</code>, total deposits assigned to the branch ($000s). Deposits are booked to the branch of record, which can overstate headquarters counties for banks that sweep deposits centrally.</li>
