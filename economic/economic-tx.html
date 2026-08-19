@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranger Bank — Footprint Economic &amp; Market Vitality (TX)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --bg:#0e1622; --panel:#141f33; --panel2:#1b2942; --panel3:#22334f;
+    --border:#28374f; --text:#e6ecf5; --muted:#93a6c4; --faint:#6b7d9b;
+    --accent:#c8a951; --accent2:#5b8def; --good:#3ea676; --warn:#e0a458; --bad:#d9694f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
+  a{color:var(--accent)}
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 22px 70px}
+  header.top h1{font-size:22px;margin:0 0 4px;font-weight:600}
+  header.top .sub{color:var(--muted);font-size:13px;max-width:74ch}
+  .stamp{margin-top:8px;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .stamp b{color:var(--muted);font-weight:500}
+  nav{display:flex;flex-wrap:wrap;gap:4px;margin:18px 0 20px;border-bottom:1px solid var(--border)}
+  nav button{background:none;border:none;color:var(--muted);padding:9px 14px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit}
+  nav button:hover{color:var(--text)}
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+  .view{display:none}
+  .view.active{display:block}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  .kpi .value{font-size:22px;margin-top:5px;font-variant-numeric:tabular-nums}
+  .kpi .value small{font-size:13px;color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:18px}
+  .panel h3{margin:0 0 4px;font-size:15px}
+  .panel .note{color:var(--muted);font-size:12px;margin-bottom:12px}
+  .controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:14px}
+  .controls label{font-size:12px;color:var(--muted);display:block}
+  select,input[type=text]{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;min-width:180px}
+  input[type=text]{min-width:220px}
+  .table-wrap{max-height:70vh;overflow:auto;border:1px solid var(--border);border-radius:10px}
+  table.data{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.data th,table.data td{padding:8px 11px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  table.data th:first-child,table.data td:first-child,table.data th.l,table.data td.l{text-align:left}
+  table.data thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;z-index:2;font-weight:600;color:var(--muted)}
+  table.data thead th.sort-asc::after{content:" ▲";color:var(--accent)}
+  table.data thead th.sort-desc::after{content:" ▼";color:var(--accent)}
+  table.data tbody tr:hover{background:rgba(200,169,81,.06)}
+  .pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+  .pill.fp{color:var(--accent);border-color:rgba(200,169,81,.4);background:rgba(200,169,81,.08)}
+  .conc-hi{color:var(--bad)} .conc-md{color:var(--warn)} .conc-lo{color:var(--good)}
+  #map{height:560px;border-radius:10px;border:1px solid var(--border)}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.3)}
+  .ramp{width:150px;height:12px;border-radius:3px;display:inline-block;background:linear-gradient(90deg,#d9694f,#e0a458,#3ea676)}
+  .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel2);color:var(--text)}
+  .leaflet-popup-content{font-size:12.5px}
+  .muted{color:var(--muted)} .small{font-size:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .prose p{color:var(--muted);max-width:78ch;margin:0 0 10px}
+  .prose h4{margin:16px 0 6px;color:var(--text);font-size:13px}
+  .prose ul{color:var(--muted);max-width:78ch;padding-left:18px}
+  .prose li{margin-bottom:5px}
+  code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
+  /* score bar in tables */
+  .sbar{display:inline-block;height:8px;border-radius:2px;vertical-align:middle;margin-left:8px;min-width:2px;opacity:.9}
+  .score{font-variant-numeric:tabular-nums;font-weight:600}
+  /* vitality weight sliders */
+  .weights{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px 22px;margin:6px 0 4px}
+  .weight .wtop{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .weight .wtop b{color:var(--text);font-weight:600}
+  .weight .wval{color:var(--accent);font-variant-numeric:tabular-nums;font-weight:600}
+  .weight input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+  .wreset{background:var(--panel2);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+  .wreset:hover{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Footprint Economic &amp; Market Vitality <span class="muted" style="font-weight:400">— Texas</span></h1>
+    <div class="sub">The market-fundamentals overlay for the RLSB / Ranger Bank footprint — county employment, wages, unemployment and business density from the Bureau of Labor Statistics, distilled into a tunable "market vitality" score. Shows where the economic base is strongest for acquiring, growing deposits, and lending.</div>
+    <div class="stamp" id="stamp">—</div>
+  </header>
+
+  <nav id="nav">
+    <button data-view="overview" class="active">Overview</button>
+    <button data-view="county">County Table</button>
+    <button data-view="vitality">Vitality Ranking</button>
+    <button data-view="map">Map</button>
+    <button data-view="method">Methodology</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <section class="view active" id="v-overview">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="panel"><h3>Employment by county</h3><div class="note">Annual-average covered employment (BLS QCEW), largest footprint markets first.</div><div id="chart-emp" style="height:420px"></div></div>
+      <div class="panel"><h3>Average weekly wage by county</h3><div class="note">Annual-average weekly wage across all industries — a proxy for local income and lending capacity.</div><div id="chart-wage" style="height:420px"></div></div>
+    </div>
+  </section>
+
+  <!-- COUNTY TABLE -->
+  <section class="view" id="v-county">
+    <div class="panel">
+      <h3>County economic table</h3>
+      <div class="note">Every footprint county with its core labor-market fundamentals and market-vitality score. Click any header to sort. Median household income and population appear when a Census key is configured.</div>
+      <div class="table-wrap"><table class="data" id="county-table"></table></div>
+    </div>
+  </section>
+
+  <!-- VITALITY -->
+  <section class="view" id="v-vitality">
+    <div class="panel">
+      <h3>Market vitality — composite ranking</h3>
+      <div class="note">A 0–100 score that percentile-ranks each county across the footprint on four labor-market metrics, then blends them by the weights below. Drag a slider to re-weight the blend and the ranking, chart and map update live. The percentile ranks themselves never change — only how they are combined.</div>
+      <div class="weights" id="weights"></div>
+      <div class="controls" style="margin:6px 0 2px"><button class="wreset" id="wreset">Reset to default weights (30 / 25 / 25 / 20)</button><span class="small muted" id="wsum"></span></div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><h3>Vitality ranking</h3><div class="note">Footprint counties ranked by the current weighted score; component columns show each percentile rank (0–100).</div><div class="table-wrap" style="max-height:64vh"><table class="data" id="vit-table"></table></div></div>
+      <div class="panel"><h3>Score by county</h3><div class="note">Colour runs red (low) → green (high) with the score.</div><div id="chart-vit" style="height:640px"></div></div>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section class="view" id="v-map">
+    <div class="panel">
+      <h3>Footprint map — market vitality</h3>
+      <div class="note">Each footprint county plotted at its centroid. Bubble <b>size</b> = employment; bubble <b>colour</b> = market-vitality score (recolours with the sliders on the Vitality tab). Click a bubble for detail.</div>
+      <div id="map"></div>
+      <div class="legend">
+        <span>Vitality:&nbsp; low <span class="ramp"></span> high</span>
+        <span><span class="sw" style="background:var(--muted)"></span> bubble size = employment</span>
+        <span class="muted" id="map-count"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- METHOD -->
+  <section class="view" id="v-method">
+    <div class="panel prose">
+      <h3>Methodology &amp; sources</h3>
+      <h4>Data sources</h4>
+      <ul>
+        <li><strong>BLS QCEW</strong> (Quarterly Census of Employment &amp; Wages) — annual-average <strong>employment</strong>, <strong>establishments</strong> and <strong>wages</strong> by county, pulled from the QCEW Open Data Access service (<code>data.bls.gov/cew/data/api/{year}/a/area/{fips}.csv</code>; free, no key). County totals use the row where <code>industry_code=10</code> (all industries) and <code>own_code=0</code> (all ownerships). The refresh auto-detects the latest published annual year.</li>
+        <li><strong>BLS LAUS</strong> (Local Area Unemployment Statistics) — the latest monthly <strong>unemployment rate</strong> per county, from the BLS public timeseries API (series <code>LAUCN{fips}0000000003</code>). A <code>BLS_API_KEY</code> is used when present but is not required.</li>
+        <li><strong>Census ACS 5-year</strong> (optional) — <strong>median household income</strong> and <strong>population</strong>, pulled only when a <code>CENSUS_API_KEY</code> is configured; otherwise those columns are omitted and everything else still renders.</li>
+      </ul>
+      <h4>Market-vitality score</h4>
+      <p>Each county is <strong>percentile-ranked (0–100) across the 33 footprint counties</strong> on four metrics, and the ranks are combined into a weighted average. Percentile-ranking makes the metrics comparable regardless of units and keeps the score robust to outliers. The default weights are:</p>
+      <ul>
+        <li><strong>Employment level — 30%</strong> (higher is better): the size of the local labour market.</li>
+        <li><strong>Average weekly wage — 25%</strong> (higher is better): income level and lending capacity.</li>
+        <li><strong>Low unemployment — 25%</strong> (lower rate scores higher): labour-market tightness / health.</li>
+        <li><strong>Establishment density — 20%</strong> (higher is better): establishments per 1,000 workers — the breadth of the business base and the pool of potential commercial borrowers.</li>
+      </ul>
+      <p>The weights are fully adjustable on the <strong>Vitality Ranking</strong> tab; the blend renormalises over whichever components are available for a county, so a missing unemployment reading never blanks the score. Establishment density is deliberately a per-worker ratio rather than a raw count, so it measures business breadth independently of sheer size (already captured by the employment component).</p>
+      <h4>Limitations</h4>
+      <ul>
+        <li>QCEW annual averages lag the present by roughly <strong>6–9 months</strong>; the unemployment rate is a single recent month and can be noisy.</li>
+        <li>Figures are <strong>county totals across all industries</strong> — no industry or firm-size breakdown, and QCEW covers only UI-covered employment (most, not all, jobs).</li>
+        <li>The vitality score is a <strong>relative</strong> ranking <em>within this footprint</em>, not an absolute or national benchmark; re-weighting changes the ranking by design.</li>
+        <li>Counties are queried by the FIPS codes in the shared footprint list and labelled by the authoritative county for that FIPS, so the data and label always agree.</li>
+        <li>ACS median household income / population are <strong>5-year pooled</strong> estimates (ACS 2022), not single-year figures.</li>
+      </ul>
+      <p class="small">Refresh: <code>python economic/refresh.py</code> — auto-detects the latest QCEW year. Scheduled weekly via GitHub Actions.</p>
+    </div>
+  </section>
+</div>
+
+<script>window.DASH=/*__DATA_START__*/{"_meta":{"generated_at":"2026-08-19T16:55:54Z","source":"BLS QCEW (annual) + BLS LAUS (monthly)","qcew_year":2025,"laus_period":"Jun 2026","acs_year":null,"has_income":false,"footprint_counties":33,"total_employment":9293725,"total_establishments":474324,"median_unemployment":5.0,"avg_weekly_wage":1582,"top_county":"Williamson","top_vitality":85.3,"weights":{"employment":30,"wage":25,"low_unemployment":25,"establishment_density":20}},"counties":[{"fips":"48491","county":"Williamson","lat":30.6491,"lng":-97.6051,"employment":238248,"establishments":15920,"estab_density":66.8,"wkly_wage":1588,"annual_pay":82589,"unemp":4.2,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":81.2,"p_wage":90.6,"p_unemp":90.6,"p_density":78.1,"vitality":85.3},{"fips":"48453","county":"Travis","lat":30.2395,"lng":-97.6913,"employment":932839,"establishments":51478,"estab_density":55.2,"wkly_wage":1942,"annual_pay":101003,"unemp":4.0,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":87.5,"p_wage":100.0,"p_unemp":95.3,"p_density":42.2,"vitality":83.5},{"fips":"48113","county":"Dallas","lat":32.767,"lng":-96.7784,"employment":1831012,"establishments":82799,"estab_density":45.2,"wkly_wage":1781,"annual_pay":92601,"unemp":4.8,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":96.9,"p_wage":96.9,"p_unemp":59.4,"p_density":6.2,"vitality":69.4},{"fips":"48157","county":"Fort Bend","lat":29.5266,"lng":-95.771,"employment":260746,"establishments":18582,"estab_density":71.3,"wkly_wage":1221,"annual_pay":63500,"unemp":5.1,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":84.4,"p_wage":62.5,"p_unemp":43.8,"p_density":87.5,"vitality":69.4},{"fips":"48439","county":"Tarrant","lat":32.7721,"lng":-97.2912,"employment":1016221,"establishments":49966,"estab_density":49.2,"wkly_wage":1440,"annual_pay":74895,"unemp":4.7,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":93.8,"p_wage":81.2,"p_unemp":68.8,"p_density":18.8,"vitality":69.4},{"fips":"48201","county":"Harris","lat":29.8573,"lng":-95.393,"employment":2456206,"establishments":122766,"estab_density":50.0,"wkly_wage":1760,"annual_pay":91510,"unemp":5.2,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":100.0,"p_wage":93.8,"p_unemp":37.5,"p_density":21.9,"vitality":67.2},{"fips":"48135","county":"Ector","lat":31.8653,"lng":-102.5425,"employment":80368,"establishments":4302,"estab_density":53.5,"wkly_wage":1455,"annual_pay":75685,"unemp":4.4,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":56.2,"p_wage":84.4,"p_unemp":81.2,"p_density":37.5,"vitality":65.8},{"fips":"48029","county":"Bexar","lat":29.4487,"lng":-98.5201,"employment":936597,"establishments":45109,"estab_density":48.2,"wkly_wage":1305,"annual_pay":67847,"unemp":4.8,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":90.6,"p_wage":71.9,"p_unemp":59.4,"p_density":15.6,"vitality":63.1},{"fips":"48251","county":"Johnson","lat":32.3797,"lng":-97.3649,"employment":60921,"establishments":4130,"estab_density":67.8,"wkly_wage":1148,"annual_pay":59681,"unemp":4.4,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":46.9,"p_wage":43.8,"p_unemp":81.2,"p_density":81.2,"vitality":61.6},{"fips":"48265","county":"Kerr","lat":30.06,"lng":-99.3533,"employment":19739,"establishments":1544,"estab_density":78.2,"wkly_wage":1123,"annual_pay":58398,"unemp":3.9,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":18.8,"p_wage":40.6,"p_unemp":100.0,"p_density":93.8,"vitality":59.5},{"fips":"48497","county":"Wise","lat":33.2191,"lng":-97.654,"employment":21805,"establishments":1690,"estab_density":77.5,"wkly_wage":1193,"annual_pay":62025,"unemp":4.4,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":25.0,"p_wage":53.1,"p_unemp":81.2,"p_density":90.6,"vitality":59.2},{"fips":"48441","county":"Taylor","lat":32.2971,"lng":-99.8904,"employment":68854,"establishments":3848,"estab_density":55.9,"wkly_wage":1121,"annual_pay":58296,"unemp":4.0,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":50.0,"p_wage":37.5,"p_unemp":95.3,"p_density":50.0,"vitality":58.2},{"fips":"48355","county":"Nueces","lat":27.74,"lng":-97.5162,"employment":166159,"establishments":8419,"estab_density":50.7,"wkly_wage":1198,"annual_pay":62291,"unemp":5.0,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":78.1,"p_wage":56.2,"p_unemp":50.0,"p_density":28.1,"vitality":55.6},{"fips":"48181","county":"Grayson","lat":33.6245,"lng":-96.6758,"employment":52998,"establishments":3253,"estab_density":61.4,"wkly_wage":1168,"annual_pay":60748,"unemp":4.7,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":43.8,"p_wage":46.9,"p_unemp":68.8,"p_density":59.4,"vitality":53.9},{"fips":"48167","county":"Galveston","lat":29.2339,"lng":-94.8882,"employment":124264,"establishments":6886,"estab_density":55.4,"wkly_wage":1260,"annual_pay":65524,"unemp":5.2,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":59.4,"p_wage":68.8,"p_unemp":37.5,"p_density":46.9,"vitality":53.8},{"fips":"48039","county":"Brazoria","lat":29.1678,"lng":-95.4346,"employment":124706,"establishments":6882,"estab_density":55.2,"wkly_wage":1356,"annual_pay":70502,"unemp":5.4,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":62.5,"p_wage":75.0,"p_unemp":21.9,"p_density":42.2,"vitality":51.4},{"fips":"48041","county":"Brazos","lat":30.6567,"lng":-96.3024,"employment":126220,"establishments":5297,"estab_density":42.0,"wkly_wage":1093,"annual_pay":56859,"unemp":4.3,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":68.8,"p_wage":21.9,"p_unemp":87.5,"p_density":3.1,"vitality":48.6},{"fips":"48027","county":"Bell","lat":31.0428,"lng":-97.4813,"employment":130439,"establishments":6562,"estab_density":50.3,"wkly_wage":1246,"annual_pay":64773,"unemp":5.5,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":71.9,"p_wage":65.6,"p_unemp":17.2,"p_density":25.0,"vitality":47.3},{"fips":"48055","county":"Caldwell","lat":29.8324,"lng":-97.6281,"employment":11125,"establishments":896,"estab_density":80.5,"wkly_wage":1100,"annual_pay":57216,"unemp":4.5,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":3.1,"p_wage":28.1,"p_unemp":75.0,"p_density":100.0,"vitality":46.7},{"fips":"48183","county":"Gregg","lat":32.4864,"lng":-94.8163,"employment":75528,"establishments":4256,"estab_density":56.3,"wkly_wage":1176,"annual_pay":61136,"unemp":5.3,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":53.1,"p_wage":50.0,"p_unemp":28.1,"p_density":53.1,"vitality":46.1},{"fips":"48469","county":"Victoria","lat":28.7964,"lng":-96.9712,"employment":36950,"establishments":2396,"estab_density":64.8,"wkly_wage":1099,"annual_pay":57123,"unemp":4.8,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":34.4,"p_wage":25.0,"p_unemp":59.4,"p_density":67.2,"vitality":44.9},{"fips":"48485","county":"Wichita","lat":33.9882,"lng":-98.708,"employment":52593,"establishments":3266,"estab_density":62.1,"wkly_wage":1042,"annual_pay":54168,"unemp":4.7,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":40.6,"p_wage":9.4,"p_unemp":68.8,"p_density":62.5,"vitality":44.2},{"fips":"48257","county":"Kaufman","lat":32.5989,"lng":-96.2884,"employment":45725,"establishments":2711,"estab_density":59.3,"wkly_wage":1108,"annual_pay":57591,"unemp":5.0,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":37.5,"p_wage":34.4,"p_unemp":50.0,"p_density":56.2,"vitality":43.6},{"fips":"48245","county":"Jefferson","lat":29.854,"lng":-94.1493,"employment":124781,"establishments":5767,"estab_density":46.2,"wkly_wage":1415,"annual_pay":73604,"unemp":6.6,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":65.6,"p_wage":78.1,"p_unemp":3.1,"p_density":9.4,"vitality":41.9},{"fips":"48365","county":"Panola","lat":32.164,"lng":-94.3052,"employment":7705,"establishments":545,"estab_density":70.7,"wkly_wage":1200,"annual_pay":62403,"unemp":6.0,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":0.0,"p_wage":59.4,"p_unemp":9.4,"p_density":84.4,"vitality":34.1},{"fips":"48199","county":"Hardin","lat":30.3296,"lng":-94.3932,"employment":12192,"establishments":965,"estab_density":79.2,"wkly_wage":1050,"annual_pay":54626,"unemp":5.2,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":6.2,"p_wage":12.5,"p_unemp":37.5,"p_density":96.9,"vitality":33.7},{"fips":"48071","county":"Chambers","lat":29.6964,"lng":-94.6694,"employment":23155,"establishments":958,"estab_density":41.4,"wkly_wage":1509,"annual_pay":78473,"unemp":5.7,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":28.1,"p_wage":87.5,"p_unemp":12.5,"p_density":0.0,"vitality":33.4},{"fips":"48291","county":"Liberty","lat":30.1585,"lng":-94.8441,"employment":20324,"establishments":1318,"estab_density":64.8,"wkly_wage":1107,"annual_pay":57589,"unemp":6.5,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":21.9,"p_wage":31.2,"p_unemp":6.2,"p_density":67.2,"vitality":29.4},{"fips":"48401","county":"Rusk","lat":32.1094,"lng":-94.7564,"employment":13335,"establishments":868,"estab_density":65.1,"wkly_wage":1074,"annual_pay":55823,"unemp":5.3,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":9.4,"p_wage":18.8,"p_unemp":28.1,"p_density":71.9,"vitality":28.9},{"fips":"48099","county":"Coryell","lat":31.3912,"lng":-97.798,"employment":15175,"establishments":1002,"estab_density":66.0,"wkly_wage":1067,"annual_pay":55461,"unemp":5.5,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":12.5,"p_wage":15.6,"p_unemp":17.2,"p_density":75.0,"vitality":26.9},{"fips":"48061","county":"Cameron","lat":26.1029,"lng":-97.479,"employment":154647,"establishments":7185,"estab_density":46.5,"wkly_wage":904,"annual_pay":47016,"unemp":7.3,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":75.0,"p_wage":0.0,"p_unemp":0.0,"p_density":12.5,"vitality":25.0},{"fips":"48449","county":"Titus","lat":33.2146,"lng":-94.9668,"employment":15957,"establishments":832,"estab_density":52.1,"wkly_wage":1034,"annual_pay":53788,"unemp":5.0,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":15.6,"p_wage":6.2,"p_unemp":50.0,"p_density":31.2,"vitality":25.0},{"fips":"48005","county":"Angelina","lat":31.2549,"lng":-94.6118,"employment":36191,"establishments":1926,"estab_density":53.2,"wkly_wage":1000,"annual_pay":52014,"unemp":5.3,"unemp_period":"Jun 2026","med_income":null,"population":null,"p_emp":31.2,"p_wage":3.1,"p_unemp":28.1,"p_density":34.4,"vitality":24.0}]}/*__DATA_END__*/;</script>
+<script>
+const D = window.DASH;
+const $ = s => document.querySelector(s);
+
+// ---- formatting ----
+function fmtN(v){ return v==null?'—':Math.round(v).toLocaleString(); }
+function money(v){ return v==null?'—':'$'+Math.round(v).toLocaleString(); }
+function moneyK(v){ // household income / large $
+  if(v==null) return '—';
+  if(v>=1e6) return '$'+(v/1e6).toFixed(1)+'M';
+  return '$'+Math.round(v).toLocaleString();
+}
+function pctv(v){ return v==null?'—':v.toFixed(1)+'%'; }
+function scoreTxt(v){ return v==null?'—':v.toFixed(1); }
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function resizeChart(id){ const el=document.getElementById(id); if(el&&window.Plotly&&el.data) Plotly.Plots.resize(el); }
+// unemployment colour: lower is better -> green low, red high
+function unempClass(v){ return v==null?'':(v>=6?'conc-hi':(v>=4.5?'conc-md':'conc-lo')); }
+// vitality colour ramp: 0 red -> 50 amber -> 100 green
+function scoreColor(v){
+  if(v==null) return '#6b7d9b';
+  const stops=[[0,[217,105,79]],[50,[224,164,88]],[100,[62,166,118]]];
+  v=Math.max(0,Math.min(100,v));
+  let a=stops[0],b=stops[2];
+  for(let i=0;i<stops.length-1;i++){ if(v>=stops[i][0]&&v<=stops[i+1][0]){a=stops[i];b=stops[i+1];break;} }
+  const t=(v-a[0])/((b[0]-a[0])||1);
+  const c=a[1].map((x,i)=>Math.round(x+(b[1][i]-x)*t));
+  return 'rgb('+c[0]+','+c[1]+','+c[2]+')';
+}
+
+// ---- nav ----
+document.querySelectorAll('#nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    $('#v-'+b.dataset.view).classList.add('active');
+    if(b.dataset.view==='overview'){ drawOverview(); resizeChart('chart-emp'); resizeChart('chart-wage'); }
+    if(b.dataset.view==='vitality') resizeChart('chart-vit');
+    if(b.dataset.view==='map') initMap();
+  };
+});
+
+// ---- generic sortable table (mirrors deposit-share) ----
+function sortableTable(el, cols, rows, opts){
+  opts=opts||{};
+  let sortKey=opts.sortKey||cols[0].key, asc=opts.asc||false;
+  function render(){
+    const sorted=rows.slice().sort((a,b)=>{
+      let av=a[sortKey], bv=b[sortKey];
+      if(typeof av==='string'){ return asc?(''+av).localeCompare(bv):(''+bv).localeCompare(av); }
+      av=av==null?-Infinity:av; bv=bv==null?-Infinity:bv;
+      return asc?av-bv:bv-av;
+    });
+    el.innerHTML='<thead><tr>'+cols.map(c=>
+      `<th class="${c.l?'l':''} ${c.key===sortKey?(asc?'sort-asc':'sort-desc'):''}" data-k="${c.key}" title="${c.t||''}">${c.label}</th>`).join('')+'</tr></thead><tbody>'+
+      sorted.map(r=>'<tr>'+cols.map(c=>`<td class="${c.l?'l':''}">${c.fmt?c.fmt(r[c.key],r):(r[c.key]??'—')}</td>`).join('')+'</tr>').join('')+'</tbody>';
+    el.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
+      const k=th.dataset.k; if(k===sortKey) asc=!asc; else { sortKey=k; asc=false; } render();
+    });
+  }
+  render();
+}
+
+// ---- vitality engine (percentiles are fixed; only weights change) ----
+const WKEYS=[['employment','p_emp','Employment'],['wage','p_wage','Weekly wage'],
+             ['low_unemployment','p_unemp','Low unemployment'],['establishment_density','p_density','Estab. density']];
+const DEFAULT_WEIGHTS=Object.assign({employment:30,wage:25,low_unemployment:25,establishment_density:20},
+                          (D&&D._meta&&D._meta.weights)||{});
+let WEIGHTS=Object.assign({},DEFAULT_WEIGHTS);
+function vitalityOf(c,w){
+  let num=0,den=0;
+  for(const [wk,pk] of WKEYS){ const p=c[pk]; if(p!=null){ num+=w[wk]*p; den+=w[wk]; } }
+  return den?num/den:null;
+}
+function scoredRows(){
+  return D.counties.map(c=>Object.assign({},c,{vit:vitalityOf(c,WEIGHTS)}));
+}
+
+// ---- overview ----
+function renderKpis(){
+  const m=D._meta;
+  $('#kpis').innerHTML=[
+    ['Footprint employment', fmtN(m.total_employment), m.footprint_counties+' counties · QCEW '+m.qcew_year],
+    ['Establishments', fmtN(m.total_establishments), 'all industries'],
+    ['Avg weekly wage', money(m.avg_weekly_wage), 'employment-weighted'],
+    ['Median unemployment', pctv(m.median_unemployment), m.laus_period?('LAUS · '+m.laus_period):'LAUS'],
+    ['Top vitality market', esc(m.top_county||'—'), m.top_vitality!=null?('score '+scoreTxt(m.top_vitality)):''],
+  ].map(x=>`<div class="kpi"><div class="label">${x[0]}</div><div class="value">${x[1]} <small>${x[2]||''}</small></div></div>`).join('');
+}
+const baseLay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},margin:{l:104,r:14,t:8,b:40},yaxis:{gridcolor:'#28374f',automargin:true},xaxis:{gridcolor:'#28374f'}};
+let overviewDrawn=false;
+function drawOverview(){
+  if(overviewDrawn||typeof Plotly==='undefined')return; overviewDrawn=true;
+  const emp=D.counties.filter(c=>c.employment!=null).slice().sort((a,b)=>a.employment-b.employment).slice(-15);
+  Plotly.newPlot('chart-emp',[{type:'bar',orientation:'h',x:emp.map(c=>c.employment/1000),y:emp.map(c=>c.county),
+      marker:{color:'#c8a951'},hovertemplate:'%{y}: %{x:,.0f}K jobs<extra></extra>'}],
+    Object.assign({},baseLay,{xaxis:{title:'Employment (000s)',gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+  const wage=D.counties.filter(c=>c.wkly_wage!=null).slice().sort((a,b)=>a.wkly_wage-b.wkly_wage).slice(-15);
+  Plotly.newPlot('chart-wage',[{type:'bar',orientation:'h',x:wage.map(c=>c.wkly_wage),y:wage.map(c=>c.county),
+      marker:{color:'#5b8def'},hovertemplate:'%{y}: $%{x:,.0f}/wk<extra></extra>'}],
+    Object.assign({},baseLay,{xaxis:{title:'Avg weekly wage ($)',gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+}
+
+// ---- county table ----
+function renderCounty(){
+  const hasInc=D._meta.has_income;
+  const cols=[
+    {key:'county',label:'County',l:1,fmt:v=>esc(v)},
+    {key:'employment',label:'Employment',t:'QCEW annual-avg employment',fmt:v=>fmtN(v)},
+    {key:'establishments',label:'Establishments',fmt:v=>fmtN(v)},
+    {key:'estab_density',label:'Estab./1k emp',t:'Establishments per 1,000 workers',fmt:v=>v==null?'—':v.toFixed(1)},
+    {key:'wkly_wage',label:'Avg wkly wage',fmt:v=>money(v)},
+    {key:'unemp',label:'Unemployment',t:'Latest LAUS monthly rate',fmt:v=>`<span class="${unempClass(v)}">${pctv(v)}</span>`},
+  ];
+  if(hasInc){
+    cols.push({key:'med_income',label:'Median income',t:'ACS 5-yr median household income',fmt:v=>moneyK(v)});
+    cols.push({key:'population',label:'Population',fmt:v=>fmtN(v)});
+  }
+  cols.push({key:'vitality',label:'Vitality',t:'Composite 0–100 (default weights)',fmt:v=>v==null?'—':
+    `<span class="score">${scoreTxt(v)}</span><span class="sbar" style="width:${Math.round(v*0.6)}px;background:${scoreColor(v)}"></span>`});
+  sortableTable($('#county-table'),cols,D.counties,{sortKey:'vitality'});
+}
+
+// ---- vitality view ----
+function renderWeights(){
+  $('#weights').innerHTML=WKEYS.map(([wk,,label])=>
+    `<div class="weight" data-wk="${wk}">
+       <div class="wtop"><b>${label}</b><span class="wval" id="wv-${wk}">${WEIGHTS[wk]}</span></div>
+       <input type="range" min="0" max="60" step="1" value="${WEIGHTS[wk]}" data-wk="${wk}">
+     </div>`).join('');
+  $('#weights').querySelectorAll('input[type=range]').forEach(inp=>{
+    inp.oninput=()=>{ WEIGHTS[inp.dataset.wk]=+inp.value; $('#wv-'+inp.dataset.wk).textContent=inp.value; refreshVitality(); };
+  });
+  updateWsum();
+}
+function updateWsum(){
+  const s=WKEYS.reduce((a,[wk])=>a+WEIGHTS[wk],0);
+  $('#wsum').textContent='Weights sum to '+s+' — the blend is normalised, so only the ratios matter.';
+}
+function renderVitTable(rows){
+  const cols=[
+    {key:'rank',label:'#',fmt:v=>v},
+    {key:'county',label:'County',l:1,fmt:v=>esc(v)},
+    {key:'p_emp',label:'Empl.',t:'Employment percentile',fmt:v=>v==null?'—':v.toFixed(0)},
+    {key:'p_wage',label:'Wage',t:'Weekly-wage percentile',fmt:v=>v==null?'—':v.toFixed(0)},
+    {key:'p_unemp',label:'Low unemp.',t:'Low-unemployment percentile',fmt:v=>v==null?'—':v.toFixed(0)},
+    {key:'p_density',label:'Density',t:'Establishment-density percentile',fmt:v=>v==null?'—':v.toFixed(0)},
+    {key:'vit',label:'Vitality',fmt:v=>v==null?'—':`<span class="score">${scoreTxt(v)}</span><span class="sbar" style="width:${Math.round(v*0.6)}px;background:${scoreColor(v)}"></span>`},
+  ];
+  sortableTable($('#vit-table'),cols,rows,{sortKey:'vit'});
+}
+let vitChartInit=false;
+function drawVitChart(){
+  if(typeof Plotly==='undefined')return;
+  const rows=scoredRows().filter(c=>c.vit!=null).sort((a,b)=>a.vit-b.vit);
+  const data=[{type:'bar',orientation:'h',x:rows.map(c=>c.vit),y:rows.map(c=>c.county),
+    marker:{color:rows.map(c=>scoreColor(c.vit))},
+    hovertemplate:'%{y}: vitality %{x:.1f}<extra></extra>'}];
+  const lay=Object.assign({},baseLay,{margin:{l:104,r:14,t:8,b:40},xaxis:{title:'Vitality score',range:[0,100],gridcolor:'#28374f'}});
+  Plotly.react('chart-vit',data,lay,{displayModeBar:false,responsive:true});
+  vitChartInit=true;
+}
+function refreshVitality(){
+  const rows=scoredRows().sort((a,b)=>(b.vit??-1)-(a.vit??-1));
+  rows.forEach((r,i)=>r.rank=i+1);
+  renderVitTable(rows);
+  drawVitChart();
+  updateWsum();
+  if(mapInit) styleMap();
+}
+
+// ---- map ----
+let map, mapInit=false, markers=[];
+function initMap(){
+  if(mapInit)return; mapInit=true;
+  map=L.map('map',{scrollWheelZoom:true}).setView([31.2,-97.7],6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  const scores=Object.fromEntries(scoredRows().map(c=>[c.fips,c.vit]));
+  let n=0;
+  D.counties.forEach(c=>{
+    if(c.lat==null||c.lng==null)return;
+    const r=Math.max(6,Math.min(34,Math.sqrt(c.employment||400)/40));
+    const mk=L.circleMarker([c.lat,c.lng],{radius:r,color:'#0e1622',weight:1,
+      fillColor:scoreColor(scores[c.fips]),fillOpacity:.82}).addTo(map);
+    mk._fips=c.fips; mk._county=c;
+    mk.bindPopup(popupHtml(c,scores[c.fips]));
+    markers.push(mk); n++;
+  });
+  $('#map-count').textContent=n+' counties mapped';
+  setTimeout(()=>map.invalidateSize(),120);
+}
+function popupHtml(c,vit){
+  const inc=D._meta.has_income&&c.med_income!=null?`<br>Median income: <b>${moneyK(c.med_income)}</b>`:'';
+  return `<b>${esc(c.county)} County</b><br>Employment: <b>${fmtN(c.employment)}</b>`
+    +`<br>Establishments: <b>${fmtN(c.establishments)}</b>`
+    +`<br>Avg weekly wage: <b>${money(c.wkly_wage)}</b>`
+    +`<br>Unemployment: <b>${pctv(c.unemp)}</b>${c.unemp_period?' <span class="muted">('+esc(c.unemp_period)+')</span>':''}`
+    +inc
+    +`<br>Vitality: <b>${scoreTxt(vit)}</b>`;
+}
+function styleMap(){
+  const scores=Object.fromEntries(scoredRows().map(c=>[c.fips,c.vit]));
+  markers.forEach(mk=>{
+    const v=scores[mk._fips];
+    mk.setStyle({fillColor:scoreColor(v)});
+    mk.setPopupContent(popupHtml(mk._county,v));
+  });
+}
+
+// ---- init ----
+function boot(){
+  if(!D){ $('.wrap').insertAdjacentHTML('afterbegin','<div class="panel" style="border-color:var(--bad)">No data loaded yet. Run <code>python economic/refresh.py</code> to populate this dashboard.</div>'); return; }
+  const m=D._meta;
+  const acs=m.has_income?` &nbsp;·&nbsp; ACS ${m.acs_year}`:' &nbsp;·&nbsp; ACS not loaded (no key)';
+  $('#stamp').innerHTML=`<b>Source:</b> ${esc(m.source)} &nbsp;·&nbsp; <b>QCEW:</b> ${m.qcew_year} &nbsp;·&nbsp; <b>Unemployment:</b> ${esc(m.laus_period||'n/a')}${acs} &nbsp;·&nbsp; <b>Refreshed:</b> ${m.generated_at.replace('T',' ').replace('Z',' UTC')} &nbsp;·&nbsp; ${m.footprint_counties} counties`;
+  renderKpis();
+  drawOverview();
+  renderCounty();
+  renderWeights();
+  refreshVitality();
+  $('#wreset').onclick=()=>{ WEIGHTS=Object.assign({},DEFAULT_WEIGHTS); renderWeights(); refreshVitality(); };
+}
+boot();
+</script>
+</body>
+</html>

@@ -19,7 +19,7 @@ USER_AGENT = "ranger-dashboards/1.0 (+https://nbsimonetti.github.io/ranger-dashb
 # 33-county TX footprint = the 32-county CRE footprint (mirrors
 # cre/cre-dashboard-tx.html) plus Harris. name -> 5-digit state+county FIPS.
 FOOTPRINT = {
-    "Angelina": "48003", "Bell": "48027", "Bexar": "48029", "Brazoria": "48039",
+    "Angelina": "48005", "Bell": "48027", "Bexar": "48029", "Brazoria": "48039",
     "Brazos": "48041", "Caldwell": "48055", "Cameron": "48061", "Chambers": "48071",
     "Coryell": "48099", "Dallas": "48113", "Ector": "48135", "Fort Bend": "48157",
     "Galveston": "48167", "Grayson": "48181", "Gregg": "48183", "Hardin": "48199",

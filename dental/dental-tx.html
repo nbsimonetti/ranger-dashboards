@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranger Bank — Dental &amp; Allied Practice BD (TX)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root{
+    --bg:#0e1622;--panel:#141f33;--panel2:#1b2942;--border:#28374f;--text:#e6ecf5;
+    --muted:#93a6c4;--faint:#6b7d9b;--accent:#c8a951;--accent2:#5b8def;--good:#3ea676;--warn:#e0a458;--bad:#d9694f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
+  a{color:var(--accent)}
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 22px 70px}
+  header.top h1{font-size:22px;margin:0 0 4px;font-weight:600}
+  header.top .sub{color:var(--muted);font-size:13px;max-width:74ch}
+  .stamp{margin-top:8px;font-size:11px;color:var(--faint)}
+  .stamp b{color:var(--muted);font-weight:500}
+  nav{display:flex;flex-wrap:wrap;gap:4px;margin:18px 0 20px;border-bottom:1px solid var(--border)}
+  nav button{background:none;border:none;color:var(--muted);padding:9px 14px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit}
+  nav button:hover{color:var(--text)}
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+  .view{display:none} .view.active{display:block}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  .kpi .value{font-size:22px;margin-top:5px;font-variant-numeric:tabular-nums}
+  .kpi .value small{font-size:13px;color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:18px}
+  .panel h3{margin:0 0 4px;font-size:15px}
+  .panel .note{color:var(--muted);font-size:12px;margin-bottom:12px}
+  .controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:14px}
+  .controls label{font-size:12px;color:var(--muted);display:block}
+  select,input[type=text]{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;min-width:170px}
+  .table-wrap{max-height:70vh;overflow:auto;border:1px solid var(--border);border-radius:10px}
+  table.data{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.data th,table.data td{padding:8px 11px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  table.data th.l,table.data td.l{text-align:left}
+  table.data thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;z-index:2;font-weight:600;color:var(--muted)}
+  table.data thead th.sort-asc::after{content:" ▲";color:var(--accent)}
+  table.data thead th.sort-desc::after{content:" ▼";color:var(--accent)}
+  table.data tbody tr:hover{background:rgba(200,169,81,.06)}
+  .pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+  .pill.solo{color:var(--accent);border-color:rgba(200,169,81,.4);background:rgba(200,169,81,.08)}
+  .pill.hot{color:#0e1622;background:var(--accent);font-weight:600}
+  .muted{color:var(--muted)} .small{font-size:12px}
+  .prose p{color:var(--muted);max-width:74ch;margin:0 0 10px}
+  .prose h4{margin:16px 0 6px;color:var(--text);font-size:13px}
+  .prose ul{color:var(--muted);max-width:74ch;padding-left:18px} .prose li{margin-bottom:5px}
+  code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
+  .empty{background:var(--panel);border:1px solid var(--warn);border-radius:10px;padding:18px 20px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Dental &amp; Allied Practice BD <span class="muted" style="font-weight:400">— Texas</span></h1>
+    <div class="sub">Texas dental and optometry practices scored as business-development prospects — practice loans, deposits, equipment finance, and treasury. Extends the physician BD engine to an adjacent, high-value practice-lending segment.</div>
+    <div class="stamp" id="stamp">—</div>
+  </header>
+
+  <nav id="nav">
+    <button data-view="overview" class="active">Overview</button>
+    <button data-view="prospects">Prospects</button>
+    <button data-view="specialty">By Specialty</button>
+    <button data-view="method">Methodology</button>
+  </nav>
+
+  <section class="view active" id="v-overview">
+    <div id="empty-note"></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="panel"><h3>Providers by specialty</h3><div class="note">Dental disciplines plus optometry across the footprint metros.</div><div id="chart-spec" style="height:340px"></div></div>
+    <div class="panel"><h3>Top cities</h3><div class="note">Where the practices are.</div><div id="chart-city" style="height:340px"></div></div>
+  </section>
+
+  <section class="view" id="v-prospects">
+    <div class="panel">
+      <h3>Prospect list</h3>
+      <div class="note">Every provider, scored 0–100 as a banking-BD prospect. Solo practices score highest — the target relationship. Filter and sort to build a call list.</div>
+      <div class="controls">
+        <label>Specialty<br><select id="p-spec"><option value="">All</option></select></label>
+        <label>Search<br><input type="text" id="p-search" placeholder="name or city…"></label>
+        <label><input type="checkbox" id="p-solo"> Solo only</label>
+      </div>
+      <div class="table-wrap"><table class="data" id="p-table"></table></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-specialty">
+    <div class="panel"><h3>Specialty mix</h3><div class="note">Counts and share by dental/allied discipline.</div>
+      <div class="table-wrap"><table class="data" id="spec-table"></table></div></div>
+  </section>
+
+  <section class="view" id="v-method">
+    <div class="panel prose">
+      <h3>Methodology &amp; sources</h3>
+      <h4>Data source</h4>
+      <p><strong>NPPES NPI Registry</strong> — the national provider registry (CMS), pulled live from the public API (<code>npiregistry.cms.gov/api</code>); free, no key. Texas dental taxonomies (general dentistry, orthodontics, oral surgery, endodontics, periodontics, pediatric, prosthodontics) plus optometry, bucketed by ZIP prefix to work around the API's 1,200-record-per-query cap and de-duplicated by NPI.</p>
+      <h4>Prospect score (0–100)</h4>
+      <p>A transparent heuristic: base 40, plus practice tenure (sweet spot 5–25 years), solo-proprietor status (the target relationship, +20), contactability (a listed phone), and higher-capex specialties (oral surgery, orthodontics, periodontics). New practices (&lt;3 yrs) and long-tenured ones (&gt;35 yrs) are flagged for startup and succession lending respectively.</p>
+      <h4>Limitations</h4>
+      <ul>
+        <li>NPPES is an administrative registry — it has no revenue, practice size, or existing-banking-relationship data. Solo-proprietor is self-reported at enrollment.</li>
+        <li>Tenure is inferred from NPI enumeration date, not actual practice-opening date.</li>
+        <li>Dentists bill little Medicare, so (unlike the physician dashboard) there is no Medicare-volume signal; scoring is registry-based.</li>
+      </ul>
+      <p class="small">Refresh: <code>python dental/refresh.py</code>. Scheduled weekly via GitHub Actions (NPPES resolves in CI).</p>
+    </div>
+  </section>
+</div>
+
+<script>window.DASH=/*__DATA_START__*/null/*__DATA_END__*/;</script>
+<script>
+const D=window.DASH, $=s=>document.querySelector(s);
+function fmtN(v){return v==null?'—':v.toLocaleString();}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');$('#v-'+b.dataset.view).classList.add('active');
+  if(b.dataset.view==='overview')drawCharts();
+});
+function sortableTable(el,cols,rows,opts){opts=opts||{};let sk=opts.sortKey||cols[0].key,asc=opts.asc||false;
+  function r(){const s=rows.slice().sort((a,b)=>{let av=a[sk],bv=b[sk];if(typeof av==='string')return asc?(''+av).localeCompare(bv):(''+bv).localeCompare(av);av=av==null?-Infinity:av;bv=bv==null?-Infinity:bv;return asc?av-bv:bv-av;});
+    el.innerHTML='<thead><tr>'+cols.map(c=>`<th class="${c.l?'l':''} ${c.key===sk?(asc?'sort-asc':'sort-desc'):''}" data-k="${c.key}">${c.label}</th>`).join('')+'</tr></thead><tbody>'+
+      s.map(row=>'<tr>'+cols.map(c=>`<td class="${c.l?'l':''}">${c.fmt?c.fmt(row[c.key],row):(row[c.key]??'—')}</td>`).join('')+'</tr>').join('')+'</tbody>';
+    el.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(k===sk)asc=!asc;else{sk=k;asc=false;}r();});}
+  r();}
+let charted=false;
+function drawCharts(){if(charted||!D||typeof Plotly==='undefined')return;charted=true;
+  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},margin:{l:150,r:14,t:8,b:34},xaxis:{gridcolor:'#28374f'},yaxis:{gridcolor:'#28374f'}};
+  const sp=D.by_specialty.slice().reverse();
+  Plotly.newPlot('chart-spec',[{type:'bar',orientation:'h',x:sp.map(s=>s.n),y:sp.map(s=>s.k),marker:{color:'#c8a951'}}],lay,{displayModeBar:false,responsive:true});
+  const ct=D.by_city.slice(0,15).reverse();
+  Plotly.newPlot('chart-city',[{type:'bar',orientation:'h',x:ct.map(s=>s.n),y:ct.map(s=>s.k),marker:{color:'#5b8def'}}],Object.assign({},lay,{margin:{l:130,r:14,t:8,b:34}}),{displayModeBar:false,responsive:true});
+}
+function renderProspects(){
+  const specs=[...new Set(D.providers.map(p=>p.specialty))].sort();
+  $('#p-spec').innerHTML='<option value="">All</option>'+specs.map(s=>`<option>${esc(s)}</option>`).join('');
+  const cols=[
+    {key:'name',label:'Provider',l:1,fmt:(v,r)=>esc(v)+(r.cred?` <span class="muted">${esc(r.cred)}</span>`:'')+(r.score>=80?' <span class="pill hot">hot</span>':'')},
+    {key:'specialty',label:'Specialty',l:1,fmt:v=>esc(v)},
+    {key:'city',label:'City',l:1,fmt:v=>esc(v)},
+    {key:'tenure',label:'Tenure (yr)'},
+    {key:'solo',label:'Solo',fmt:v=>v?'<span class="pill solo">solo</span>':'—'},
+    {key:'phone',label:'Phone',l:1,fmt:v=>v?esc(v):'—'},
+    {key:'score',label:'Score'},
+  ];
+  const el=$('#p-table');
+  function apply(){
+    let rows=D.providers;
+    const sp=$('#p-spec').value, q=$('#p-search').value.trim().toLowerCase(), solo=$('#p-solo').checked;
+    if(sp)rows=rows.filter(p=>p.specialty===sp);
+    if(solo)rows=rows.filter(p=>p.solo);
+    if(q)rows=rows.filter(p=>(p.name+' '+p.city).toLowerCase().includes(q));
+    sortableTable(el,cols,rows,{sortKey:'score'});
+  }
+  $('#p-spec').onchange=apply;$('#p-search').oninput=apply;$('#p-solo').onchange=apply;apply();
+}
+function renderSpecialty(){
+  const total=D.providers.length||1;
+  const rows=D.by_specialty.map(s=>({specialty:s.k,n:s.n,share:+(s.n/total*100).toFixed(1)}));
+  sortableTable($('#spec-table'),[
+    {key:'specialty',label:'Specialty',l:1,fmt:v=>esc(v)},
+    {key:'n',label:'Providers'},
+    {key:'share',label:'Share %',fmt:v=>v+'%'},
+  ],rows,{sortKey:'n'});
+}
+function boot(){
+  if(!D||!D.providers||!D.providers.length){
+    $('#empty-note').innerHTML='<div class="empty">No provider data loaded yet. This dashboard populates on the first scheduled refresh — NPPES (<code>npiregistry.cms.gov</code>) resolves inside GitHub Actions. Run <code>python dental/refresh.py</code> from an environment that can reach it, or trigger the <b>Refresh dashboard data</b> workflow with <code>only=dental</code>.</div>';
+    $('#stamp').textContent='Awaiting first data refresh.';
+    return;
+  }
+  const m=D._meta;
+  $('#stamp').innerHTML=`<b>Source:</b> ${esc(m.source)} &nbsp;·&nbsp; <b>Providers:</b> ${fmtN(m.providers)} (${fmtN(m.solo)} solo) &nbsp;·&nbsp; <b>Refreshed:</b> ${m.generated_at.replace('T',' ').replace('Z',' UTC')}`;
+  const topCity=D.by_city[0];
+  $('#kpis').innerHTML=[
+    ['Providers',fmtN(m.providers),m.specialties+' disciplines'],
+    ['Solo practices',fmtN(m.solo),'target relationship'],
+    ['Top market',topCity?esc(topCity.k):'—',topCity?fmtN(topCity.n)+' providers':''],
+    ['Hot prospects',fmtN(D.providers.filter(p=>p.score>=80).length),'score ≥ 80'],
+  ].map(x=>`<div class="kpi"><div class="label">${x[0]}</div><div class="value">${x[1]} <small>${x[2]||''}</small></div></div>`).join('');
+  drawCharts();renderProspects();renderSpecialty();
+}
+boot();
+</script>
+</body>
+</html>
