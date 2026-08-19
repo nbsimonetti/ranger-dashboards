@@ -24,7 +24,7 @@ from footprint import inject_data, stamp  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 HTML = HERE / "smallbiz-ag-tx.html"
-LOANS = HERE.parent / "loan-maturity" / "loans.json"
+LOANS = HERE.parent / "loan-maturity" / "loans_statewide.json"
 
 SECTORS = {
     "11": "Agriculture, Forestry & Fishing", "21": "Mining & Oil/Gas", "22": "Utilities",

@@ -37,7 +37,7 @@ from footprint import inject_data, stamp, FOOTPRINT, USER_AGENT  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 HTML = HERE / "professional-services-tx.html"
-LOANS = HERE.parent / "loan-maturity" / "loans.json"
+LOANS = HERE.parent / "loan-maturity" / "loans_statewide.json"
 
 QCEW_URL = "https://data.bls.gov/cew/data/api/%d/a/area/%s.csv"
 
