@@ -21,27 +21,27 @@
 <script src="../shared/sortable-table.js"></script>
 <style>
 :root {
-  --navy:    #1B365D;
-  --navy2:   #254a7a;
-  --gold:    #C8A951;
-  --gold-lt: #f5ecd5;
-  --bg:      #f4f6f9;
-  --surface: #ffffff;
-  --border:  #e2e8f0;
-  --text:    #1a202c;
-  --muted:   #718096;
-  --blue:    #2b6cb0;
-  --green:   #276749;
-  --red:     #c53030;
-  --shadow:  0 1px 3px rgba(0,0,0,.05);
+  --navy:    #012A52;
+  --navy2:   #1B5E8C;
+  --gold:    #CB995C;
+  --gold-lt: #F4E9DB;
+  --bg:      #F2EFE9;
+  --surface: #FFFFFF;
+  --border:  #DDD8CE;
+  --text:    #101418;
+  --muted:   #5C6670;
+  --blue:    #1B5E8C;
+  --green:   #2F7D5D;
+  --red:     #DA0C1B;
+  --shadow:  0 1px 3px rgba(1,42,82,.05);
 }
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
        background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
 /* Header */
-header { background: linear-gradient(135deg, var(--navy), var(--navy2)); color: #fff;
-         padding: 12px 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+header { background: linear-gradient(135deg, var(--navy), var(--navy2)); color: #FFFFFF;
+         padding: 12px 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(1,42,82,.1); }
 .hdr { max-width: 1500px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .hdr-left { display: flex; align-items: center; gap: 14px; }
 .hdr-logo { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
@@ -51,7 +51,7 @@ header { background: linear-gradient(135deg, var(--navy), var(--navy2)); color: 
 .hdr-meta { font-size: 11px; color: rgba(255,255,255,.7); text-align: right; }
 .search-wrap { position: relative; }
 .search-wrap input { padding: 6px 10px 6px 28px; border: 1px solid rgba(255,255,255,.2);
-  border-radius: 4px; background: rgba(255,255,255,.1); color: #fff; font-size: 12px; width: 240px; }
+  border-radius: 4px; background: rgba(255,255,255,.1); color: #FFFFFF; font-size: 12px; width: 240px; }
 .search-wrap input::placeholder { color: rgba(255,255,255,.55); }
 .search-wrap::before { content:'🔍'; position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:11px; }
 
@@ -61,29 +61,29 @@ header { background: linear-gradient(135deg, var(--navy), var(--navy2)); color: 
   color:var(--gold); font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; }
 .btn-refresh:hover { background:var(--gold); color:var(--navy); }
 .btn-refresh.loading { opacity:.85; pointer-events:none; }
-.btn-refresh .spin { display:none; width:14px; height:14px; border:2px solid rgba(200,169,81,.3);
+.btn-refresh .spin { display:none; width:14px; height:14px; border:2px solid rgba(203,153,92,.3);
   border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; }
 .btn-refresh.loading .spin { display:inline-block; }
 .btn-refresh.loading .icon { display:none; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .btn-repull { display:inline-flex; align-items:center; gap:6px; padding:7px 12px;
   border-radius:6px; border:1px solid rgba(255,255,255,.35); background:transparent;
-  color:#fff; font-size:11.5px; font-weight:600; cursor:pointer; opacity:.85; }
+  color:#FFFFFF; font-size:11.5px; font-weight:600; cursor:pointer; opacity:.85; }
 .btn-repull:hover { opacity:1; background:rgba(255,255,255,.08); }
-.hamburger { display:none; background:none; border:none; color:#fff; font-size:22px; cursor:pointer; }
+.hamburger { display:none; background:none; border:none; color:#FFFFFF; font-size:22px; cursor:pointer; }
 
 /* Freshness ribbon */
 .freshness-ribbon { background:var(--surface); border-bottom:1px solid var(--border); padding:8px 24px; font-size:12px; }
 .fr-inner { max-width:1500px; margin:0 auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .fr-pill { display:inline-flex; align-items:center; gap:8px; padding:5px 12px; border-radius:14px;
-  border:1px solid transparent; font-weight:600; line-height:1.2; background:#edf2f7; color:#2d3748; }
+  border:1px solid transparent; font-weight:600; line-height:1.2; background:#F0EBE1; color:#012A52; }
 .fr-pill .fr-dot { width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.7; }
 .fr-pill .fr-label { font-weight:700; }
 .fr-pill .fr-detail { font-weight:400; color:inherit; opacity:.78; font-size:11px; }
-.fr-pill.fr-green  { background:#e6fffa; color:#22543d; border-color:#9ae6b4; }
-.fr-pill.fr-yellow { background:#fffbea; color:#7b341e; border-color:#f6ad55; }
-.fr-pill.fr-red    { background:#fed7d7; color:#742a2a; border-color:#fc8181; }
-.fr-pill.fr-gray   { background:#edf2f7; color:#4a5568; border-color:#cbd5e0; }
+.fr-pill.fr-green  { background:#E2EDE8; color:#1E5A41; border-color:#A9C9B8; }
+.fr-pill.fr-yellow { background:#FBF3E2; color:#7A4A12; border-color:#D8A458; }
+.fr-pill.fr-red    { background:#F7DEDF; color:#8C1218; border-color:#E2989C; }
+.fr-pill.fr-gray   { background:#F0EBE1; color:#5C6670; border-color:#C7BFB1; }
 
 /* Tabs */
 .tabbar { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; }
@@ -110,9 +110,9 @@ header { background: linear-gradient(135deg, var(--navy), var(--navy2)); color: 
 .fi input[type=number], .fi input[type=text] { width: 100%; padding: 4px 8px; border: 1px solid var(--border);
   border-radius: 4px; font-size: 12px; }
 .fi { margin-bottom: 8px; }
-.btn-reset { background: #fed7d7; color: #742a2a; border: 1px solid #fc8181; padding: 4px 10px;
+.btn-reset { background: #F7DEDF; color: #8C1218; border: 1px solid #E2989C; padding: 4px 10px;
   border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; }
-.btn-reset:hover { background: #fc8181; color: #fff; }
+.btn-reset:hover { background: #DA0C1B; color: #FFFFFF; }
 
 /* Stat cards */
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 12px; margin-bottom: 16px; }
@@ -136,39 +136,39 @@ header { background: linear-gradient(135deg, var(--navy), var(--navy2)); color: 
 .dt-head .dt-sub { font-size: 11px; color: var(--muted); font-weight: 400; }
 table.dt { width: 100%; border-collapse: collapse; font-size: 12px; }
 table.dt th, table.dt td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: left; }
-table.dt thead th { background: #f7fafc; color: var(--muted); font-weight: 700; font-size: 11px;
+table.dt thead th { background: #FCFAF6; color: var(--muted); font-weight: 700; font-size: 11px;
   text-transform: uppercase; letter-spacing: .3px; position: sticky; top: 0; z-index: 5; }
-table.dt tbody tr:hover { background: #f7fafc; }
+table.dt tbody tr:hover { background: rgba(1,42,82,.06); }
 table.dt td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .scroll-wrap { max-height: 65vh; overflow: auto; }
 .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 13px; }
 
 /* Score badge */
 .score-badge { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 12px;
-  font-weight: 700; color: #fff; min-width: 36px; text-align: center; cursor: help; }
+  font-weight: 700; color: #FFFFFF; min-width: 36px; text-align: center; cursor: help; }
 .score-hot  { background: var(--red); }
-.score-warm { background: #dd6b20; }
-.score-med  { background: #d69e2e; color: var(--navy); }
-.score-cool { background: #a0aec0; }
-.score-cold { background: #cbd5e0; color: var(--navy); }
+.score-warm { background: #8C6239; }
+.score-med  { background: #CB995C; color: var(--navy); }
+.score-cool { background: #1B5E8C; }
+.score-cold { background: #C7BFB1; color: var(--navy); }
 
 /* Maturity badge */
 .mat-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px;
   font-weight: 700; }
-.mat-imminent { background: #fed7d7; color: #742a2a; }  /* ≤6 months */
-.mat-near     { background: #feebc8; color: #7b341e; }  /* 7-12 months */
-.mat-mid      { background: #fefcbf; color: #5f370e; }  /* 13-24 months */
-.mat-far      { background: #c6f6d5; color: #22543d; }  /* >24 months */
+.mat-imminent { background: #F7DEDF; color: #8C1218; }  /* ≤6 months */
+.mat-near     { background: #F6E3C6; color: #7A4A12; }  /* 7-12 months */
+.mat-mid      { background: #F6EFDA; color: #6E4B24; }  /* 13-24 months */
+.mat-far      { background: #D7E7DF; color: #1E5A41; }  /* >24 months */
 
 /* Source badge */
 .src-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 9.5px;
-  font-weight: 700; letter-spacing: .3px; background: #ebf4ff; color: #2c5282; }
-.src-sba-7a   { background: #c6f6d5; color: #22543d; }
-.src-sba-504  { background: #bee3f8; color: #2c5282; }
-.src-cmbs     { background: #fbb6ce; color: #702459; }
-.src-hmda     { background: #fed7e2; color: #702459; }
-.src-deed     { background: #d6bcfa; color: #44337a; }
-.src-ucc      { background: #faf089; color: #5f370e; }
+  font-weight: 700; letter-spacing: .3px; background: #E7EDF3; color: #012A52; }
+.src-sba-7a   { background: #D7E7DF; color: #1E5A41; }
+.src-sba-504  { background: #DFE8EF; color: #012A52; }
+.src-cmbs     { background: #E3D0BE; color: #5E3E1C; }
+.src-hmda     { background: #F1E6DA; color: #5E3E1C; }
+.src-deed     { background: #D5DADE; color: #3F4952; }
+.src-ucc      { background: #F0E3B8; color: #6E4B24; }
 
 /* Chart card */
 .chart-card { background: var(--surface); border-radius: 8px; padding: 14px; box-shadow: var(--shadow); margin-bottom: 14px; }
@@ -177,41 +177,41 @@ table.dt td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .chart-title span { font-weight: 400; font-size: 11px; color: var(--muted); }
 
 /* Repull / Methodology modals */
-.rs-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:10000;
+.rs-modal { display:none; position:fixed; inset:0; background:rgba(1,42,82,.45); z-index:10000;
   align-items:center; justify-content:center; padding:20px; }
 .rs-modal.show { display:flex; }
-.rs-modal .rs-card { background:#fff; max-width:680px; width:100%; border-radius:10px; overflow:hidden;
-  box-shadow:0 18px 48px rgba(0,0,0,.25); }
-.rs-modal .rs-head { background:var(--navy); color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+.rs-modal .rs-card { background:#FFFFFF; max-width:680px; width:100%; border-radius:10px; overflow:hidden;
+  box-shadow:0 18px 48px rgba(1,42,82,.25); }
+.rs-modal .rs-head { background:var(--navy); color:#FFFFFF; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
 .rs-modal .rs-head h3 { font-size:15px; }
-.rs-modal .rs-close { background:none; border:none; color:#fff; font-size:18px; cursor:pointer; }
+.rs-modal .rs-close { background:none; border:none; color:#FFFFFF; font-size:18px; cursor:pointer; }
 .rs-modal .rs-body { padding:18px; font-size:13px; line-height:1.5; }
-.rs-modal pre { background:#1a202c; color:#e2e8f0; padding:12px 14px; border-radius:6px;
+.rs-modal pre { background:#101418; color:#DDD8CE; padding:12px 14px; border-radius:6px;
   font-size:11.5px; font-family:Consolas,Monaco,monospace; overflow-x:auto; line-height:1.45; }
 .rs-modal .rs-copy { float:right; background:var(--gold); color:var(--navy); border:none;
   padding:4px 10px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; }
-.rs-modal .rs-note { background:#fffbea; border-left:3px solid #f6ad55; padding:8px 12px;
-  font-size:12px; color:#7b341e; border-radius:0 4px 4px 0; margin-top:10px; }
+.rs-modal .rs-note { background:#FBF3E2; border-left:3px solid #D8A458; padding:8px 12px;
+  font-size:12px; color:#7A4A12; border-radius:0 4px 4px 0; margin-top:10px; }
 
 /* Toast */
 .toast-stack { position:fixed; top:18px; right:18px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
-.toast { background:#2d3748; color:#fff; padding:10px 14px; border-radius:6px; font-size:12.5px;
-  font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.18); border-left:4px solid #4299e1;
+.toast { background:#012A52; color:#FFFFFF; padding:10px 14px; border-radius:6px; font-size:12.5px;
+  font-weight:600; box-shadow:0 6px 18px rgba(1,42,82,.18); border-left:4px solid #CB995C;
   min-width:240px; max-width:380px; opacity:0; transform:translateY(-6px); transition:.2s; pointer-events:auto; }
 .toast.show { opacity:1; transform:translateY(0); }
-.toast.toast-success { border-left-color: #48bb78; }
-.toast.toast-error   { border-left-color: #f56565; }
+.toast.toast-success { border-left-color: #2F7D5D; }
+.toast.toast-error   { border-left-color: #DA0C1B; }
 
 /* Pagination */
 .pgbar { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px;
-  background: #f7fafc; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--muted); }
-.pgbar button { background: #fff; border: 1px solid var(--border); padding: 3px 9px; border-radius: 4px;
+  background: #FCFAF6; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--muted); }
+.pgbar button { background: #FFFFFF; border: 1px solid var(--border); padding: 3px 9px; border-radius: 4px;
   cursor: pointer; font-size: 11.5px; }
 .pgbar button:disabled { opacity: .4; cursor: default; }
 
 /* Map */
 #map { height: 480px; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
-.map-legend { background:#fff; padding:8px 10px; border-radius:6px; box-shadow:var(--shadow);
+.map-legend { background:#FFFFFF; padding:8px 10px; border-radius:6px; box-shadow:var(--shadow);
   font-size:11px; line-height:1.6; }
 
 /* Methodology */
@@ -222,7 +222,7 @@ table.dt td.num { text-align: right; font-variant-numeric: tabular-nums; }
   letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; }
 
 /* Provenance cell tooltip helper */
-.prov-cell { cursor: help; text-decoration: underline dotted #cbd5e0; text-underline-offset: 2px; }
+.prov-cell { cursor: help; text-decoration: underline dotted #C7BFB1; text-underline-offset: 2px; }
 
 /* Mobile */
 @media (max-width: 1024px) {
@@ -540,9 +540,9 @@ git push</pre>
         <div class="chart-title">Geographic distribution of upcoming maturities <span>marker size ∝ loan $; color = months to maturity</span></div>
         <div id="map"></div>
         <div class="map-legend" style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap">
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c53030;margin-right:6px"></span>≤12 mo</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dd6b20;margin-right:6px"></span>13-24 mo</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#38a169;margin-right:6px"></span>&gt;24 mo</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#DA0C1B;margin-right:6px"></span>≤12 mo</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#B5761F;margin-right:6px"></span>13-24 mo</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2F7D5D;margin-right:6px"></span>&gt;24 mo</span>
         </div>
       </div>
     </div>
@@ -658,7 +658,7 @@ function loadStatuses() { try { return JSON.parse(localStorage.getItem(PIPELINE_
 function saveStatuses(map) { try { localStorage.setItem(PIPELINE_STATUS_KEY, JSON.stringify(map)); } catch (e) {} }
 const PIPELINE_STATUSES = ['new','contacted','meeting','proposal','won','lost'];
 const STATUS_LABELS = { new:'Not contacted', contacted:'Contacted', meeting:'Meeting set', proposal:'Proposal sent', won:'Won', lost:'Lost' };
-const STATUS_COLORS = { new:'#a0aec0', contacted:'#3182ce', meeting:'#d69e2e', proposal:'#805ad5', won:'#276749', lost:'#c53030' };
+const STATUS_COLORS = { new:'#8B9199', contacted:'#012A52', meeting:'#CB995C', proposal:'#7C8994', won:'#2F7D5D', lost:'#DA0C1B' };
 
 // Haversine distance in miles
 function haversineMi(lat1, lon1, lat2, lon2) {
@@ -874,17 +874,17 @@ function oppBadge(score, rec, comps) {
               s >= _maturityBandCuts.warm ? 'score-warm' :
               s >= _maturityBandCuts.mod  ? 'score-med'  : 'score-cool';
   const components = [
-    { label: 'Loan size',             value: comps.size,         max: SCORE_WEIGHTS.size,         color: '#3182ce' },
-    { label: 'Proximity to maturity', value: comps.proximity,    max: SCORE_WEIGHTS.proximity,    color: '#c53030' },
-    { label: 'Lender exit risk',      value: comps.lender_exit,  max: SCORE_WEIGHTS.lender_exit,  color: '#dd6b20' },
-    { label: 'Branch proximity',      value: comps.geo,          max: SCORE_WEIGHTS.geo,          color: '#38a169' },
-    { label: 'Borrower concentration',value: comps.concentration,max: SCORE_WEIGHTS.concentration,color: '#805ad5' },
-    { label: 'Source confidence',     value: comps.source_conf,  max: SCORE_WEIGHTS.source_conf,  color: '#319795' },
+    { label: 'Loan size',             value: comps.size,         max: SCORE_WEIGHTS.size,         color: '#012A52' },
+    { label: 'Proximity to maturity', value: comps.proximity,    max: SCORE_WEIGHTS.proximity,    color: '#DA0C1B' },
+    { label: 'Lender exit risk',      value: comps.lender_exit,  max: SCORE_WEIGHTS.lender_exit,  color: '#B5761F' },
+    { label: 'Branch proximity',      value: comps.geo,          max: SCORE_WEIGHTS.geo,          color: '#2F7D5D' },
+    { label: 'Borrower concentration',value: comps.concentration,max: SCORE_WEIGHTS.concentration,color: '#7C8994' },
+    { label: 'Source confidence',     value: comps.source_conf,  max: SCORE_WEIGHTS.source_conf,  color: '#1B5E8C' },
   ];
-  if (comps.bonus) components.push({ label:'Premium-signal bonus', value:comps.bonus, max:5, color:'#22c55e' });
+  if (comps.bonus) components.push({ label:'Premium-signal bonus', value:comps.bonus, max:5, color:'#CB995C' });
   const penaltyLabels = { micro_loan:'− Micro loan (<$50K)', past_due:'− Already past due', exempt_naics:'− Tax-exempt NAICS', dead_status:'− Paid/Charged-off' };
   Object.keys(comps.penalties || {}).forEach(k => {
-    components.push({ label: penaltyLabels[k], value: comps.penalties[k], max: comps.penalties[k], color: '#e53e3e' });
+    components.push({ label: penaltyLabels[k], value: comps.penalties[k], max: comps.penalties[k], color: '#DA0C1B' });
   });
   const pct = maturityScorePct(rec);
   const pctStr = (pct != null) ? ' · Top '+(100 - pct)+'%' : '';
@@ -1041,11 +1041,11 @@ function renderMaturityWall(F) {
     b.by[r.source] = (b.by[r.source]||0) + v;
     b.sum += v;
   });
-  const palette = { 'sba-7a':'#48bb78', 'sba-504':'#3182ce', 'cmbs':'#d53f8c', 'hmda':'#f687b3', 'deed-of-trust':'#805ad5', 'ucc-1':'#d69e2e' };
+  const palette = { 'sba-7a':'#2F7D5D', 'sba-504':'#012A52', 'cmbs':'#8C6239', 'hmda':'#1B5E8C', 'deed-of-trust':'#7C8994', 'ucc-1':'#CB995C' };
   const datasets = Array.from(sources).map(src => ({
     label: src,
     data: buckets.map(b => b.by[src] || 0),
-    backgroundColor: palette[src] || '#a0aec0',
+    backgroundColor: palette[src] || '#8B9199',
     stack: 'all',
   }));
   S.charts.wall = new Chart(qs('#ch-wall'), {
@@ -1055,11 +1055,11 @@ function renderMaturityWall(F) {
       plugins: {
         legend: { position: 'bottom', labels: { font: { size: 11 } } },
         tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt$(ctx.raw)}` } },
-        subtitle: { display: true, text: `${F.length.toLocaleString()} loans in current filter · sum ${fmt$(F.reduce((s,r)=>s+(r.loan_amount||0),0))}`, font:{size:10,style:'italic'}, color:'#a0aec0', padding:{top:4,bottom:2} },
+        subtitle: { display: true, text: `${F.length.toLocaleString()} loans in current filter · sum ${fmt$(F.reduce((s,r)=>s+(r.loan_amount||0),0))}`, font:{size:10,style:'italic'}, color:'#8B9199', padding:{top:4,bottom:2} },
       },
       scales: {
         x: { stacked: true, grid: { display: false } },
-        y: { stacked: true, ticks: { callback: v => fmt$(v) }, title: { display: true, text: 'Dollars rolling off', font: { size: 10 }, color: '#718096' } },
+        y: { stacked: true, ticks: { callback: v => fmt$(v) }, title: { display: true, text: 'Dollars rolling off', font: { size: 10 }, color: '#5C6670' } },
       },
     },
   });
@@ -1086,7 +1086,7 @@ function renderTopLendersChart(F) {
       labels: sorted.map(([k]) => k.length > 30 ? k.slice(0,28)+'…' : k),
       datasets: [{
         data: sorted.map(([,v]) => v.sum),
-        backgroundColor: sorted.map(([,v]) => v.type === 'tx-local' ? '#48bb78' : v.type === 'oot-bank' ? '#3182ce' : v.type === 'non-bank' ? '#dd6b20' : '#a0aec0'),
+        backgroundColor: sorted.map(([,v]) => v.type === 'tx-local' ? '#2F7D5D' : v.type === 'oot-bank' ? '#012A52' : v.type === 'non-bank' ? '#B5761F' : '#8B9199'),
       }],
     },
     options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
@@ -1094,7 +1094,7 @@ function renderTopLendersChart(F) {
         const [, v] = sorted[ctx.dataIndex];
         return [`${fmt$(v.sum)} across ${v.count} loans`, `Type: ${v.type}`];
       } } } },
-      scales: { x: { ticks: { callback: v => fmt$(v) }, grid: { color: '#f0f4f8' } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } },
+      scales: { x: { ticks: { callback: v => fmt$(v) }, grid: { color: '#DDD8CE' } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } },
   });
 }
 
@@ -1103,7 +1103,7 @@ function renderSourceMixChart(F) {
   const buckets = ['0-6','7-12','13-24','25-60','60+'];
   const blabel = { '0-6':'≤6 mo', '7-12':'7-12 mo', '13-24':'13-24 mo', '25-60':'2-5 yr', '60+':'5+ yr' };
   const sources = Array.from(new Set(F.map(r => r.source)));
-  const palette = { 'sba-7a':'#48bb78', 'sba-504':'#3182ce', 'cmbs':'#d53f8c', 'hmda':'#f687b3', 'deed-of-trust':'#805ad5', 'ucc-1':'#d69e2e' };
+  const palette = { 'sba-7a':'#2F7D5D', 'sba-504':'#012A52', 'cmbs':'#8C6239', 'hmda':'#1B5E8C', 'deed-of-trust':'#7C8994', 'ucc-1':'#CB995C' };
   const data = {};
   sources.forEach(s => { data[s] = buckets.map(() => 0); });
   F.forEach(r => {
@@ -1115,11 +1115,11 @@ function renderSourceMixChart(F) {
     type: 'bar',
     data: {
       labels: buckets.map(b => blabel[b]),
-      datasets: sources.map(s => ({ label: s, data: data[s], backgroundColor: palette[s] || '#a0aec0', stack: 'all' })),
+      datasets: sources.map(s => ({ label: s, data: data[s], backgroundColor: palette[s] || '#8B9199', stack: 'all' })),
     },
     options: { responsive: true, maintainAspectRatio: false,
       plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
-      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, title: { display: true, text: 'Loan count', font: { size: 10 }, color: '#718096' }, grid: { color: '#f0f4f8' } } } },
+      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, title: { display: true, text: 'Loan count', font: { size: 10 }, color: '#5C6670' }, grid: { color: '#DDD8CE' } } } },
   });
 }
 
@@ -1147,18 +1147,18 @@ function renderPipeline() {
     const rateDeltaCell = (() => {
       if (r.interest_rate == null) return '—';
       const d = r._rateDelta;
-      const color = d > 0 ? '#276749' : d < -1 ? '#c53030' : '#718096';
+      const color = d > 0 ? '#2F7D5D' : d < -1 ? '#DA0C1B' : '#5C6670';
       const sign = d > 0 ? '+' : '';
       return `<span title="Origination rate ${r.interest_rate.toFixed(2)}% vs market benchmark ${MARKET_BENCHMARK_RATE}%">${r.interest_rate.toFixed(2)}%<br><span style="font-size:10px;color:${color};font-weight:700">${sign}${d}% vs mkt</span></span>`;
     })();
-    const sisterCell = r._sisterCount > 0 ? `<span title="${r._sisterCount} other loan(s) for this borrower in current data" style="font-weight:700;color:#805ad5">👥 +${r._sisterCount}</span>` : '<span style="color:#cbd5e0">—</span>';
+    const sisterCell = r._sisterCount > 0 ? `<span title="${r._sisterCount} other loan(s) for this borrower in current data" style="font-weight:700;color:#012A52">👥 +${r._sisterCount}</span>` : '<span style="color:#C7BFB1">—</span>';
     // Cross-link CRE badge — link to CRE Prospecting dashboard pre-filtered to this borrower
     const visibleProps = (r._propertyMatches||[]).filter(m => m.visible_default);
     const cnt = visibleProps.length;
     const allCnt = (r._propertyMatches||[]).length;
     const crelink = cnt > 0
-      ? `<button class="cre-link-btn" data-loan-id="${esc(r.loan_id)}" title="${cnt} high-confidence CRE property match${cnt>1?'es':''} (of ${allCnt} candidates). Click for details &amp; CRE dashboard link." style="background:#e6fffa;color:#22543d;border:1px solid #9ae6b4;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer">🏢 ${cnt}</button>`
-      : '<span style="color:#cbd5e0">—</span>';
+      ? `<button class="cre-link-btn" data-loan-id="${esc(r.loan_id)}" title="${cnt} high-confidence CRE property match${cnt>1?'es':''} (of ${allCnt} candidates). Click for details &amp; CRE dashboard link." style="background:#E2EDE8;color:#1E5A41;border:1px solid #A9C9B8;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer">🏢 ${cnt}</button>`
+      : '<span style="color:#C7BFB1">—</span>';
     const branchCell = r._branchMi != null ? `<span title="Nearest Ranger branch (DFW/Austin/Houston/SA approx)">${r._branchMi} mi</span>` : '—';
     return `
     <tr data-loan-id="${esc(r.loan_id)}">
@@ -1366,12 +1366,12 @@ function renderMap() {
     const legend = L.control({ position: 'bottomright' });
     legend.onAdd = function() {
       const div = L.DomUtil.create('div');
-      div.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.15);font-size:11px;line-height:1.6';
+      div.style.cssText = 'background:#FFFFFF;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(1,42,82,.15);font-size:11px;line-height:1.6';
       div.innerHTML = '<strong style="display:block;margin-bottom:4px">Months to maturity</strong>' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c53030;margin-right:6px"></span>≤12 mo</span><br>' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dd6b20;margin-right:6px"></span>13-24 mo</span><br>' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#38a169;margin-right:6px"></span>&gt;24 mo</span><br>' +
-        '<span style="color:#718096;font-size:10px;font-style:italic">size ∝ loan $</span>';
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#DA0C1B;margin-right:6px"></span>≤12 mo</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#B5761F;margin-right:6px"></span>13-24 mo</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2F7D5D;margin-right:6px"></span>&gt;24 mo</span><br>' +
+        '<span style="color:#5C6670;font-size:10px;font-style:italic">size ∝ loan $</span>';
       return div;
     };
     legend.addTo(S.map);
@@ -1379,7 +1379,7 @@ function renderMap() {
     const fitBtn = L.control({ position: 'topright' });
     fitBtn.onAdd = function() {
       const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-      div.innerHTML = '<a href="#" id="map-fit-btn" title="Fit map to filtered borrowers" style="background:#fff;color:#1B365D;padding:6px 10px;font-weight:700;font-size:11px;text-decoration:none;display:block">⛶ Fit to filter</a>';
+      div.innerHTML = '<a href="#" id="map-fit-btn" title="Fit map to filtered borrowers" style="background:#FFFFFF;color:#012A52;padding:6px 10px;font-weight:700;font-size:11px;text-decoration:none;display:block">⛶ Fit to filter</a>';
       L.DomEvent.disableClickPropagation(div);
       return div;
     };
@@ -1425,31 +1425,31 @@ function renderMap() {
   Object.values(byCoord).forEach(grp => {
     const totalAmt = grp.loans.reduce((s,L) => s + (L.loan_amount||0), 0);
     const earliestMonths = Math.min(...grp.loans.map(L => L._months ?? 999));
-    const color = earliestMonths == null ? '#a0aec0' :
-                  earliestMonths <= 12 ? '#c53030' :
-                  earliestMonths <= 24 ? '#dd6b20' : '#38a169';
+    const color = earliestMonths == null ? '#8B9199' :
+                  earliestMonths <= 12 ? '#DA0C1B' :
+                  earliestMonths <= 24 ? '#B5761F' : '#2F7D5D';
     const radiusPx = Math.max(4, Math.min(18, Math.log10(Math.max(10000, totalAmt)) * 1.8));
     const opacity = grp.source === 'address' ? 0.75 : 0.45;
     const weight  = grp.source === 'address' ? 1 : 0;
     const dash    = grp.source === 'address' ? null : '3,3';
     const m = L.circleMarker([grp.lat, grp.lng], {
-      radius: radiusPx, color: '#1B365D', weight, fillColor: color, fillOpacity: opacity,
+      radius: radiusPx, color: '#012A52', weight, fillColor: color, fillOpacity: opacity,
       dashArray: dash,
     });
     // Standardized popup
     const head = grp.loans.length === 1
       ? `<strong>${esc(grp.loans[0].borrower)}</strong>`
-      : `<strong>${grp.loans.length} loans · ${esc(grp.loans[0].borrower)}${grp.loans.length>1 ? ` <span style="color:#718096">+${grp.loans.length-1} more</span>`:''}</strong>`;
+      : `<strong>${grp.loans.length} loans · ${esc(grp.loans[0].borrower)}${grp.loans.length>1 ? ` <span style="color:#5C6670">+${grp.loans.length-1} more</span>`:''}</strong>`;
     const sortedLoans = grp.loans.slice().sort((a,b) => (a._months||9999) - (b._months||9999));
     const top = sortedLoans[0];
     const rowsHtml = sortedLoans.slice(0,5).map(L =>
-      `<div style="font-size:11px;color:#4a5568;border-top:1px solid #edf2f7;padding-top:3px;margin-top:3px">${esc(L.lender)} · ${fmt$(L.loan_amount)} · matures ${fmtDate(L.maturity_date)}</div>`
+      `<div style="font-size:11px;color:#5C6670;border-top:1px solid #DDD8CE;padding-top:3px;margin-top:3px">${esc(L.lender)} · ${fmt$(L.loan_amount)} · matures ${fmtDate(L.maturity_date)}</div>`
     ).join('');
-    const more = grp.loans.length > 5 ? `<div style="font-size:10px;color:#718096;margin-top:3px;font-style:italic">+${grp.loans.length-5} more loans at this address</div>` : '';
+    const more = grp.loans.length > 5 ? `<div style="font-size:10px;color:#5C6670;margin-top:3px;font-style:italic">+${grp.loans.length-5} more loans at this address</div>` : '';
     const provenance = grp.source === 'county'
-      ? `<div style="font-size:9.5px;color:#a0aec0;margin-top:6px;font-style:italic">Position = county centroid (street address not geocoded)</div>`
-      : `<div style="font-size:9.5px;color:#a0aec0;margin-top:6px;font-style:italic">Position = US Census Geocoder match on ${esc(top.borrower_address||'borrower address')}</div>`;
-    m.bindPopup(`<div style="font-size:12.5px">${head}<div style="font-size:11px;color:#718096;margin-bottom:4px">${esc(top.county||'')} County · combined ${fmt$(totalAmt)}</div>${rowsHtml}${more}${provenance}</div>`);
+      ? `<div style="font-size:9.5px;color:#8B9199;margin-top:6px;font-style:italic">Position = county centroid (street address not geocoded)</div>`
+      : `<div style="font-size:9.5px;color:#8B9199;margin-top:6px;font-style:italic">Position = US Census Geocoder match on ${esc(top.borrower_address||'borrower address')}</div>`;
+    m.bindPopup(`<div style="font-size:12.5px">${head}<div style="font-size:11px;color:#5C6670;margin-bottom:4px">${esc(top.county||'')} County · combined ${fmt$(totalAmt)}</div>${rowsHtml}${more}${provenance}</div>`);
     m.addTo(S.markers);
   });
   S.markers.addTo(S.map);
@@ -1459,7 +1459,7 @@ function renderMap() {
     if (legendNote.querySelector('.geo-note')) legendNote.querySelector('.geo-note').remove();
     const note = document.createElement('div');
     note.className = 'geo-note';
-    note.style.cssText = 'margin-top:5px;padding-top:5px;border-top:1px solid #edf2f7;color:#718096;font-size:10px';
+    note.style.cssText = 'margin-top:5px;padding-top:5px;border-top:1px solid #DDD8CE;color:#5C6670;font-size:10px';
     note.innerHTML = `${geocodedCount.toLocaleString()} address-precise<br>${fallbackCount.toLocaleString()} county-only`;
     legendNote.appendChild(note);
   }
@@ -1500,7 +1500,7 @@ function renderMethodology() {
     <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:6px; font-size:11.5px">
       ${Object.entries(SCORE_WEIGHTS).map(([k,v]) => {
         const labels = { proximity:'Time-to-maturity', size:'Loan size', lender_exit:'Lender exit risk', geo:'Geo fit', concentration:'Borrower concentration', source_conf:'Source confidence' };
-        return `<div style="background:#f7fafc;padding:6px 8px;border-radius:4px"><strong>${v}</strong> · ${labels[k]||k}</div>`;
+        return `<div style="background:#FCFAF6;padding:6px 8px;border-radius:4px"><strong>${v}</strong> · ${labels[k]||k}</div>`;
       }).join('')}
     </div>`;
   // Coverage
@@ -1631,7 +1631,7 @@ function openCreLinkModal(loanId) {
     · Combined assessed value <strong>${fmt$(totalVal)}</strong>
     · Borrower: ${esc(loan.borrower)}${loan.borrower_city ? ' · '+esc(loan.borrower_city) : ''}, ${esc(loan.borrower_state||'')}`;
   const rowsHtml = matches.map(m => {
-    const cls = m.confidence >= 75 ? '#22543d' : m.confidence >= 60 ? '#7b341e' : '#742a2a';
+    const cls = m.confidence >= 75 ? '#1E5A41' : m.confidence >= 60 ? '#7A4A12' : '#8C1218';
     return `<tr${m.visible_default ? '' : ' style="opacity:.6"'}>
       <td><strong>${esc(m.owner || '—')}</strong></td>
       <td>${esc(m.addr || '—')}</td>
