@@ -19,19 +19,19 @@
 <script src="../shared/sortable-table.js"></script>
 <style>
 :root {
-  --navy:    #1B365D;
-  --navy2:   #254a7a;
-  --gold:    #C8A951;
-  --gold-lt: #f5ecd5;
-  --bg:      #f4f6f9;
+  --navy:    #012A52;
+  --navy2:   #1B5E8C;
+  --gold:    #CB995C;
+  --gold-lt: #F0EBE1;
+  --bg:      #F2EFE9;
   --surface: #ffffff;
-  --border:  #e2e8f0;
-  --text:    #1a202c;
-  --muted:   #718096;
-  --blue:    #2b6cb0;
-  --green:   #276749;
+  --border:  #DDD8CE;
+  --text:    #101418;
+  --muted:   #5C6670;
+  --blue:    #012A52;
+  --green:   #2F7D5D;
   --r:       8px;
-  --shadow:  0 2px 8px rgba(0,0,0,.09);
+  --shadow:  0 2px 8px rgba(1,42,82,.09);
 }
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -65,9 +65,9 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
   color:var(--gold); font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; white-space:nowrap; }
 .btn-refresh:hover { background:var(--gold); color:var(--navy); }
 .btn-refresh.loading { opacity:.85; pointer-events:none; }
-.btn-refresh.success { background:#22543d; color:#fff; border-color:#22543d; }
-.btn-refresh.error   { background:#c53030; color:#fff; border-color:#c53030; }
-.btn-refresh .spin { display:none; width:14px; height:14px; border:2px solid rgba(200,169,81,.3);
+.btn-refresh.success { background:#2F7D5D; color:#fff; border-color:#2F7D5D; }
+.btn-refresh.error   { background:#DA0C1B; color:#fff; border-color:#DA0C1B; }
+.btn-refresh .spin { display:none; width:14px; height:14px; border:2px solid rgba(203,153,92,.3);
   border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; }
 .btn-refresh.loading .spin { display:inline-block; }
 .btn-refresh.loading .icon { display:none; }
@@ -77,20 +77,20 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 .btn-rescrape:hover { opacity:1; background:rgba(255,255,255,.08); }
 
 /* Freshness ribbon (3 pills below header) */
-.freshness-ribbon { background:var(--surface); border-bottom:1px solid #e2e8f0;
+.freshness-ribbon { background:var(--surface); border-bottom:1px solid #DDD8CE;
   padding:8px 24px; font-size:12px; }
 .freshness-ribbon .fr-inner { max-width:1500px; margin:0 auto; display:flex; gap:10px;
   align-items:center; flex-wrap:wrap; }
 .fr-pill { display:inline-flex; align-items:center; gap:8px; padding:5px 12px;
   border-radius:14px; border:1px solid transparent; font-weight:600; line-height:1.2;
-  background:#edf2f7; color:#2d3748; }
+  background:#F0EBE1; color:#101418; }
 .fr-pill .fr-dot { width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.7; }
 .fr-pill .fr-label { font-weight:700; }
 .fr-pill .fr-detail { font-weight:400; color:inherit; opacity:.78; font-size:11px; }
-.fr-pill.fr-green  { background:#e6fffa; color:#22543d; border-color:#9ae6b4; }
-.fr-pill.fr-yellow { background:#fffbea; color:#7b341e; border-color:#f6ad55; }
-.fr-pill.fr-red    { background:#fed7d7; color:#742a2a; border-color:#fc8181; }
-.fr-pill.fr-gray   { background:#edf2f7; color:#4a5568; border-color:#cbd5e0; }
+.fr-pill.fr-green  { background:rgba(47,125,93,.08); color:#2F7D5D; border-color:rgba(47,125,93,.35); }
+.fr-pill.fr-yellow { background:rgba(203,153,92,.14); color:#8C6239; border-color:rgba(203,153,92,.4); }
+.fr-pill.fr-red    { background:rgba(218,12,27,.08); color:#DA0C1B; border-color:rgba(218,12,27,.35); }
+.fr-pill.fr-gray   { background:#F0EBE1; color:#5C6670; border-color:#C7BFB1; }
 .fr-why { background:none; border:none; color:inherit; text-decoration:underline;
   font-size:11px; cursor:pointer; padding:0 0 0 4px; font-weight:500; }
 .fr-expand { background:none; border:none; color:var(--muted); font-size:11px;
@@ -103,33 +103,33 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 }
 
 /* Stale rates warning banner */
-.stale-rates-warn { background:#fffbea; border:1px solid #f6ad55; color:#7b341e;
+.stale-rates-warn { background:rgba(203,153,92,.14); border:1px solid rgba(203,153,92,.4); color:#8C6239;
   padding:10px 16px; border-radius:8px; margin:0 0 12px 0; font-size:12.5px;
   display:flex; align-items:center; gap:10px; }
-.stale-rates-warn strong { color:#742a2a; }
+.stale-rates-warn strong { color:#DA0C1B; }
 .stale-rates-warn .srw-act { margin-left:auto; }
-.stale-rates-warn button { background:#7b341e; color:#fff; border:none;
+.stale-rates-warn button { background:#8C6239; color:#fff; border:none;
   padding:5px 11px; border-radius:5px; font-size:11.5px; font-weight:600; cursor:pointer; }
 
 /* Toast */
 .toast-stack { position:fixed; top:18px; right:18px; z-index:9999; display:flex;
   flex-direction:column; gap:8px; pointer-events:none; }
-.toast { background:#2d3748; color:#fff; padding:10px 14px; border-radius:6px;
-  font-size:12.5px; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.18);
-  border-left:4px solid #4299e1; min-width:240px; max-width:380px;
+.toast { background:#101418; color:#fff; padding:10px 14px; border-radius:6px;
+  font-size:12.5px; font-weight:600; box-shadow:0 6px 18px rgba(1,42,82,.18);
+  border-left:4px solid #1B5E8C; min-width:240px; max-width:380px;
   pointer-events:auto; opacity:0; transform:translateY(-6px); transition:opacity .2s, transform .2s; }
 .toast.show { opacity:1; transform:translateY(0); }
-.toast.toast-success { border-left-color:#48bb78; }
-.toast.toast-info    { border-left-color:#4299e1; }
-.toast.toast-error   { border-left-color:#f56565; }
+.toast.toast-success { border-left-color:#2F7D5D; }
+.toast.toast-info    { border-left-color:#1B5E8C; }
+.toast.toast-error   { border-left-color:#DA0C1B; }
 .toast .t-sub { font-weight:400; opacity:.78; font-size:11.5px; margin-top:2px; }
 
 /* Re-scrape modal */
-.rs-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:10000;
+.rs-modal { display:none; position:fixed; inset:0; background:rgba(1,42,82,.45); z-index:10000;
   align-items:center; justify-content:center; padding:20px; }
 .rs-modal.show { display:flex; }
 .rs-modal .rs-card { background:#fff; max-width:620px; width:100%; border-radius:10px;
-  box-shadow:0 18px 48px rgba(0,0,0,.25); overflow:hidden; }
+  box-shadow:0 18px 48px rgba(1,42,82,.25); overflow:hidden; }
 .rs-modal .rs-head { background:var(--navy); color:#fff; padding:14px 18px;
   display:flex; align-items:center; justify-content:space-between; }
 .rs-modal .rs-head h3 { margin:0; font-size:15px; }
@@ -137,14 +137,14 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 .rs-modal .rs-body { padding:18px; font-size:13px; line-height:1.5; color:var(--text); }
 .rs-modal .rs-age { display:inline-block; padding:4px 10px; border-radius:12px;
   font-size:11.5px; font-weight:700; margin-bottom:10px; }
-.rs-modal pre { background:#1a202c; color:#e2e8f0; padding:12px 14px; border-radius:6px;
+.rs-modal pre { background:#101418; color:#DDD8CE; padding:12px 14px; border-radius:6px;
   font-size:11.5px; font-family:Consolas,'Courier New',monospace; overflow-x:auto;
   white-space:pre; line-height:1.45; }
 .rs-modal .rs-copy { float:right; background:var(--gold); color:var(--navy); border:none;
   padding:4px 10px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; }
-.rs-modal .rs-copy.copied { background:#48bb78; color:#fff; }
-.rs-modal .rs-note { background:#fffbea; border-left:3px solid #f6ad55; padding:8px 12px;
-  font-size:12px; color:#7b341e; border-radius:0 4px 4px 0; margin-top:10px; }
+.rs-modal .rs-copy.copied { background:#2F7D5D; color:#fff; }
+.rs-modal .rs-note { background:rgba(203,153,92,.14); border-left:3px solid rgba(203,153,92,.4); padding:8px 12px;
+  font-size:12px; color:#8C6239; border-radius:0 4px 4px 0; margin-top:10px; }
 
 /* Hamburger */
 .hamburger { display:none; background:none; border:none; color:#fff; font-size:24px; cursor:pointer;
@@ -153,24 +153,24 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 @keyframes spin { to { transform:rotate(360deg); } }
 
 /* ── Notice bar ──────────────────────────────────────────── */
-.notice { padding:8px 24px; font-size:12px; border-bottom:2px solid var(--gold); background:var(--gold-lt); color:#5a4a1e; }
+.notice { padding:8px 24px; font-size:12px; border-bottom:2px solid var(--gold); background:var(--gold-lt); color:#8C6239; }
 .notice .inner { max-width:1500px; margin:0 auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .badge { display:inline-flex; align-items:center; gap:3px; padding:1px 7px;
   border-radius:12px; font-size:10.5px; font-weight:700; vertical-align:middle; }
 .badge-gold  { background:var(--gold); color:var(--navy); }
-.badge-green { background:#c6f6d5; color:#276749; }
-.badge-blue  { background:#bee3f8; color:#2b6cb0; }
-.badge-red   { background:#fed7d7; color:#9b2c2c; }
+.badge-green { background:rgba(47,125,93,.08); color:#2F7D5D; }
+.badge-blue  { background:rgba(1,42,82,.20); color:#012A52; }
+.badge-red   { background:rgba(218,12,27,.08); color:#DA0C1B; }
 
 /* ── Main ────────────────────────────────────────────────── */
 .main { max-width:1500px; margin:0 auto; padding:16px 16px 48px; }
 
 /* ── Loading ─────────────────────────────────────────────── */
 #loading { text-align:center; padding:80px 20px; }
-.spinner { width:40px; height:40px; border:4px solid #d4c5a0;
+.spinner { width:40px; height:40px; border:4px solid rgba(203,153,92,.35);
   border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
 #loading p { color:var(--muted); font-size:15px; }
-#loading .sub { font-size:12px; margin-top:6px; color:#a0aec0; }
+#loading .sub { font-size:12px; margin-top:6px; color:#8B9199; }
 
 /* ── Stat cards ──────────────────────────────────────────── */
 .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:12px; margin-bottom:16px; }
@@ -178,10 +178,10 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
   box-shadow:var(--shadow); border-left:4px solid var(--border); }
 .stat-card.navy   { border-left-color:var(--navy); }
 .stat-card.gold   { border-left-color:var(--gold); }
-.stat-card.green  { border-left-color:#38a169; }
-.stat-card.teal   { border-left-color:#319795; }
-.stat-card.orange { border-left-color:#dd6b20; }
-.stat-card.purple { border-left-color:#805ad5; }
+.stat-card.green  { border-left-color:#2F7D5D; }
+.stat-card.teal   { border-left-color:#7C8994; }
+.stat-card.orange { border-left-color:#B5761F; }
+.stat-card.purple { border-left-color:#1B5E8C; }
 .stat-label { font-size:10.5px; font-weight:600; color:var(--muted);
   text-transform:uppercase; letter-spacing:.5px; }
 .stat-value { font-size:24px; font-weight:700; margin-top:3px; line-height:1; }
@@ -195,14 +195,14 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 .fpanel-title { font-weight:700; font-size:13px; }
 .btn-sm { background:none; border:1px solid var(--border); border-radius:6px;
   padding:5px 12px; font-size:11.5px; cursor:pointer; color:var(--muted); white-space:nowrap; }
-.btn-sm:hover { background:#f7fafc; color:var(--text); }
+.btn-sm:hover { background:#FCFAF6; color:var(--text); }
 .btn-export { background:var(--navy); color:#fff; border-color:var(--navy); }
 .btn-export:hover { background:var(--navy2); }
 .fgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; }
 .fi label { display:block; font-size:10.5px; font-weight:600; color:var(--muted);
   text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
 .fi select,.fi input[type=text] { width:100%; border:1px solid var(--border); border-radius:6px;
-  padding:7px 10px; font-size:12.5px; background:#f8fafc; color:var(--text);
+  padding:7px 10px; font-size:12.5px; background:#FCFAF6; color:var(--text);
   -webkit-appearance:none; appearance:none; min-height:36px; }
 .fi select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
@@ -232,18 +232,18 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 /* ── Table ───────────────────────────────────────────────── */
 .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; max-height:70vh; overflow-y:auto; }
 table { width:100%; border-collapse:collapse; }
-thead tr { background:#f7fafc; }
+thead tr { background:#FCFAF6; }
 th { padding:10px 12px; font-size:10.5px; font-weight:700; text-transform:uppercase;
   letter-spacing:.5px; color:var(--muted); text-align:left; white-space:nowrap;
   cursor:pointer; user-select:none; min-height:44px;
-  position:sticky; top:0; background:#f7fafc; z-index:2; box-shadow:0 1px 0 var(--border); }
+  position:sticky; top:0; background:#FCFAF6; z-index:2; box-shadow:0 1px 0 var(--border); }
 th:hover:not(.nosort) { color:var(--text); }
 th.nosort { cursor:default; }
 th.sort-asc::after  { content:' ▲'; color:var(--navy); }
 th.sort-desc::after { content:' ▼'; color:var(--navy); }
-td { padding:9px 12px; border-bottom:1px solid #f0f4f8; vertical-align:middle; }
+td { padding:9px 12px; border-bottom:1px solid #F0EBE1; vertical-align:middle; }
 tr:last-child td { border-bottom:none; }
-tr:hover td { background:#fafbfd; }
+tr:hover td { background:#FCFAF6; }
 tr.ranger-row td { background:var(--gold-lt); }
 td.right { text-align:right; font-variant-numeric:tabular-nums; }
 .bank-name { font-weight:600; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -251,66 +251,66 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
 .alert-rate::after { content:'🔥'; margin-left:3px; font-size:11px; }
 
 /* Rate display */
-.apy-hi  { color:#22543d; font-weight:700; font-size:14px; }
-.apy-mid { color:#276749; font-weight:700; font-size:14px; }
-.apy-lo  { color:#4a5568; font-weight:700; font-size:13px; }
+.apy-hi  { color:#2F7D5D; font-weight:700; font-size:14px; }
+.apy-mid { color:#2F7D5D; font-weight:700; font-size:14px; }
+.apy-lo  { color:#5C6670; font-weight:700; font-size:13px; }
 .apy-sub { font-size:10px; color:var(--muted); display:block; margin-top:1px; }
-.cof-hi  { color:#22543d; font-weight:700; font-size:14px; }
-.cof-mid { color:#276749; font-weight:700; font-size:14px; }
-.cof-lo  { color:#4a5568; font-weight:700; font-size:14px; }
-.cof-na  { color:#a0aec0; font-size:12px; }
+.cof-hi  { color:#2F7D5D; font-weight:700; font-size:14px; }
+.cof-mid { color:#2F7D5D; font-weight:700; font-size:14px; }
+.cof-lo  { color:#5C6670; font-weight:700; font-size:14px; }
+.cof-na  { color:#8B9199; font-size:12px; }
 .cof-sub { font-size:10px; color:var(--muted); display:block; margin-top:1px; }
 
 /* Competition badges */
 .lvl { display:inline-block; padding:2px 8px; border-radius:20px; font-size:10.5px; font-weight:700; }
-.lvl-soft { background:#ebf8ff; color:#2b6cb0; }
-.lvl-mod  { background:#fffaf0; color:#c05621; }
-.lvl-hot  { background:#fff5f5; color:#c53030; }
+.lvl-soft { background:rgba(1,42,82,.08); color:#012A52; }
+.lvl-mod  { background:rgba(140,98,57,.10); color:#8C6239; }
+.lvl-hot  { background:rgba(218,12,27,.05); color:#DA0C1B; }
 
 /* Product pills */
 .pp { display:inline-block; padding:2px 7px; border-radius:20px; font-size:10.5px; font-weight:600; white-space:nowrap; }
-.pp-cd      { background:#ebf8ff; color:#2b6cb0; }
-.pp-savings { background:#f0fff4; color:#276749; }
-.pp-mmkt    { background:#fffaf0; color:#c05621; }
-.pp-ichk    { background:#faf5ff; color:#6b46c1; }
-.pp-ira     { background:#fff5f5; color:#c53030; }
-.pill-charter { background:#f0f4f8; color:#4a5568; display:inline-block; padding:2px 8px;
+.pp-cd      { background:rgba(1,42,82,.08); color:#012A52; }
+.pp-savings { background:rgba(47,125,93,.08); color:#2F7D5D; }
+.pp-mmkt    { background:rgba(140,98,57,.10); color:#8C6239; }
+.pp-ichk    { background:rgba(27,94,140,.06); color:#1B5E8C; }
+.pp-ira     { background:rgba(218,12,27,.05); color:#DA0C1B; }
+.pill-charter { background:#F0EBE1; color:#5C6670; display:inline-block; padding:2px 8px;
   border-radius:20px; font-size:10.5px; font-weight:600; }
 
 /* Special flags */
-.sf-promo  { background:#fefcbf; color:#744210; font-size:9.5px; padding:1px 5px; border-radius:4px; font-weight:700; }
-.sf-jumbo  { background:#e9d8fd; color:#553c9a; font-size:9.5px; padding:1px 5px; border-radius:4px; font-weight:700; }
+.sf-promo  { background:rgba(203,153,92,.20); color:#8C6239; font-size:9.5px; padding:1px 5px; border-radius:4px; font-weight:700; }
+.sf-jumbo  { background:rgba(27,94,140,.15); color:#1B5E8C; font-size:9.5px; padding:1px 5px; border-radius:4px; font-weight:700; }
 
 /* Links */
 .link-btn { display:inline-flex; align-items:center; gap:3px; padding:5px 10px;
   border-radius:6px; font-size:11.5px; font-weight:600; text-decoration:none;
   white-space:nowrap; border:1px solid; transition:background .12s; min-height:32px; }
-.link-p { background:#ebf4ff; color:#2b6cb0; border-color:#bee3f8; }
-.link-p:hover { background:#bee3f8; }
-.link-s { background:#f7fafc; color:#4a5568; border-color:#e2e8f0; }
-.link-s:hover { background:#edf2f7; }
+.link-p { background:rgba(1,42,82,.08); color:#012A52; border-color:rgba(1,42,82,.20); }
+.link-p:hover { background:rgba(1,42,82,.20); }
+.link-s { background:#FCFAF6; color:#5C6670; border-color:#DDD8CE; }
+.link-s:hover { background:#F0EBE1; }
 
 .tbl-note { font-size:11px; color:var(--muted); padding:10px 14px;
-  background:#f9fbfd; border-top:1px solid var(--border); line-height:1.6; }
+  background:#FCFAF6; border-top:1px solid var(--border); line-height:1.6; }
 
 /* ── Insight banners (per-tab lens callout) ──────────────────── */
 .insight-banner { display:flex; gap:10px; align-items:flex-start; padding:11px 16px;
   font-size:12.5px; line-height:1.5; border-radius:0; }
 .insight-banner .ib-icon { font-size:15px; font-weight:700; white-space:nowrap; flex-shrink:0; }
-.insight-opportunity { background:#e6fff0; color:#1a5e2e; border-bottom:2px solid #38a169; }
-.insight-opportunity strong { color:#15803d; }
-.insight-threat { background:#fdecec; color:#7b241c; border-bottom:2px solid #c53030; }
-.insight-threat strong { color:#b91c1c; }
+.insight-opportunity { background:rgba(47,125,93,.08); color:#2F7D5D; border-bottom:2px solid #2F7D5D; }
+.insight-opportunity strong { color:#2F7D5D; }
+.insight-threat { background:rgba(218,12,27,.06); color:#DA0C1B; border-bottom:2px solid #DA0C1B; }
+.insight-threat strong { color:#DA0C1B; }
 /* Dashboard-managed sortable headers (markets/scanner/cof) */
 th.dash-sortable { cursor:pointer; user-select:none; }
-th.dash-sortable:hover { background:#eef3f8; }
+th.dash-sortable:hover { background:#F0EBE1; }
 /* Cross-link cell pills */
 .xlink-pill { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10.5px; font-weight:700; }
-.xlink-clean { background:#c6f6d5; color:#22543d; }
-.xlink-some  { background:#feebc8; color:#7b341e; }
-.xlink-heavy { background:#fed7d7; color:#742a2a; }
-.xlink-yes   { background:#fed7d7; color:#742a2a; }
-.xlink-no    { background:#edf2f7; color:#718096; }
+.xlink-clean { background:rgba(47,125,93,.08); color:#2F7D5D; }
+.xlink-some  { background:rgba(203,153,92,.20); color:#8C6239; }
+.xlink-heavy { background:rgba(218,12,27,.08); color:#DA0C1B; }
+.xlink-yes   { background:rgba(218,12,27,.08); color:#DA0C1B; }
+.xlink-no    { background:#F0EBE1; color:#5C6670; }
 
 /* ── Pagination ──────────────────────────────────────────── */
 .pgbar { display:flex; align-items:center; justify-content:space-between;
@@ -319,7 +319,7 @@ th.dash-sortable:hover { background:#eef3f8; }
 .pgbtns { display:flex; gap:3px; flex-wrap:wrap; }
 .pgbtns button { padding:5px 10px; border:1px solid var(--border); border-radius:5px;
   background:var(--surface); font-size:11.5px; cursor:pointer; min-height:32px; min-width:32px; }
-.pgbtns button:hover:not(:disabled):not(.active) { background:#ebf4ff; border-color:#bee3f8; }
+.pgbtns button:hover:not(:disabled):not(.active) { background:rgba(1,42,82,.08); border-color:rgba(1,42,82,.20); }
 .pgbtns button.active { background:var(--navy); color:#fff; border-color:var(--navy); }
 .pgbtns button:disabled { opacity:.4; cursor:default; }
 .pgsize select { border:1px solid var(--border); border-radius:5px; padding:4px 8px; font-size:11.5px; }
@@ -327,36 +327,36 @@ th.dash-sortable:hover { background:#eef3f8; }
 /* ── Charts ──────────────────────────────────────────────── */
 .charts-wrap { padding:16px; }
 .cgrid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.ccard { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r); padding:14px; }
+.ccard { background:#FCFAF6; border:1px solid var(--border); border-radius:var(--r); padding:14px; }
 .ccard.wide { grid-column:1 / -1; }
 .clabel { font-size:11.5px; font-weight:700; color:var(--muted);
   text-transform:uppercase; letter-spacing:.4px; margin-bottom:10px; }
-.clabel span { font-weight:400; color:#a0aec0; margin-left:4px; }
+.clabel span { font-weight:400; color:#8B9199; margin-left:4px; }
 
 /* ── CD Matrix ───────────────────────────────────────────── */
 .matrix-wrap { padding:16px; }
 .matrix-tbl th,.matrix-tbl td { text-align:center; padding:7px 9px; min-width:60px; }
 .matrix-tbl td:first-child,.matrix-tbl th:first-child { text-align:left; min-width:140px; white-space:nowrap; }
 .cell-apy   { font-weight:700; font-size:12.5px; border-radius:4px; display:block; padding:3px 5px; }
-.cell-hi    { background:#c6f6d5; color:#22543d; }
-.cell-mid   { background:#fefcbf; color:#744210; }
-.cell-lo    { background:#fed7d7; color:#9b2c2c; }
-.cell-na    { color:#a0aec0; font-size:11px; }
+.cell-hi    { background:rgba(47,125,93,.08); color:#2F7D5D; }
+.cell-mid   { background:rgba(203,153,92,.20); color:#8C6239; }
+.cell-lo    { background:rgba(218,12,27,.08); color:#DA0C1B; }
+.cell-na    { color:#8B9199; font-size:11px; }
 
 /* ── Map ─────────────────────────────────────────────────── */
 .map-wrap { padding:14px; }
 #map { height:500px; border-radius:var(--r); overflow:hidden; }
 .map-legend { display:flex; gap:14px; margin-bottom:10px; align-items:center; flex-wrap:wrap; }
 .mleg { display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--muted); }
-.mdot { width:11px; height:11px; border-radius:50%; border:2px solid rgba(0,0,0,.15); }
+.mdot { width:11px; height:11px; border-radius:50%; border:2px solid rgba(1,42,82,.15); }
 .map-note { font-size:10.5px; color:var(--muted); margin-top:8px; }
 
 /* ── Ranger Rate Input Modal ─────────────────────────────── */
-.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200;
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(1,42,82,.45); z-index:200;
   align-items:center; justify-content:center; padding:20px; }
 .modal-overlay.show { display:flex; }
 .modal { background:#fff; border-radius:12px; padding:24px; max-width:480px; width:100%;
-  box-shadow:0 20px 60px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto; }
+  box-shadow:0 20px 60px rgba(1,42,82,.2); max-height:90vh; overflow-y:auto; }
 .modal h3 { font-size:16px; margin-bottom:4px; color:var(--navy); }
 .modal p { font-size:12.5px; color:var(--muted); margin-bottom:16px; }
 .modal label { display:block; font-size:11px; font-weight:600; color:var(--muted);
@@ -373,7 +373,7 @@ th.dash-sortable:hover { background:#eef3f8; }
 /* ── Back to top ─────────────────────────────────────────── */
 .btt { position:fixed; bottom:20px; right:20px; width:44px; height:44px;
   border-radius:50%; background:var(--navy); color:var(--gold); border:2px solid var(--gold);
-  font-size:20px; cursor:pointer; display:none; z-index:50; box-shadow:0 4px 12px rgba(0,0,0,.2);
+  font-size:20px; cursor:pointer; display:none; z-index:50; box-shadow:0 4px 12px rgba(1,42,82,.2);
   align-items:center; justify-content:center; }
 .btt.show { display:flex; }
 
@@ -722,9 +722,9 @@ th.dash-sortable:hover { background:#eef3f8; }
       </div>
       <div class="tbl-note">
         <strong>Rate Environment:</strong> Based on avg advertised APY.
-        <span style="color:#2b6cb0;font-weight:600">Low</span> = easy to attract depositors.
-        <span style="color:#c05621;font-weight:600">Moderate</span> = avg competition.
-        <span style="color:#c53030;font-weight:600">High</span> = you must match.
+        <span style="color:#012A52;font-weight:600">Low</span> = easy to attract depositors.
+        <span style="color:#8C6239;font-weight:600">Moderate</span> = avg competition.
+        <span style="color:#DA0C1B;font-weight:600">High</span> = you must match.
       </div>
       <div class="pgbar">
         <div class="pgsize">Rows: <select id="mkt-pg-size"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></div>
@@ -889,23 +889,23 @@ th.dash-sortable:hover { background:#eef3f8; }
         <div class="map-wrap" style="padding:0">
           <!-- County-attractiveness legend (diverging green→red) -->
           <div class="map-legend" id="legend-counties">
-            <strong style="font-size:11.5px;color:#4a5568">Entry attractiveness:</strong>
-            <div class="mleg"><div class="mdot" style="background:#1a9850"></div>Best — low rate, low competition</div>
-            <div class="mleg"><div class="mdot" style="background:#91cf60"></div>Good</div>
-            <div class="mleg"><div class="mdot" style="background:#fee08b"></div>Moderate</div>
-            <div class="mleg"><div class="mdot" style="background:#fc8d59"></div>Contested</div>
-            <div class="mleg"><div class="mdot" style="background:#d73027"></div>Avoid — high rate, high competition</div>
-            <div class="mleg"><div class="mdot" style="background:#e2e8f0"></div>No data</div>
+            <strong style="font-size:11.5px;color:#5C6670">Entry attractiveness:</strong>
+            <div class="mleg"><div class="mdot" style="background:#2F7D5D"></div>Best — low rate, low competition</div>
+            <div class="mleg"><div class="mdot" style="background:rgba(47,125,93,.62)"></div>Good</div>
+            <div class="mleg"><div class="mdot" style="background:#CB995C"></div>Moderate</div>
+            <div class="mleg"><div class="mdot" style="background:rgba(218,12,27,.62)"></div>Contested</div>
+            <div class="mleg"><div class="mdot" style="background:#DA0C1B"></div>Avoid — high rate, high competition</div>
+            <div class="mleg"><div class="mdot" style="background:#DDD8CE"></div>No data</div>
           </div>
           <!-- Bank-marker legend (hidden until that view is active) -->
           <div class="map-legend" id="legend-banks" style="display:none">
-            <strong style="font-size:11.5px;color:#4a5568">Color = Cost of Funds:</strong>
-            <div class="mleg"><div class="mdot" style="background:#d69e2e"></div>&lt; 1%</div>
-            <div class="mleg"><div class="mdot" style="background:#68d391"></div>1–2%</div>
-            <div class="mleg"><div class="mdot" style="background:#38a169"></div>2–3%</div>
-            <div class="mleg"><div class="mdot" style="background:#276749"></div>3%+</div>
+            <strong style="font-size:11.5px;color:#5C6670">Color = Cost of Funds:</strong>
+            <div class="mleg"><div class="mdot" style="background:#7C8994"></div>&lt; 1%</div>
+            <div class="mleg"><div class="mdot" style="background:#8C6239"></div>1–2%</div>
+            <div class="mleg"><div class="mdot" style="background:#1B5E8C"></div>2–3%</div>
+            <div class="mleg"><div class="mdot" style="background:#012A52"></div>3%+</div>
             <div class="mleg"><div class="mdot" style="background:var(--gold)"></div>Scraped rates</div>
-            <div class="mleg"><div class="mdot" style="background:#a0aec0"></div>No data</div>
+            <div class="mleg"><div class="mdot" style="background:#DDD8CE"></div>No data</div>
           </div>
           <div id="map"></div>
         </div>
@@ -920,13 +920,13 @@ th.dash-sortable:hover { background:#eef3f8; }
 
         <!-- Two-lens inverse explainer -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-          <div style="background:#e6fff0;border:1px solid #9ae6b4;border-left:4px solid #38a169;border-radius:8px;padding:14px 16px">
-            <div style="font-weight:700;color:#15803d;font-size:13.5px;margin-bottom:4px">🟢 Market Entry Opportunity (offensive)</div>
-            <div style="font-size:12px;color:#1a5e2e;line-height:1.5"><strong>Higher = better market to ENTER.</strong> Scores TX <em>metros</em>. A high score means an under-served market with below-median rates and room for a competitive new entrant — where Ranger should grow. Green = pursue.</div>
+          <div style="background:rgba(47,125,93,.08);border:1px solid rgba(47,125,93,.35);border-left:4px solid #2F7D5D;border-radius:8px;padding:14px 16px">
+            <div style="font-weight:700;color:#2F7D5D;font-size:13.5px;margin-bottom:4px">🟢 Market Entry Opportunity (offensive)</div>
+            <div style="font-size:12px;color:#2F7D5D;line-height:1.5"><strong>Higher = better market to ENTER.</strong> Scores TX <em>metros</em>. A high score means an under-served market with below-median rates and room for a competitive new entrant — where Ranger should grow. Green = pursue.</div>
           </div>
-          <div style="background:#fdecec;border:1px solid #fc8181;border-left:4px solid #c53030;border-radius:8px;padding:14px 16px">
-            <div style="font-weight:700;color:#b91c1c;font-size:13.5px;margin-bottom:4px">🔴 Competitor Watch (defensive)</div>
-            <div style="font-size:12px;color:#7b241c;line-height:1.5"><strong>Higher = bigger threat to DEFEND against.</strong> Scores individual <em>banks</em>. The "Rate Aggressiveness" component ranks on <strong>interest-bearing cost of funds</strong> — the rate a bank pays to win rate-sensitive money — because that, not the blended total, is what determines who out-bids us for the marginal depositor. Red = a threat, not a model to copy.</div>
+          <div style="background:rgba(218,12,27,.06);border:1px solid rgba(218,12,27,.35);border-left:4px solid #DA0C1B;border-radius:8px;padding:14px 16px">
+            <div style="font-weight:700;color:#DA0C1B;font-size:13.5px;margin-bottom:4px">🔴 Competitor Watch (defensive)</div>
+            <div style="font-size:12px;color:#DA0C1B;line-height:1.5"><strong>Higher = bigger threat to DEFEND against.</strong> Scores individual <em>banks</em>. The "Rate Aggressiveness" component ranks on <strong>interest-bearing cost of funds</strong> — the rate a bank pays to win rate-sensitive money — because that, not the blended total, is what determines who out-bids us for the marginal depositor. Red = a threat, not a model to copy.</div>
           </div>
         </div>
 
@@ -938,7 +938,7 @@ th.dash-sortable:hover { background:#eef3f8; }
             <strong>IB COF (marginal rate)</strong> = annualized interest expense ÷ interest-bearing deposits. The rate a bank pays <em>only</em> on rate-sensitive money. <strong>This is the number that matters when competing on rate.</strong> NIB deposits are relationship-driven and won't follow a rate offer, so the marginal depositor is captured at the IB rate — and a bank with a high IB COF will out-bid you for that depositor even if its Total COF looks low. The Competitor Aggressiveness score ranks on IB COF for exactly this reason, and the Market Entry tab's "Marginal Rate to Win" column shows the median IB COF of banks in each market — the rate floor a new entrant must beat.
           </div>
         </div>
-        <div style="background:#fffbea;border-left:3px solid var(--gold);padding:11px 15px;border-radius:0 6px 6px 0;font-size:12.5px;color:#5a4a1e;line-height:1.55;margin-bottom:20px">
+        <div style="background:rgba(203,153,92,.14);border-left:3px solid var(--gold);padding:11px 15px;border-radius:0 6px 6px 0;font-size:12.5px;color:#8C6239;line-height:1.55;margin-bottom:20px">
           <strong>The green-light overlap rule.</strong> The two lenses inform each other. A market scores high on Entry Opportunity <em>partly because</em> it lacks aggressive competitors — so the cleanest expansion targets are markets with a high Entry Opportunity score AND a low "Comp. Pressure" count (zero aggressive incumbents). On the Competitor Watch tab, a bank flagged "⚑ In Target Mkt" is the highest-priority watch item: it's an aggressive competitor sitting in a market we want, so it's simultaneously a defensive alert and an offensive signpost.
         </div>
 
@@ -964,11 +964,11 @@ th.dash-sortable:hover { background:#eef3f8; }
         <div style="background:var(--surface);border-radius:8px;padding:16px 20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow)">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Choropleth color (entry attractiveness)</div>
           <div style="display:flex;border-radius:6px;overflow:hidden;height:28px;font-size:11px;font-weight:700;color:#fff">
-            <div style="flex:1;background:#d73027;display:flex;align-items:center;justify-content:center">Avoid</div>
-            <div style="flex:1;background:#fc8d59;display:flex;align-items:center;justify-content:center">Contested</div>
-            <div style="flex:1;background:#fee08b;display:flex;align-items:center;justify-content:center;color:#7b5b1e">Moderate</div>
-            <div style="flex:1;background:#91cf60;display:flex;align-items:center;justify-content:center">Good</div>
-            <div style="flex:1;background:#1a9850;display:flex;align-items:center;justify-content:center">Best</div>
+            <div style="flex:1;background:#DA0C1B;display:flex;align-items:center;justify-content:center">Avoid</div>
+            <div style="flex:1;background:rgba(218,12,27,.62);display:flex;align-items:center;justify-content:center">Contested</div>
+            <div style="flex:1;background:#CB995C;display:flex;align-items:center;justify-content:center;color:#101418">Moderate</div>
+            <div style="flex:1;background:rgba(47,125,93,.62);display:flex;align-items:center;justify-content:center">Good</div>
+            <div style="flex:1;background:#2F7D5D;display:flex;align-items:center;justify-content:center">Best</div>
           </div>
           <div style="font-size:11.5px;color:var(--muted);margin-top:8px">Green = lower marginal rate + lighter competition (cheap to win deposits, no rate war). Red = higher rates already bid up + crowded with aggressive incumbents. Counties with no matched bank render gray ("insufficient data").</div>
         </div>
@@ -1013,7 +1013,7 @@ th.dash-sortable:hover { background:#eef3f8; }
           </div>
         </div>
 
-        <div style="background:#fffbea;border-left:3px solid var(--gold);padding:11px 15px;border-radius:0 6px 6px 0;font-size:12.5px;color:#5a4a1e;line-height:1.55;margin-bottom:20px">
+        <div style="background:rgba(203,153,92,.14);border-left:3px solid var(--gold);padding:11px 15px;border-radius:0 6px 6px 0;font-size:12.5px;color:#8C6239;line-height:1.55;margin-bottom:20px">
           <strong>On marketed rates from national competitors.</strong> National banks render rates <em>client-side</em> from backend APIs (Capital One's static HTML even serves <code>NaN</code>), so a plain static scrape returns nothing. A ToS-cleared <strong>headless-browser pass</strong> (Playwright/Chromium) with per-bank parsers now renders them, and three of the four biggest are <strong>live in the data</strong> with full provenance and an explicit rate <em>tier</em>:
           <strong>Capital One</strong> — full 360 CD ladder (9 terms, standard, $0 min; e.g. 12-mo 3.90%);
           <strong>Chase</strong> — featured <em>relationship</em> CDs (2-mo 1.50%, 4-mo 3.30%, 11-mo 2.75%; require a linked Chase checking account, $1,000 min) — captured from Chase's labeled rate table and flagged RELATIONSHIP so they're never read as unconditional;
@@ -1081,8 +1081,8 @@ const SCRAPED_RATES = {"metadata": {"scraped_at": "2026-06-10T00:07:46.752716+00
 // ═══════════════════════════════════════════════════════════════════════════════
 const PRODUCT_LABELS = { cd:'CD', savings:'Savings', mmkt:'Money Market', ichk:'Int. Checking', ira:'IRA' };
 const PRODUCT_LABELS_LONG = { cd:'Certificate of Deposit', savings:'Savings', mmkt:'Money Market', ichk:'Interest Checking', ira:'IRA' };
-const PRODUCT_COLORS = { cd:'#2b6cb0', savings:'#38a169', mmkt:'#d69e2e', ichk:'#805ad5', ira:'#c53030' };
-const PRODUCT_BG     = { cd:'#ebf8ff', savings:'#f0fff4', mmkt:'#fffaf0', ichk:'#faf5ff', ira:'#fff5f5' };
+const PRODUCT_COLORS = { cd:'#012A52', savings:'#2F7D5D', mmkt:'#8C6239', ichk:'#1B5E8C', ira:'#DA0C1B' };
+const PRODUCT_BG     = { cd:'rgba(1,42,82,.08)', savings:'rgba(47,125,93,.08)', mmkt:'rgba(140,98,57,.10)', ichk:'rgba(27,94,140,.08)', ira:'rgba(218,12,27,.05)' };
 
 const COUNTY_REGION = {
   'DALLAS':'north_central','TARRANT':'north_central','COLLIN':'north_central','DENTON':'north_central',
@@ -1792,21 +1792,21 @@ function recomputeMktBandCuts() {
 
 // Entry Opportunity Score badge — GREEN semantics (high = good market to enter)
 function mktOppBadge(m) {
-  if (m.opportunity == null) return '<span style="color:#a0aec0">—</span>';
+  if (m.opportunity == null) return '<span style="color:#8B9199">—</span>';
   const s = m.opportunity;
   // Opportunity lens: high = GREEN = pursue. Deepest green for Hot band.
-  const color = s >= _mktBandCuts.hot  ? '#15803d' :
-                s >= _mktBandCuts.warm ? '#38a169' :
-                s >= _mktBandCuts.mod  ? '#68a89a' : '#a0aec0';
+  const color = s >= _mktBandCuts.hot  ? '#2F7D5D' :
+                s >= _mktBandCuts.warm ? '#1B5E8C' :
+                s >= _mktBandCuts.mod  ? '#7C8994' : '#8B9199';
   const c = m._oppComponents || {};
   const w = MKT_OPP_WEIGHTS;
   const comps = [
-    { label:'Low marginal rate (county IB COF)', value: c.lowRate||0,        max: w.lowRate,        color: '#3182ce' },
-    { label:'Low competition (few aggressors)',  value: c.lowCompetition||0, max: w.lowCompetition, color: '#38a169' },
-    { label:'Market size (U-curve)',             value: c.marketSize||0,     max: w.marketSize,     color: '#805ad5' },
+    { label:'Low marginal rate (county IB COF)', value: c.lowRate||0,        max: w.lowRate,        color: '#012A52' },
+    { label:'Low competition (few aggressors)',  value: c.lowCompetition||0, max: w.lowCompetition, color: '#2F7D5D' },
+    { label:'Market size (U-curve)',             value: c.marketSize||0,     max: w.marketSize,     color: '#1B5E8C' },
   ];
-  if (c.bonus) comps.push({ label:'Soft+uncontested bonus', value: c.bonus, max: 3, color: '#22c55e' });
-  if (c.penalty) comps.push({ label:'− Rate war underway', value: c.penalty, max: c.penalty, color:'#e53e3e' });
+  if (c.bonus) comps.push({ label:'Soft+uncontested bonus', value: c.bonus, max: 3, color: '#CB995C' });
+  if (c.penalty) comps.push({ label:'− Rate war underway', value: c.penalty, max: c.penalty, color:'#DA0C1B' });
   const arr = (S && S.filtMarkets) || [];
   const n = arr.length;
   let rank = null;
@@ -1981,20 +1981,20 @@ function renderMarkets() {
   const rows=S.filtMarkets.slice(start,start+ps);
   const total=S.filtMarkets.length,pages=Math.max(1,Math.ceil(total/ps));
   const threshold=S.ranger.threshold;
-  const apyCell=v=>v!=null?`<span class="${v>=3?'apy-hi':v>=1.5?'apy-mid':'apy-lo'}${v>=threshold?' alert-rate':''}">${v.toFixed(2)}%</span>`:'<span style="color:#a0aec0">—</span>';
+  const apyCell=v=>v!=null?`<span class="${v>=3?'apy-hi':v>=1.5?'apy-mid':'apy-lo'}${v>=threshold?' alert-rate':''}">${v.toFixed(2)}%</span>`:'<span style="color:#8B9199">—</span>';
   const levelBadge=lv=>lv==='soft'?'<span class="lvl lvl-soft">Low</span>':lv==='mod'?'<span class="lvl lvl-mod">Moderate</span>':lv==='hot'?'<span class="lvl lvl-hot">High</span>':'—';
 
   // Competitor-pressure pill: 0 aggressive = clean entry (green), 1-2 = some, 3+ = heavy
   const pressureCell=n=>{
-    if(n==null) return '<span style="color:#a0aec0">—</span>';
+    if(n==null) return '<span style="color:#8B9199">—</span>';
     const cls=n===0?'xlink-clean':n<=2?'xlink-some':'xlink-heavy';
     const label=n===0?'Clean':n+' aggr.';
     return `<span class="xlink-pill ${cls}" title="${n} aggressive competitor(s) (Hot/Warm on Competitor Watch) operate in this market">${label}</span>`;
   };
   // Marginal-rate cell: lower = greener (cheaper to compete).
-  const rateCell=v=>v!=null?`<span style="font-weight:700;color:${v>=3?'#c53030':v>=2?'#dd6b20':'#276749'}">${v.toFixed(2)}%</span>`:'<span style="color:#a0aec0" title="No interest-bearing COF data for banks in this county">—</span>';
+  const rateCell=v=>v!=null?`<span style="font-weight:700;color:${v>=3?'#DA0C1B':v>=2?'#B5761F':'#2F7D5D'}">${v.toFixed(2)}%</span>`:'<span style="color:#8B9199" title="No interest-bearing COF data for banks in this county">—</span>';
   qs('#mkt-body').innerHTML=rows.map(m=>{
-    const types=m.products.length?m.products.map(t=>`<span class="pp pp-${t}">${PRODUCT_LABELS[t]||t}</span>`).join(' '):'<span style="color:#a0aec0;font-size:10px">no adv. rates</span>';
+    const types=m.products.length?m.products.map(t=>`<span class="pp pp-${t}">${PRODUCT_LABELS[t]||t}</span>`).join(' '):'<span style="color:#8B9199;font-size:10px">no adv. rates</span>';
     return`<tr>
       <td class="right">${mktOppBadge(m)}</td>
       <td><strong>${esc(titleCase(m.county))}</strong></td>
@@ -2037,7 +2037,7 @@ function renderScanner() {
          : r.special.replace(/[_(].*$/,'').trim().toUpperCase().slice(0,12))
       : '';
     const specTag = r.special
-      ? `<span style="display:inline-block;font-size:9px;font-weight:700;background:#fef3c7;color:#92400e;border-radius:7px;padding:0 5px;margin-right:4px;vertical-align:middle" title="${esc(r.conditions||r.special)}">${tierShort}</span>`
+      ? `<span style="display:inline-block;font-size:9px;font-weight:700;background:rgba(203,153,92,.20);color:#8C6239;border-radius:7px;padding:0 5px;margin-right:4px;vertical-align:middle" title="${esc(r.conditions||r.special)}">${tierShort}</span>`
       : '';
     return`<tr>
       <td><div class="bank-name" title="${esc(r.bankName)}">${esc(r.bankName)}</div></td>
@@ -2053,7 +2053,7 @@ function renderScanner() {
         const natl=BENCHMARKS.nationalAvg[nk];
         if(natl==null)return'—';
         const diffBp=Math.round((r.apy-natl)*100); const sign=diffBp>=0?'+':'';
-        return`<span style="color:${diffBp>=0?'#276749':'#c53030'};font-weight:600">${sign}${diffBp}bp</span>`;
+        return`<span style="color:${diffBp>=0?'#2F7D5D':'#DA0C1B'};font-weight:600">${sign}${diffBp}bp</span>`;
       })()}</td>
       <td>${srcLink}</td>
     </tr>`;
@@ -2065,16 +2065,16 @@ function renderScanner() {
 //  COST OF FUNDS TABLE
 // ═══════════════════════════════════════════════════════════════════════════════
 function healthColor(val,thresholds) {
-  if(val==null) return 'color:#a0aec0';
-  if(val<=thresholds[0]) return 'color:#276749;font-weight:700';
-  if(val<=thresholds[1]) return 'color:#c05621;font-weight:700';
-  return 'color:#c53030;font-weight:700';
+  if(val==null) return 'color:#8B9199';
+  if(val<=thresholds[0]) return 'color:#2F7D5D;font-weight:700';
+  if(val<=thresholds[1]) return 'color:#8C6239;font-weight:700';
+  return 'color:#DA0C1B;font-weight:700';
 }
 function healthColorInv(val,thresholds) {
-  if(val==null) return 'color:#a0aec0';
-  if(val>=thresholds[0]) return 'color:#276749;font-weight:700';
-  if(val>=thresholds[1]) return 'color:#c05621;font-weight:700';
-  return 'color:#c53030;font-weight:700';
+  if(val==null) return 'color:#8B9199';
+  if(val>=thresholds[0]) return 'color:#2F7D5D;font-weight:700';
+  if(val>=thresholds[1]) return 'color:#8C6239;font-weight:700';
+  return 'color:#DA0C1B;font-weight:700';
 }
 
 function renderCofTable() {
@@ -2093,14 +2093,14 @@ function renderCofTable() {
     const ibCell = b.cofIB != null
       ? `<span class="${cofClass(b.cofIB)}" title="Marginal rate — what this bank pays on interest-bearing money">${b.cofIB.toFixed(2)}%</span>`
       : `<span class="cof-na">—</span>`;
-    const pctCell=b.cofPctile!=null?`<span style="font-size:12px;font-weight:600;color:${b.cofPctile>=75?'#276749':b.cofPctile>=50?'#2b6cb0':'#a0aec0'}">${b.cofPctile}th</span>`:'<span style="color:#a0aec0">—</span>';
+    const pctCell=b.cofPctile!=null?`<span style="font-size:12px;font-weight:600;color:${b.cofPctile>=75?'#2F7D5D':b.cofPctile>=50?'#012A52':'#8B9199'}">${b.cofPctile}th</span>`:'<span style="color:#8B9199">—</span>';
     const intExp=b.eintexpM>0?`$${b.eintexpM<1?(b.eintexpM*1000).toFixed(0)+'K':b.eintexpM.toFixed(2)+'M'}`:'—';
     const depiCell=b.depiM>0?`$${b.depiM>=1000?(b.depiM/1000).toFixed(2)+'B':b.depiM.toFixed(0)+'M'}`:'—';
     const depCell=b.depM>0?`$${b.depM>=1000?(b.depM/1000).toFixed(2)+'B':b.depM.toFixed(0)+'M'}`:'—';
     const link=b.websiteUrl
       ?`<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" class="link-btn link-p">Visit Bank ↗</a>`
       :`<a href="https://www.google.com/search?q=${encodeURIComponent(b.name+' '+b.city+' TX deposit rates')}" target="_blank" rel="noopener" class="link-btn link-s">Search ↗</a>`;
-    const dgCell=b.depGrowth!=null?`<span style="font-size:12px;${b.depGrowth>=0?'color:#276749':'color:#c53030'};font-weight:600">${b.depGrowth>=0?'+':''}${b.depGrowth}%</span>`:'—';
+    const dgCell=b.depGrowth!=null?`<span style="font-size:12px;${b.depGrowth>=0?'color:#2F7D5D':'color:#DA0C1B'};font-weight:600">${b.depGrowth>=0?'+':''}${b.depGrowth}%</span>`:'—';
     return`<tr>
       <td><div class="bank-name" title="${esc(b.name)}">${esc(b.name)}</div></td>
       <td>${b.city}</td>
@@ -2139,19 +2139,19 @@ function renderCdCurve() {
     const k='cd'+t; return BENCHMARKS.nationalAvg[k]!=null?BENCHMARKS.nationalAvg[k]:null;
   });
   const datasets=[
-    {label:'Avg APY',data:avgs,borderColor:'#2b6cb0',backgroundColor:'rgba(43,108,176,.12)',pointBackgroundColor:'#2b6cb0',pointRadius:5,tension:.35,fill:true},
-    {label:'Best APY',data:bests,borderColor:'#276749',backgroundColor:'transparent',pointBackgroundColor:'#276749',pointRadius:4,borderDash:[5,3],tension:.35},
-    {label:'Natl Avg CD',data:natlAvgs,borderColor:'#a0aec0',backgroundColor:'transparent',pointBackgroundColor:'#a0aec0',pointRadius:3,borderDash:[3,3],tension:.35,borderWidth:2},
+    {label:'Avg APY',data:avgs,borderColor:'#012A52',backgroundColor:'rgba(1,42,82,.12)',pointBackgroundColor:'#012A52',pointRadius:5,tension:.35,fill:true},
+    {label:'Best APY',data:bests,borderColor:'#2F7D5D',backgroundColor:'transparent',pointBackgroundColor:'#2F7D5D',pointRadius:4,borderDash:[5,3],tension:.35},
+    {label:'Natl Avg CD',data:natlAvgs,borderColor:'#8B9199',backgroundColor:'transparent',pointBackgroundColor:'#8B9199',pointRadius:3,borderDash:[3,3],tension:.35,borderWidth:2},
   ];
   // Add Ranger CD rate if set
   if(S.ranger.cd12!=null){
     const rData=terms.map(t=>t===12?S.ranger.cd12:null);
-    datasets.push({label:'Ranger Bank',data:rData,borderColor:'#C8A951',backgroundColor:'transparent',pointBackgroundColor:'#C8A951',pointRadius:8,pointStyle:'star',showLine:false});
+    datasets.push({label:'Ranger Bank',data:rData,borderColor:'#CB995C',backgroundColor:'transparent',pointBackgroundColor:'#CB995C',pointRadius:8,pointStyle:'star',showLine:false});
   }
   S.charts.curve=new Chart(qs('#ch-curve'),{type:'line',data:{labels:terms.map(t=>t>=12&&t%12===0?`${t/12}yr`:`${t}mo`),datasets},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>ctx.raw!=null?`${ctx.dataset.label}: ${ctx.raw.toFixed(2)}%`:'No data'}}},
-      scales:{y:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f4f8'}},x:{grid:{color:'#f0f4f8'}}}}});
+      scales:{y:{ticks:{callback:v=>v+'%'},grid:{color:'#F0EBE1'}},x:{grid:{color:'#F0EBE1'}}}}});
 }
 
 function renderCdMatrix() {
@@ -2172,7 +2172,7 @@ function renderCdMatrix() {
       const cls=range<.01?'cell-mid':v>=min+range*.67?'cell-hi':v>=min+range*.33?'cell-mid':'cell-lo';
       return`<td><span class="cell-apy ${cls}">${v.toFixed(2)}%</span></td>`;
     }).join('');
-    const src=b.sourceUrl?`<a href="${esc(b.sourceUrl)}" target="_blank" rel="noopener" style="font-size:10px;color:#2b6cb0;font-weight:600">↗</a>`:'';
+    const src=b.sourceUrl?`<a href="${esc(b.sourceUrl)}" target="_blank" rel="noopener" style="font-size:10px;color:#012A52;font-weight:600">↗</a>`:'';
     return`<tr><td><div style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600" title="${esc(b.bankName)}">${esc(nameT)} ${src}</div></td><td style="font-size:11.5px;color:var(--muted)">${esc(titleCase(b.city))}</td>${cells}</tr>`;
   }).join('');
 }
@@ -2218,13 +2218,13 @@ function _fdicSub(){
   return r ? `FDIC ${formatRepdte(r)}` : '';
 }
 function _subtitleCfg(text){
-  return text ? { display:true, text, font:{size:10,style:'italic'}, color:'#a0aec0', padding:{top:4,bottom:2} } : { display:false };
+  return text ? { display:true, text, font:{size:10,style:'italic'}, color:'#8B9199', padding:{top:4,bottom:2} } : { display:false };
 }
 
 function renderCharts() {
   const H = (typeof DEPOSIT_HISTORY!=='undefined' && DEPOSIT_HISTORY.history) ? DEPOSIT_HISTORY.history : [];
   const banks = S.filtBanks || [];
-  const grid = '#f0f4f8';
+  const grid = '#F0EBE1';
   const med = arr => { const a=arr.filter(v=>v!=null).sort((x,y)=>x-y); return a.length? a[Math.floor(a.length/2)] : null; };
   const FDIC = 'FDIC BankFind · ' + (S.currentRepdte ? formatRepdte(S.currentRepdte) : 'current');
 
@@ -2233,8 +2233,8 @@ function renderCharts() {
   if(H.length){
     S.charts.cofTrend=new Chart(qs('#ch-cof-trend'),{type:'line',
       data:{labels:H.map(h=>h.label),datasets:[
-        {label:'Marginal (IB) COF — median',data:H.map(h=>h.med_ib_cof),borderColor:'#c53030',backgroundColor:'rgba(197,48,48,.08)',borderWidth:2,tension:.3,pointRadius:3,fill:true},
-        {label:'Blended (Total) COF — median',data:H.map(h=>h.med_total_cof),borderColor:'#2b6cb0',backgroundColor:'rgba(43,108,176,.06)',borderWidth:2,tension:.3,pointRadius:3,fill:true},
+        {label:'Marginal (IB) COF — median',data:H.map(h=>h.med_ib_cof),borderColor:'#DA0C1B',backgroundColor:'rgba(218,12,27,.08)',borderWidth:2,tension:.3,pointRadius:3,fill:true},
+        {label:'Blended (Total) COF — median',data:H.map(h=>h.med_total_cof),borderColor:'#012A52',backgroundColor:'rgba(1,42,82,.06)',borderWidth:2,tension:.3,pointRadius:3,fill:true},
       ]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}},subtitle:_subtitleCfg('FDIC · median of '+(H[H.length-1].n_banks||'')+' TX-branch banks · Fed funds now '+BENCHMARKS.fedFundsLow+'–'+BENCHMARKS.fedFundsHigh+'%'),
@@ -2247,8 +2247,8 @@ function renderCharts() {
   if(H.length){
     S.charts.depTrend=new Chart(qs('#ch-dep-trend'),{
       data:{labels:H.map(h=>h.label),datasets:[
-        {type:'bar',label:'Deposits ($B, ex-mega)',data:H.map(h=>h.dep_ex_mega_b),backgroundColor:'#90cdf4',borderRadius:4,yAxisID:'y',order:2},
-        {type:'line',label:'QoQ growth %',data:H.map(h=>h.dep_qoq_pct),borderColor:'#276749',borderWidth:2,tension:.3,pointRadius:3,yAxisID:'y1',order:1},
+        {type:'bar',label:'Deposits ($B, ex-mega)',data:H.map(h=>h.dep_ex_mega_b),backgroundColor:'#1B5E8C',borderRadius:4,yAxisID:'y',order:2},
+        {type:'line',label:'QoQ growth %',data:H.map(h=>h.dep_qoq_pct),borderColor:'#2F7D5D',borderWidth:2,tension:.3,pointRadius:3,yAxisID:'y1',order:1},
       ]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}},subtitle:_subtitleCfg('FDIC · summed deposits of footprint banks under $50B (TX community/regional base)'),
@@ -2263,7 +2263,7 @@ function renderCharts() {
     const na=BENCHMARKS.nationalAvg||{};
     const labels=['Footprint IB COF','Footprint Total COF','Natl avg savings','Natl avg 12-mo CD','Fed funds (upper)'];
     const vals=[medIB,medTot,na.savings,na.cd12,BENCHMARKS.fedFundsHigh];
-    const cols=['#c53030','#2b6cb0','#a0aec0','#a0aec0','#1B365D'];
+    const cols=['#DA0C1B','#012A52','#8B9199','#8B9199','#CB995C'];
     S.charts.macro=new Chart(qs('#ch-macro'),{type:'bar',
       data:{labels,datasets:[{data:vals,backgroundColor:cols,borderRadius:5}]},
       options:{responsive:true,maintainAspectRatio:false,
@@ -2287,10 +2287,10 @@ function renderCharts() {
     const best=prodDef.map(p=>{const a=sub(p);return a.length?+Math.max(...a).toFixed(2):null;});
     const ranger=prodDef.map(p=>p.ranger!=null?+(+p.ranger).toFixed(2):null);
     const natl=prodDef.map(p=>na[p.natl]!=null?na[p.natl]:null);
-    const ds=[{label:'Market avg',data:market,backgroundColor:'#63b3ed',borderRadius:4},
-              {label:'Market best',data:best,backgroundColor:'#2b6cb0',borderRadius:4},
-              {label:'FDIC national avg',data:natl,backgroundColor:'#a0aec0',borderRadius:4}];
-    if(ranger.some(v=>v!=null)) ds.unshift({label:'Ranger',data:ranger,backgroundColor:'#C8A951',borderRadius:4});
+    const ds=[{label:'Market avg',data:market,backgroundColor:'#1B5E8C',borderRadius:4},
+              {label:'Market best',data:best,backgroundColor:'#012A52',borderRadius:4},
+              {label:'FDIC national avg',data:natl,backgroundColor:'#8B9199',borderRadius:4}];
+    if(ranger.some(v=>v!=null)) ds.unshift({label:'Ranger',data:ranger,backgroundColor:'#CB995C',borderRadius:4});
     const subtxt = ranger.some(v=>v!=null) ? 'Ranger vs market (scraped) vs FDIC national avg — gap to the field, by product'
                  : 'Click "Set Ranger Rates" to overlay your line · market = scraped advertised, national = FDIC';
     S.charts.gap=new Chart(qs('#ch-gap'),{type:'bar',
@@ -2311,12 +2311,12 @@ function renderCharts() {
       const counts=new Array(bands.length).fill(0); ib.forEach(r=>counts[bandIdx(r)]++);
       const q=p=>ib[Math.min(ib.length-1,Math.floor(p*ib.length))];
       const m=q(.5),q1=q(.25),q3=q(.75),mi=bandIdx(m);
-      const cols=counts.map((_,i)=> i===mi?'#c8a951':'#63b3ed');
+      const cols=counts.map((_,i)=> i===mi?'#CB995C':'#1B5E8C');
       S.charts.cofDist=new Chart(qs('#ch-cof-dist'),{type:'bar',
-        data:{labels:bands,datasets:[{data:counts,backgroundColor:cols,borderColor:'#2b6cb0',borderWidth:1,borderRadius:4}]},
+        data:{labels:bands,datasets:[{data:counts,backgroundColor:cols,borderColor:'#012A52',borderWidth:1,borderRadius:4}]},
         options:{responsive:true,maintainAspectRatio:false,
           plugins:{legend:{display:false},subtitle:_subtitleCfg(FDIC+' · gold = median band '+m.toFixed(2)+'% · IQR '+q1.toFixed(2)+'–'+q3.toFixed(2)+'%'),tooltip:{callbacks:{label:ctx=>ctx.raw+' banks'}}},
-          scales:{y:{title:{display:true,text:'Bank count',font:{size:10},color:'#718096'},grid:{color:grid}},x:{title:{display:true,text:'Marginal (IB) cost of funds',font:{size:10},color:'#718096'},grid:{display:false}}}}});
+          scales:{y:{title:{display:true,text:'Bank count',font:{size:10},color:'#5C6670'},grid:{color:grid}},x:{title:{display:true,text:'Marginal (IB) cost of funds',font:{size:10},color:'#5C6670'},grid:{display:false}}}}});
     }
   }
 
@@ -2329,8 +2329,8 @@ function renderCharts() {
     const tot =regKeys.map(rk=>banks.filter(b=>b.region===rk).length);
     S.charts.pressure=new Chart(qs('#ch-pressure'),{type:'bar',
       data:{labels:regKeys.map(rk=>REGION_LABELS[rk].replace('/ ','/')),datasets:[
-        {label:'Aggressive (Hot/Warm)',data:aggr,backgroundColor:'#c53030',borderRadius:4},
-        {label:'All competitors',data:tot,backgroundColor:'#e2e8f0',borderRadius:4},
+        {label:'Aggressive (Hot/Warm)',data:aggr,backgroundColor:'#DA0C1B',borderRadius:4},
+        {label:'All competitors',data:tot,backgroundColor:'#DDD8CE',borderRadius:4},
       ]},
       options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
         plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}},subtitle:_subtitleCfg('Aggressive = Hot/Warm on Competitor Watch · '+FDIC),
@@ -2347,13 +2347,13 @@ function renderCharts() {
       const bi=v=>v<50?0:v<65?1:v<80?2:v<90?3:v<100?4:5;
       const counts=new Array(6).fill(0); ltd.forEach(v=>counts[bi(v)]++);
       const m=ltd[Math.floor(ltd.length/2)],mi=bi(m);
-      const base=['#c6f6d5','#9ae6b4','#68d391','#fefcbf','#fed7d7','#fc8181'];
-      const cols=base.map((c,i)=> i===mi?'#c8a951':c);
+      const base=['rgba(47,125,93,.55)','rgba(47,125,93,.40)','rgba(47,125,93,.25)','rgba(181,118,31,.35)','rgba(218,12,27,.35)','rgba(218,12,27,.55)'];
+      const cols=base.map((c,i)=> i===mi?'#CB995C':c);
       S.charts.ltdDist=new Chart(qs('#ch-ltd-dist'),{type:'bar',
         data:{labels:bands,datasets:[{data:counts,backgroundColor:cols,borderRadius:4}]},
         options:{responsive:true,maintainAspectRatio:false,
           plugins:{legend:{display:false},subtitle:_subtitleCfg(FDIC+' · green ≤80% liquid · red >100% loaned-up · gold = footprint median '+m.toFixed(0)+'%'),tooltip:{callbacks:{label:ctx=>ctx.raw+' banks'}}},
-          scales:{y:{title:{display:true,text:'Bank count',font:{size:10},color:'#718096'},grid:{color:grid}},x:{grid:{display:false}}}}});
+          scales:{y:{title:{display:true,text:'Bank count',font:{size:10},color:'#5C6670'},grid:{color:grid}},x:{grid:{display:false}}}}});
     }
   }
 }
@@ -2361,16 +2361,16 @@ function renderCharts() {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  MAP
 // ═══════════════════════════════════════════════════════════════════════════════
-function cofColor(cof){if(cof===null)return'#a0aec0';if(cof>=3)return'#276749';if(cof>=2)return'#38a169';if(cof>=1)return'#68d391';return'#d69e2e';}
+function cofColor(cof){if(cof===null)return'#DDD8CE';if(cof>=3)return'#012A52';if(cof>=2)return'#1B5E8C';if(cof>=1)return'#8C6239';return'#7C8994';}
 
 // Diverging green→red scale for county entry attractiveness (0–100 opportunity).
 function attractivenessColor(score){
-  if(score==null) return '#e2e8f0';                 // no data → gray
-  if(score>=75) return '#1a9850';                   // best
-  if(score>=60) return '#91cf60';
-  if(score>=45) return '#fee08b';                   // moderate
-  if(score>=30) return '#fc8d59';
-  return '#d73027';                                 // avoid
+  if(score==null) return '#DDD8CE';                 // no data → gray
+  if(score>=75) return '#2F7D5D';                   // best
+  if(score>=60) return 'rgba(47,125,93,.62)';
+  if(score>=45) return '#CB995C';                   // moderate
+  if(score>=30) return 'rgba(218,12,27,.62)';
+  return '#DA0C1B';                                 // avoid
 }
 
 // ── County choropleth ──────────────────────────────────────────────────────
@@ -2391,22 +2391,22 @@ function renderCountyChoropleth() {
       const name=feat.properties.name||titleCase(feat.properties.county||'');
       const m=byCounty[(feat.properties.county||'').toUpperCase()];
       if(!m){
-        layer.bindPopup(`<div style="min-width:180px;font-size:13px"><div style="font-weight:700">${esc(name)} County</div><div style="color:#718096;font-size:11px;margin-top:3px">No bank with a TX branch matched here — insufficient data.</div></div>`,{maxWidth:280});
+        layer.bindPopup(`<div style="min-width:180px;font-size:13px"><div style="font-weight:700">${esc(name)} County</div><div style="color:#5C6670;font-size:11px;margin-top:3px">No bank with a TX branch matched here — insufficient data.</div></div>`,{maxWidth:280});
       } else {
         const med=m.marginalRate!=null?m.marginalRate.toFixed(2)+'%':'—';
         const mx =m.marginalRateMax!=null?m.marginalRateMax.toFixed(2)+'%':'—';
         const adv=m.avgApy!=null?m.avgApy.toFixed(2)+'%':'no scraped rates';
         layer.bindPopup(`<div style="min-width:230px;font-size:13px">
           <div style="font-weight:700;font-size:14px">${esc(name)} County</div>
-          <div style="color:#718096;font-size:11px;margin-bottom:6px">${m.regionLabel}</div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Entry Opportunity</span><strong style="color:${attractivenessColor(m.opportunity)==='#fee08b'?'#b7791f':attractivenessColor(m.opportunity)}">${m.opportunity!=null?m.opportunity:'—'}</strong></div>
+          <div style="color:#5C6670;font-size:11px;margin-bottom:6px">${m.regionLabel}</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Entry Opportunity</span><strong style="color:${attractivenessColor(m.opportunity)==='#CB995C'?'#8C6239':attractivenessColor(m.opportunity)}">${m.opportunity!=null?m.opportunity:'—'}</strong></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Competitors / aggressive</span><strong>${m.bankCount} / ${m._compPressure}</strong></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Marginal rate (median / max)</span><strong>${med} / ${mx}</strong></div>
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Avg advertised APY</span><strong>${adv}</strong></div>
         </div>`,{maxWidth:300});
       }
       layer.on({
-        mouseover:e=>e.target.setStyle({weight:2,color:'#1B365D'}),
+        mouseover:e=>e.target.setStyle({weight:2,color:'#012A52'}),
         mouseout:e=>S.countyLayer.resetStyle(e.target),
       });
     },
@@ -2451,23 +2451,23 @@ function renderMap() {
     if(!b.lat||!b.lng)return;
     const sc=scrapedByBank.get(String(b.cert));
     const radius=5+Math.min(b.assetM/150,9);
-    const fillColor=sc?'#C8A951':cofColor(b.impliedRate);
+    const fillColor=sc?'#CB995C':cofColor(b.impliedRate);
     const marker=L.circleMarker([b.lat,b.lng],{radius,fillColor,color:'#fff',weight:1.5,fillOpacity:.88});
 
     const cofRow=b.impliedRate!==null
-      ?`<div style="font-size:12px;margin-bottom:4px"><span style="color:var(--muted)">FDIC COF:</span> <strong style="color:#2b6cb0">${b.impliedRate.toFixed(2)}%</strong></div>`
+      ?`<div style="font-size:12px;margin-bottom:4px"><span style="color:var(--muted)">FDIC COF:</span> <strong style="color:#012A52">${b.impliedRate.toFixed(2)}%</strong></div>`
       :'';
     const scrapedHtml=sc?sc.prods.map(p=>{
       const term=p.term_months?` · ${p.term_months}mo`:'';
-      return`<div style="display:flex;justify-content:space-between;gap:6px;margin-bottom:2px;font-size:11.5px"><span style="color:${PRODUCT_COLORS[p.type]||'#4a5568'};font-weight:600">${esc(p.name||p.type)}${term}</span><span style="font-weight:700;color:#22543d">${p.apy.toFixed(2)}%</span></div>`;
+      return`<div style="display:flex;justify-content:space-between;gap:6px;margin-bottom:2px;font-size:11.5px"><span style="color:${PRODUCT_COLORS[p.type]||'#5C6670'};font-weight:600">${esc(p.name||p.type)}${term}</span><span style="font-weight:700;color:#2F7D5D">${p.apy.toFixed(2)}%</span></div>`;
     }).join(''):'';
-    const link=b.websiteUrl?`<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" style="color:#2b6cb0;font-size:11.5px;font-weight:600;text-decoration:none">Visit Bank ↗</a>`:'';
+    const link=b.websiteUrl?`<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" style="color:#012A52;font-size:11.5px;font-weight:600;text-decoration:none">Visit Bank ↗</a>`:'';
 
     marker.bindPopup(`<div style="min-width:230px;font-size:13px">
       <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(b.name)}</div>
-      <div style="color:#718096;font-size:11px;margin-bottom:6px">${b.city}, TX · ${fmtM(b.assetM)} assets</div>
-      ${cofRow}${scrapedHtml?'<div style="border-top:1px solid #e2e8f0;padding-top:5px;margin-top:4px">'+scrapedHtml+'</div>':''}
-      ${link?'<div style="border-top:1px solid #e2e8f0;padding-top:5px;margin-top:4px">'+link+'</div>':''}
+      <div style="color:#5C6670;font-size:11px;margin-bottom:6px">${b.city}, TX · ${fmtM(b.assetM)} assets</div>
+      ${cofRow}${scrapedHtml?'<div style="border-top:1px solid #DDD8CE;padding-top:5px;margin-top:4px">'+scrapedHtml+'</div>':''}
+      ${link?'<div style="border-top:1px solid #DDD8CE;padding-top:5px;margin-top:4px">'+link+'</div>':''}
     </div>`,{maxWidth:300});
     S.cluster.addLayer(marker);
   });
@@ -2914,11 +2914,11 @@ function populateRescrapeModal(){
   const scrapedAt = m?.scraped_at ? new Date(m.scraped_at) : null;
   const days = daysAgo(scrapedAt);
   const cls  = freshnessClass(days);
-  const colorBg = cls==='fr-green'?'#e6fffa':cls==='fr-yellow'?'#fffbea':cls==='fr-red'?'#fed7d7':'#edf2f7';
-  const colorFg = cls==='fr-green'?'#22543d':cls==='fr-yellow'?'#7b341e':cls==='fr-red'?'#742a2a':'#4a5568';
+  const colorBg = cls==='fr-green'?'rgba(47,125,93,.08)':cls==='fr-yellow'?'rgba(203,153,92,.14)':cls==='fr-red'?'rgba(218,12,27,.08)':'#F0EBE1';
+  const colorFg = cls==='fr-green'?'#2F7D5D':cls==='fr-yellow'?'#8C6239':cls==='fr-red'?'#DA0C1B':'#5C6670';
   const ageLine = scrapedAt
     ? `<div class="rs-age" style="background:${colorBg};color:${colorFg}">Last scraped: ${scrapedAt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})} · ${days} days ago · ${m?.banks_with_rates||0} banks, ${m?.product_rows||0} products</div>`
-    : `<div class="rs-age" style="background:#edf2f7;color:#4a5568">No rate-scrape metadata recorded</div>`;
+    : `<div class="rs-age" style="background:#F0EBE1;color:#5C6670">No rate-scrape metadata recorded</div>`;
   const ageHost = document.getElementById('rs-age-line');
   if(ageHost) ageHost.innerHTML = ageLine;
   const cmd =
@@ -2963,7 +2963,7 @@ function renderMethodology(){
   if(asof){
     const cofCls  = freshnessClass(repdteDays);
     const rateCls = freshnessClass(scrapeDays);
-    const dot = cls => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cls==='fr-green'?'#48bb78':cls==='fr-yellow'?'#ed8936':cls==='fr-red'?'#f56565':'#cbd5e0'};margin-right:6px;vertical-align:middle"></span>`;
+    const dot = cls => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cls==='fr-green'?'#2F7D5D':cls==='fr-yellow'?'#B5761F':cls==='fr-red'?'#DA0C1B':'#C7BFB1'};margin-right:6px;vertical-align:middle"></span>`;
     asof.innerHTML = `
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Data freshness</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -3023,7 +3023,7 @@ function renderMethodology(){
   if(limEl){
     const ageNote = scrapeDays!=null
       ? (scrapeDays>STALE_RATES_WARN_DAYS
-          ? `<strong style="color:#742a2a">Advertised rates are ${scrapeDays} days old</strong> — re-scrape recommended (every 30 days)`
+          ? `<strong style="color:#DA0C1B">Advertised rates are ${scrapeDays} days old</strong> — re-scrape recommended (every 30 days)`
           : `Advertised rates are ${scrapeDays} day${scrapeDays===1?'':'s'} old`)
       : 'Advertised rate scrape age unknown';
     limEl.innerHTML = `
@@ -3162,21 +3162,21 @@ function compScorePct(b) {
   return Math.round(100 * c / n);
 }
 function compBadge(s, bank) {
-  const bg = s >= _compBandCuts.hot  ? '#c53030' :
-             s >= _compBandCuts.warm ? '#dd6b20' :
-             s >= _compBandCuts.mod  ? '#3182ce' : '#a0aec0';
+  const bg = s >= _compBandCuts.hot  ? '#DA0C1B' :
+             s >= _compBandCuts.warm ? '#B5761F' :
+             s >= _compBandCuts.mod  ? '#012A52' : '#7C8994';
   const c = (bank && bank._compComponents) || {};
   const w = COMP_WEIGHTS;
   const comps = [
-    { label: 'Rate aggressiveness (IB COF peer-rank)', value: c.cof||0,      max: w.cof,      color: '#c53030' },
-    { label: 'Growth proxy (peer-rank)',   value: c.growth||0,   max: w.growth,   color: '#38a169' },
-    { label: 'Asset size fit',             value: c.assetFit||0, max: w.assetFit, color: '#319795' },
-    { label: 'Web presence',               value: c.web||0,      max: w.web,      color: '#dd6b20' },
-    { label: 'Best advertised APY (peer-rank)', value: c.scraped||0,  max: w.scraped,  color: '#805ad5' },
+    { label: 'Rate aggressiveness (IB COF peer-rank)', value: c.cof||0,      max: w.cof,      color: '#DA0C1B' },
+    { label: 'Growth proxy (peer-rank)',   value: c.growth||0,   max: w.growth,   color: '#2F7D5D' },
+    { label: 'Asset size fit',             value: c.assetFit||0, max: w.assetFit, color: '#7C8994' },
+    { label: 'Web presence',               value: c.web||0,      max: w.web,      color: '#B5761F' },
+    { label: 'Best advertised APY (peer-rank)', value: c.scraped||0,  max: w.scraped,  color: '#1B5E8C' },
   ];
-  if (c.bonus) comps.push({ label:'Premium-signal bonus', value:c.bonus, max:5, color:'#22c55e' });
+  if (c.bonus) comps.push({ label:'Premium-signal bonus', value:c.bonus, max:5, color:'#CB995C' });
   const penaltyLabels = { mega_bank:'− Mega bank (>$5B)', micro_bank:'− Sub-scale (<$50M)' };
-  Object.keys(c.penalties || {}).forEach(k => comps.push({ label: penaltyLabels[k], value: c.penalties[k], max: c.penalties[k], color: '#e53e3e' }));
+  Object.keys(c.penalties || {}).forEach(k => comps.push({ label: penaltyLabels[k], value: c.penalties[k], max: c.penalties[k], color: '#DA0C1B' }));
   const pct = compScorePct(bank);
   const pctStr = (pct != null) ? ' · Top '+(100 - pct)+'%' : '';
   const compsJson = JSON.stringify(comps).replace(/"/g, '&quot;');
@@ -3206,29 +3206,29 @@ function renderBankDirectory() {
   const total=sorted.length, pages=Math.max(1,Math.ceil(total/ps));
 
   const fmtM=v=>v>=1000?'$'+(v/1000).toFixed(1)+'B':v>0?'$'+v.toFixed(0)+'M':'—';
-  const cofC=r=>r>=3?'color:#22543d':r>=1.5?'color:#276749':'color:#4a5568';
+  const cofC=r=>r>=3?'color:#2F7D5D':r>=1.5?'color:#2F7D5D':'color:#5C6670';
   const isRanger = S.ranger && S.ranger.cd12;
 
   qs('#bank-body').innerHTML = rows.map(b => {
     // Total (blended) COF — all-in funding cost
     const cofCell = b.cofTotal!=null
       ? `<span style="font-weight:700;font-size:14px;${cofC(b.cofTotal)}">${b.cofTotal.toFixed(2)}%</span><br><span style="font-size:10px;color:var(--muted)" title="FDIC INTEXPY ${b.finRepdte||''}">${b.finRepdte?formatRepdte(b.finRepdte):''}</span>`
-      : '<span style="color:#a0aec0">—</span>';
+      : '<span style="color:#8B9199">—</span>';
     // IB COF — marginal rate; the number Ranger must beat to win a rate shopper.
     // Bolder/red-leaning because this is the rate-competition signal.
     const ibCofCell = b.cofIB!=null
-      ? `<span style="font-weight:700;font-size:14px;color:${b.cofIB>=4?'#c53030':b.cofIB>=2.5?'#dd6b20':'#4a5568'}">${b.cofIB.toFixed(2)}%</span>`
-      : '<span style="color:#a0aec0">—</span>';
+      ? `<span style="font-weight:700;font-size:14px;color:${b.cofIB>=4?'#DA0C1B':b.cofIB>=2.5?'#B5761F':'#5C6670'}">${b.cofIB.toFixed(2)}%</span>`
+      : '<span style="color:#8B9199">—</span>';
     const rateLink = b.websiteUrl
-      ? `<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#ebf4ff;color:#2b6cb0;border:1px solid #bee3f8;text-decoration:none;white-space:nowrap">Visit ↗</a>`
-      : `<a href="https://www.google.com/search?q=${encodeURIComponent(b.name+' '+b.city+' TX rates')}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#f7fafc;color:#4a5568;border:1px solid #e2e8f0;text-decoration:none;white-space:nowrap">Search ↗</a>`;
+      ? `<a href="${esc(b.websiteUrl)}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:rgba(1,42,82,.08);color:#012A52;border:1px solid rgba(1,42,82,.20);text-decoration:none;white-space:nowrap">Visit ↗</a>`
+      : `<a href="https://www.google.com/search?q=${encodeURIComponent(b.name+' '+b.city+' TX rates')}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;background:#FCFAF6;color:#5C6670;border:1px solid #DDD8CE;text-decoration:none;white-space:nowrap">Search ↗</a>`;
     // Cross-link: is this competitor sitting in a market we want to enter?
     const inTgt = b._inTargetMkt
       ? `<span class="xlink-pill xlink-yes" title="This competitor operates in ${esc(titleCase(b.city))}, a Hot/Warm Entry Opportunity market (score ${b._mktOpp!=null?Math.round(b._mktOpp):'—'}). Highest-priority watch item — they're in a market we'd want.">⚑ Yes (${b._mktOpp!=null?Math.round(b._mktOpp):'—'})</span>`
       : '<span class="xlink-pill xlink-no">—</span>';
     // Out-of-state HQ tag: show the bank's TX footprint city + HQ-state chip.
     const oosTag = b.oosHq
-      ? ` <span title="Headquartered in ${esc(b.hqState)} (${esc(titleCase(b.hqCity||''))}). Shown at its largest TX branch market." style="display:inline-block;font-size:9px;font-weight:700;background:#edf2f7;color:#4a5568;border-radius:8px;padding:0 5px;vertical-align:middle">HQ ${esc(b.hqState)}</span>`
+      ? ` <span title="Headquartered in ${esc(b.hqState)} (${esc(titleCase(b.hqCity||''))}). Shown at its largest TX branch market." style="display:inline-block;font-size:9px;font-weight:700;background:#F0EBE1;color:#5C6670;border-radius:8px;padding:0 5px;vertical-align:middle">HQ ${esc(b.hqState)}</span>`
       : '';
     return `<tr data-cert="${b.cert}">
       <td style="position:relative">${compBadge(b.compScore, b)}</td>
@@ -3241,7 +3241,7 @@ function renderBankDirectory() {
       <td class="right" style="font-size:12px;color:var(--muted)">${b.eintexpM>0?(b.eintexpM<1?'$'+(b.eintexpM*1000).toFixed(0)+'K':'$'+b.eintexpM.toFixed(1)+'M'):'—'}</td>
       <td class="right" style="font-size:12px;color:var(--muted)">${fmtM(b.depM)}</td>
       <td class="right" style="font-size:12px;color:var(--muted)">${fmtM(b.assetM)}</td>
-      <td><span style="display:inline-block;padding:2px 7px;border-radius:12px;font-size:10.5px;font-weight:600;background:#f0f4f8;color:#4a5568">${(b.charterType||'').replace('Non-Member ','NM ').replace('Member ','M ')}</span></td>
+      <td><span style="display:inline-block;padding:2px 7px;border-radius:12px;font-size:10.5px;font-weight:600;background:#F0EBE1;color:#5C6670">${(b.charterType||'').replace('Non-Member ','NM ').replace('Member ','M ')}</span></td>
       <td style="font-size:12px;color:var(--muted)">${b.established||'—'}</td>
       <td>${rateLink}</td>
     </tr>`;
@@ -3306,7 +3306,7 @@ function renderOverview() {
       const avg = avgOf(mktRates);
       const rank = mktRates.filter(v=>v>rangerRate).length+1;
       const total = mktRates.length;
-      const vs = avg!==null ? (rangerRate>avg ? `<span style="color:#276749;font-weight:700">+${(rangerRate-avg).toFixed(2)}%</span> above avg` : `<span style="color:#c53030;font-weight:700">${(rangerRate-avg).toFixed(2)}%</span> below avg`) : 'no market data';
+      const vs = avg!==null ? (rangerRate>avg ? `<span style="color:#2F7D5D;font-weight:700">+${(rangerRate-avg).toFixed(2)}%</span> above avg` : `<span style="color:#DA0C1B;font-weight:700">${(rangerRate-avg).toFixed(2)}%</span> below avg`) : 'no market data';
       return `<div style="background:var(--surface);border-radius:8px;padding:14px 16px;border:1px solid var(--border);border-left:4px solid var(--gold)">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${label}</div>
         <div style="font-size:22px;font-weight:700;margin:4px 0">${rangerRate.toFixed(2)}%</div>
@@ -3344,8 +3344,8 @@ function renderOverview() {
       <div class="stat-card" style="border-left-color:var(--gold)"><div class="stat-label">Fed Funds Rate</div><div class="stat-value">${S.treasury?.fedFunds||'—'}</div><div class="stat-note">Current benchmark</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);border-top:3px solid #38a169;box-shadow:var(--shadow)">
-        <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:2px">🟢 Top 5 Markets to ENTER</div>
+      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);border-top:3px solid #2F7D5D;box-shadow:var(--shadow)">
+        <div style="font-size:12px;font-weight:700;color:#2F7D5D;margin-bottom:2px">🟢 Top 5 Markets to ENTER</div>
         <div style="font-size:10.5px;color:var(--muted);margin-bottom:10px">Highest Entry Opportunity — where Ranger should grow deposits. "Clean" = no aggressive incumbent.</div>
         <table style="width:100%;font-size:12px;border-collapse:collapse">
           <tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Market</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Avg APY</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Comp.</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Score</th></tr>
@@ -3353,16 +3353,16 @@ function renderOverview() {
             const press=m._compPressure;
             const pCls=press==null?'':press===0?'xlink-clean':press<=2?'xlink-some':'xlink-heavy';
             const pTxt=press==null?'—':press===0?'Clean':press+'';
-            return `<tr style="border-bottom:1px solid #f7fafc"><td style="padding:5px 0;font-weight:600">${titleCase(m.city)}</td><td style="text-align:right;padding:5px 0;color:var(--muted)">${m.avgApy!=null?m.avgApy.toFixed(2)+'%':'—'}</td><td style="text-align:right;padding:5px 0"><span class="xlink-pill ${pCls}" style="font-size:9.5px">${pTxt}</span></td><td style="text-align:right;padding:5px 0">${mktOppBadge(m)}</td></tr>`;
+            return `<tr style="border-bottom:1px solid #FCFAF6"><td style="padding:5px 0;font-weight:600">${titleCase(m.city)}</td><td style="text-align:right;padding:5px 0;color:var(--muted)">${m.avgApy!=null?m.avgApy.toFixed(2)+'%':'—'}</td><td style="text-align:right;padding:5px 0"><span class="xlink-pill ${pCls}" style="font-size:9.5px">${pTxt}</span></td><td style="text-align:right;padding:5px 0">${mktOppBadge(m)}</td></tr>`;
           }).join('')}
         </table>
       </div>
-      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);border-top:3px solid #c53030;box-shadow:var(--shadow)">
-        <div style="font-size:12px;font-weight:700;color:#b91c1c;margin-bottom:2px">🔴 Top 5 Aggressive Competitors</div>
+      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);border-top:3px solid #DA0C1B;box-shadow:var(--shadow)">
+        <div style="font-size:12px;font-weight:700;color:#DA0C1B;margin-bottom:2px">🔴 Top 5 Aggressive Competitors</div>
         <div style="font-size:10.5px;color:var(--muted);margin-bottom:10px">Highest Aggressiveness — banks to defend against. ⚑ = sitting in a market we want to enter.</div>
         <table style="width:100%;font-size:12px;border-collapse:collapse">
           <tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Bank</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">COF</th><th style="text-align:center;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Tgt</th><th style="text-align:right;padding:4px 0;color:var(--muted);font-size:10px;text-transform:uppercase">Score</th></tr>
-          ${[...banks].sort((a,b)=>(b.compScore||0)-(a.compScore||0)).slice(0,5).map(b=>`<tr style="border-bottom:1px solid #f7fafc"><td style="padding:5px 0;font-weight:600;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.name)}</td><td style="text-align:right;padding:5px 0;color:var(--muted)">${b.impliedRate!=null?b.impliedRate.toFixed(2)+'%':'—'}</td><td style="text-align:center;padding:5px 0">${b._inTargetMkt?'<span title="In a market we want to enter">⚑</span>':''}</td><td style="text-align:right;padding:5px 0">${compBadge(b.compScore, b)}</td></tr>`).join('')}
+          ${[...banks].sort((a,b)=>(b.compScore||0)-(a.compScore||0)).slice(0,5).map(b=>`<tr style="border-bottom:1px solid #FCFAF6"><td style="padding:5px 0;font-weight:600;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.name)}</td><td style="text-align:right;padding:5px 0;color:var(--muted)">${b.impliedRate!=null?b.impliedRate.toFixed(2)+'%':'—'}</td><td style="text-align:center;padding:5px 0">${b._inTargetMkt?'<span title="In a market we want to enter">⚑</span>':''}</td><td style="text-align:right;padding:5px 0">${compBadge(b.compScore, b)}</td></tr>`).join('')}
         </table>
       </div>
     </div>
@@ -3415,11 +3415,11 @@ async function main() {
 
   } catch(err) {
     qs('#loading').innerHTML = `
-      <div style="text-align:center;padding:40px;color:#c53030">
+      <div style="text-align:center;padding:40px;color:#DA0C1B">
         <div style="font-size:36px;margin-bottom:12px">!</div>
         <div style="font-size:18px;font-weight:700;margin-bottom:8px">Failed to load FDIC data</div>
-        <div style="color:#718096;margin-bottom:16px">${esc(err.message)}</div>
-        <button onclick="location.reload()" style="padding:8px 20px;background:#1B365D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">Retry</button>
+        <div style="color:#5C6670;margin-bottom:16px">${esc(err.message)}</div>
+        <button onclick="location.reload()" style="padding:8px 20px;background:#012A52;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">Retry</button>
       </div>`;
   }
 }

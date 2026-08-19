@@ -25,15 +25,15 @@
 <script src="../shared/sortable-table.js"></script>
 <style>
   :root {
-    --bg: #0b1220;
-    --panel: #131c2e;
-    --panel2: #1b2740;
-    --border: #2a3650;
-    --text: #e6ecf5;
-    --muted: #8a99b5;
-    --accent: #3ea676;
-    --accent2: #5b8def;
-    --warn: #e0a458;
+    --bg: #F2EFE9;
+    --panel: #FFFFFF;
+    --panel2: #FCFAF6; --panel3: #F0EBE1;
+    --border: #DDD8CE;
+    --text: #101418;
+    --muted: #5C6670; --faint: #8B9199;
+    --accent: #012A52; --good: #2F7D5D; --bad: #DA0C1B;
+    --accent2: #CB995C; --link: #1B5E8C;
+    --warn: #B5761F;
   }
   * { box-sizing: border-box; }
   body {
@@ -42,7 +42,7 @@
   }
   header {
     padding: 18px 28px; border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, #131c2e, #0b1220);
+    background: linear-gradient(180deg, #FFFFFF, #F2EFE9);
   }
   header h1 { margin: 0 0 4px; font-size: 20px; }
   header p  { margin: 0; color: var(--muted); font-size: 13px; }
@@ -94,7 +94,7 @@
   }
   table.data thead th.sort-asc::after { content: " ▲"; }
   table.data thead th.sort-desc::after { content: " ▼"; }
-  table.data tbody tr:hover { background: rgba(255,255,255,.03); }
+  table.data tbody tr:hover { background: rgba(1,42,82,.06); }
   .table-wrap { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 10px; max-width: 100%; }
   .table-wrap table { min-width: 100%; }
 
@@ -122,8 +122,8 @@
     display: inline-block; padding: 1px 7px; border-radius: 999px;
     font-size: 10px; font-weight: 600; vertical-align: middle;
   }
-  .badge.public { background: #1f3a5c; color: #aac8ff; border: 1px solid #2a4d75; }
-  .badge.mbhc   { background: #1d3a2c; color: #93d6b3; border: 1px solid #275a45; }
+  .badge.public { background: #012A52; color: #FFFFFF; border: 1px solid #012A52; }
+  .badge.mbhc   { background: #2F7D5D; color: #FFFFFF; border: 1px solid #2F7D5D; }
   .contact-panel {
     background: var(--panel2); border-radius: 8px; padding: 12px 14px;
     margin-top: 10px; font-size: 13px;
@@ -134,14 +134,14 @@
   }
   .contact-row { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 4px; }
   .contact-row .lbl { color: var(--muted); margin-right: 4px; }
-  .contact-panel a { color: var(--accent2); text-decoration: none; }
+  .contact-panel a { color: var(--link); text-decoration: none; }
   .contact-panel a:hover { text-decoration: underline; }
   .source-tag { color: var(--muted); font-size: 11px; font-style: italic; }
 
   /* ----- Map view ----- */
   #leaflet-map {
     height: 620px; border-radius: 10px; border: 1px solid var(--border);
-    background: #0e1626;
+    background: #F0EBE1;
   }
   .leaflet-popup-content-wrapper {
     background: var(--panel); color: var(--text);
@@ -149,7 +149,7 @@
   }
   .leaflet-popup-tip { background: var(--panel); }
   .leaflet-popup-content { font-size: 12.5px; margin: 10px 12px; min-width: 220px; }
-  .leaflet-popup-content a { color: var(--accent2); }
+  .leaflet-popup-content a { color: var(--link); }
   .leaflet-popup-content h4 { margin: 0 0 4px; font-size: 14px; }
   .leaflet-popup-content .pop-row { margin: 3px 0; }
   .leaflet-popup-content .lbl { color: var(--muted); }
@@ -170,17 +170,17 @@
     text-transform: uppercase; letter-spacing: .04em; }
   .map-legend .ramp {
     display: inline-block; width: 120px; height: 8px;
-    background: linear-gradient(90deg, #c8eed8, #1f6f44);
+    background: linear-gradient(90deg, #C0CAD4, #012A52);
     vertical-align: middle; border-radius: 4px;
   }
   .map-legend .swatch {
     display: inline-block; width: 11px; height: 11px; border-radius: 50%;
-    border: 1px solid #fff; vertical-align: middle; margin-right: 4px;
+    border: 1px solid rgba(1,42,82,.25); vertical-align: middle; margin-right: 4px;
   }
-  .map-legend .swatch.priority   { background: rgba(91,141,239,.35); border-color: #5b8def; }
-  .map-legend .swatch.secondary  { background: rgba(160,170,190,.25); border-color: #8a99b5; }
-  .map-legend .swatch.target     { background: #3ea676; }
-  .map-legend .swatch.rlsb       { background: #e0a458; border-color: #fff; }
+  .map-legend .swatch.priority   { background: rgba(203,153,92,.35); border-color: #CB995C; }
+  .map-legend .swatch.secondary  { background: rgba(124,137,148,.25); border-color: #7C8994; }
+  .map-legend .swatch.target     { background: #012A52; }
+  .map-legend .swatch.rlsb       { background: #B5761F; border-color: rgba(1,42,82,.25); }
   .map-controls {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px 18px;
@@ -213,7 +213,7 @@
     border-radius: 6px; cursor: pointer; font-size: 13px;
   }
   button.btn:hover { filter: brightness(1.1); }
-  details summary { cursor: pointer; color: var(--accent2); }
+  details summary { cursor: pointer; color: var(--link); }
   ul.compact { margin: 6px 0 0 18px; }
   ul.compact li { margin: 2px 0; }
 
@@ -228,7 +228,7 @@
   .val-method-card { background:var(--panel); border-left:4px solid var(--accent); border-radius:6px; padding:14px 18px; margin-bottom:16px; }
   .val-method-title { font-weight:700; font-size:13px; color:var(--accent); margin-bottom:6px; }
   .val-method-body { font-size:12px; color:var(--text); line-height:1.7; }
-  .val-method-body strong { color:var(--accent2); }
+  .val-method-body strong { color:var(--link); }
   .val-tbl-wrap { background:var(--panel); border-radius:8px; padding:0; margin-bottom:16px; max-height:60vh; overflow:auto; }
   #val-tbl { width:100%; border-collapse:collapse; font-size:12px; }
   #val-tbl thead th { background:var(--panel2); padding:9px 10px; color:var(--muted); font-weight:600;
@@ -236,22 +236,22 @@
                       cursor:pointer; user-select:none; font-size:10.5px; text-transform:uppercase; letter-spacing:.3px; }
   #val-tbl thead th.sort-asc::after { content:' ▲'; color:var(--accent); }
   #val-tbl thead th.sort-desc::after { content:' ▼'; color:var(--accent); }
-  #val-tbl tbody td { padding:7px 10px; border-bottom:1px solid var(--panel2); }
-  #val-tbl tbody tr:hover { background:var(--panel2); }
+  #val-tbl tbody td { padding:7px 10px; border-bottom:1px solid var(--border); }
+  #val-tbl tbody tr:hover { background:rgba(1,42,82,.06); }
   #val-tbl .num { text-align:right; font-variant-numeric:tabular-nums; }
   #val-tbl .bank-cell { font-weight:600; max-width:200px; }
   #val-tbl .bank-cell-city { font-size:10.5px; color:var(--muted); font-weight:400; }
   .val-status-badge { display:inline-block; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:700;
                       text-transform:uppercase; letter-spacing:.3px; }
-  .val-status-public { background:#1e3a5f; color:#9ec5fe; }
-  .val-status-private { background:#1e4136; color:#8ed5b3; }
-  .val-status-nohc { background:#3f2e1e; color:#f0b97e; }
-  .val-link { color:var(--accent2); text-decoration:none; font-size:11px; }
-  .val-link:hover { text-decoration:underline; color:#9ec5fe; }
+  .val-status-public { background:#012A52; color:#FFFFFF; }
+  .val-status-private { background:#2F7D5D; color:#FFFFFF; }
+  .val-status-nohc { background:#8C6239; color:#FFFFFF; }
+  .val-link { color:var(--link); text-decoration:none; font-size:11px; }
+  .val-link:hover { text-decoration:underline; color:#012A52; }
   .val-bottom-grid { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-top:8px; }
   .val-card { background:var(--panel); border-radius:8px; padding:16px 18px; }
   .val-card-title { font-weight:700; font-size:13px; color:var(--text); margin-bottom:10px;
-                    padding-bottom:8px; border-bottom:1px solid var(--panel2); }
+                    padding-bottom:8px; border-bottom:1px solid var(--border); }
   .val-coverage { font-size:12.5px; color:var(--text); line-height:1.6; }
   .val-coverage p { margin:0 0 10px 0; }
   .val-coverage strong { color:var(--accent); }
@@ -259,27 +259,27 @@
   .val-coverage-stats > div { background:var(--panel2); padding:8px 10px; border-radius:4px; text-align:center; }
   .val-coverage-stats .v { font-size:18px; font-weight:700; color:var(--accent); }
   .val-coverage-stats .l { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; margin-top:2px; }
-  .val-consideration { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--panel2); align-items:flex-start; }
+  .val-consideration { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
   .val-consideration:last-child { border-bottom:none; }
   .val-cons-bank { flex:0 0 200px; font-weight:600; font-size:12px; }
   .val-cons-flags { flex:1; font-size:11.5px; color:var(--text); line-height:1.5; }
   .val-cons-flag { display:inline-block; padding:2px 7px; border-radius:3px; font-size:10px; font-weight:600;
                    margin-right:4px; margin-bottom:2px; }
-  .val-flag-yellow { background:#3f2e1e; color:#f0b97e; }
-  .val-flag-red { background:#3a1e1e; color:#f0807e; }
-  .val-flag-green { background:#1e3a2e; color:#8ed5b3; }
-  .val-flag-blue { background:#1e2f3f; color:#9ec5fe; }
+  .val-flag-yellow { background:#8C6239; color:#FFFFFF; }
+  .val-flag-red { background:#DA0C1B; color:#FFFFFF; }
+  .val-flag-green { background:#2F7D5D; color:#FFFFFF; }
+  .val-flag-blue { background:#1B5E8C; color:#FFFFFF; }
   @media (max-width:1100px) {
     .val-controls, .val-bottom-grid { grid-template-columns: 1fr; }
   }
 
   /* Print styles */
   @media print {
-    body { background: #fff; color: #000; font-size: 10px; }
-    header { background: #1a202c; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { background: #FFFFFF; color: #101418; font-size: 10px; }
+    header { background: #F2EFE9; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .filter-bar, .btn, #map, .tabbar button:not(.active) { display: none !important; }
     .stat-grid { gap: 8px; margin-bottom: 10px; }
-    .stat-card { padding: 8px 10px; border: 1px solid #ccc; }
+    .stat-card { padding: 8px 10px; border: 1px solid #DDD8CE; }
     table { font-size: 9px; }
     th, td { padding: 4px 5px; }
     .tbl-wrap { max-height: none; overflow: visible; }
@@ -501,11 +501,11 @@
   <div class="card">
     <h3>Composite Scoring — Refined Methodology (v2)</h3>
     <p style="margin-top:0;font-size:13px;">
-      <strong style="color:#c8a951;">Composite = 0.50 × Quant + 0.25 × Deal Economics + 0.25 × Qualitative</strong><br>
+      <strong style="color:#012A52;">Composite = 0.50 × Quant + 0.25 × Deal Economics + 0.25 × Qualitative</strong><br>
       <span style="color:var(--muted);font-size:12px">v1 was 0.70 × Quant + 0.30 × Qualitative. v2 reallocates 20 pts from Quant to Deal Economics and shifts 5 pts of Qual to shareholder accessibility to balance "motivated seller" signals (Quant) with "attractive deal economics" (Deal Econ) and "executable transaction" (Qual w/ shareholder access).</span>
     </p>
 
-    <h4 style="margin-top:14px;margin-bottom:6px;font-size:14px;color:#9ec5fe;">Quantitative Score (50% of composite) — unchanged inputs</h4>
+    <h4 style="margin-top:14px;margin-bottom:6px;font-size:14px;color:#1B5E8C;">Quantitative Score (50% of composite) — unchanged inputs</h4>
     <table class="data" style="width:auto;">
       <thead><tr><th>Metric</th><th>Direction</th><th class="right">Weight</th></tr></thead>
       <tbody>
@@ -522,7 +522,7 @@
     </table>
     <p style="font-size:12px;color:var(--muted);margin-top:6px;">Each metric scored as a percentile rank across the 95-bank universe (0 = worst, 100 = best given direction). Weights applied to the percentile, then summed.</p>
 
-    <h4 style="margin-top:18px;margin-bottom:6px;font-size:14px;color:#c8a951;">Deal Economics Score (25% of composite) — NEW</h4>
+    <h4 style="margin-top:18px;margin-bottom:6px;font-size:14px;color:#012A52;">Deal Economics Score (25% of composite) — NEW</h4>
     <table class="data" style="width:auto;">
       <thead><tr><th>Sub-component</th><th>Formula</th><th class="right">Weight</th></tr></thead>
       <tbody>
@@ -534,7 +534,7 @@
       </tbody>
     </table>
 
-    <h4 style="margin-top:18px;margin-bottom:6px;font-size:14px;color:#8ed5b3;">Qualitative Score (25% of composite) — refined</h4>
+    <h4 style="margin-top:18px;margin-bottom:6px;font-size:14px;color:#2F7D5D;">Qualitative Score (25% of composite) — refined</h4>
     <table class="data" style="width:auto;">
       <thead><tr><th>Dimension</th><th>Source</th><th class="right">Weight</th></tr></thead>
       <tbody>
@@ -717,8 +717,8 @@ function holdcoShort(name) {
 function rankDeltaBadge(r) {
   const d = r.rank_delta;
   if (d == null || d === 0) return '<span style="color:var(--muted);font-size:11px">—</span>';
-  if (d > 0) return `<span style="color:#8ed5b3;font-size:11px;font-weight:700">▲${d}</span>`;
-  return `<span style="color:#f0807e;font-size:11px;font-weight:700">▼${Math.abs(d)}</span>`;
+  if (d > 0) return `<span style="color:#2F7D5D;font-size:11px;font-weight:700">▲${d}</span>`;
+  return `<span style="color:#DA0C1B;font-size:11px;font-weight:700">▼${Math.abs(d)}</span>`;
 }
 
 // Shareholder badge (used in rankings + map popup)
@@ -727,28 +727,28 @@ function shareholderBadge(r) {
   if (s === 'public') return '<span class="badge public" title="SEC-registered. DEF 14A proxy has 5%+ holders.">Public</span>';
   if (s === 'private_holdco') {
     if (r.multi_bank_holdco) return '<span class="badge mbhc" title="Multi-bank holdco. FR Y-6 available via FFIEC NIC; carve-out friction.">Multi-BHC</span>';
-    return '<span class="badge" style="background:#1e4136;color:#8ed5b3" title="Single-bank holding company. FR Y-6 available via FFIEC NIC.">Private+HC</span>';
+    return '<span class="badge" style="background:#2F7D5D;color:#FFFFFF" title="Single-bank holding company. FR Y-6 available via FFIEC NIC.">Private+HC</span>';
   }
-  return '<span class="badge" style="background:#3f2e1e;color:#f0b97e" title="No holding company on file. Ownership requires direct disclosure during outreach.">No HC</span>';
+  return '<span class="badge" style="background:#8C6239;color:#FFFFFF" title="No holding company on file. Ownership requires direct disclosure during outreach.">No HC</span>';
 }
 
 // Build hover-tooltip data attributes for the composite_score badge
 function compositeHoverAttrs(r) {
   // Top-level breakdown
   const comps = [
-    { label: 'Quant',        value: r.quant_score || 0,    max: 100, color: '#5b8def' },
-    { label: 'Deal Econ',    value: r.deal_econ_score || 0, max: 100, color: '#c8a951' },
-    { label: 'Qualitative',  value: r.qual_score || 0,     max: 100, color: '#3ea676' },
+    { label: 'Quant',        value: r.quant_score || 0,    max: 100, color: '#CB995C' },
+    { label: 'Deal Econ',    value: r.deal_econ_score || 0, max: 100, color: '#012A52' },
+    { label: 'Qualitative',  value: r.qual_score || 0,     max: 100, color: '#2F7D5D' },
   ];
   // v2 adjustments
-  if (r._maConviction) comps.push({ label: 'Conviction bonus (top-quartile pillars)', value: r._maConviction, max: 5, color: '#22c55e' });
+  if (r._maConviction) comps.push({ label: 'Conviction bonus (top-quartile pillars)', value: r._maConviction, max: 5, color: '#2F7D5D' });
   if (r._maMultiplier && r._maMultiplier !== 1.0) {
     const lbl = r._maMultiplier > 1 ? 'Shareholder access (×'+r._maMultiplier.toFixed(2)+')' : 'Opaque shareholders (×'+r._maMultiplier.toFixed(2)+')';
-    const color = r._maMultiplier > 1 ? '#22c55e' : '#dd6b20';
+    const color = r._maMultiplier > 1 ? '#2F7D5D' : '#B5761F';
     comps.push({ label: lbl, value: Math.abs(Math.round((r._compositeOriginal||0) * (r._maMultiplier - 1))), max: 30, color });
   }
   const penaltyLabels = { oversized:'− Oversized (>$1.5B)', undersized:'− Sub-scale (<$50M)', distressed:'− Liquidity+credit red flag' };
-  Object.keys(r._maPenalties||{}).forEach(k => comps.push({label:penaltyLabels[k]||('− '+k), value:r._maPenalties[k], max:r._maPenalties[k], color:'#e53e3e'}));
+  Object.keys(r._maPenalties||{}).forEach(k => comps.push({label:penaltyLabels[k]||('− '+k), value:r._maPenalties[k], max:r._maPenalties[k], color:'#DA0C1B'}));
   // Sub-group: deal econ components if available
   let subgroups = [];
   if (r.deal_econ_components) {
@@ -756,11 +756,11 @@ function compositeHoverAttrs(r) {
     subgroups.push({
       groupLabel: 'Deal Econ Breakdown',
       components: [
-        { label: 'Capital Efficiency', value: dc.capital_efficiency || 0, max: 100, color: '#5b8def' },
-        { label: 'Goodwill Burden',    value: dc.goodwill_burden || 0,    max: 100, color: '#38a169' },
-        { label: 'TBVE Size Fit',      value: dc.tbve_size_fit || 0,      max: 100, color: '#c8a951' },
-        { label: 'CoF Franchise',      value: dc.cof_franchise || 0,      max: 100, color: '#319795' },
-        { label: 'Credit Quality',     value: dc.credit_quality || 0,     max: 100, color: '#805ad5' },
+        { label: 'Capital Efficiency', value: dc.capital_efficiency || 0, max: 100, color: '#CB995C' },
+        { label: 'Goodwill Burden',    value: dc.goodwill_burden || 0,    max: 100, color: '#2F7D5D' },
+        { label: 'TBVE Size Fit',      value: dc.tbve_size_fit || 0,      max: 100, color: '#012A52' },
+        { label: 'CoF Franchise',      value: dc.cof_franchise || 0,      max: 100, color: '#1B5E8C' },
+        { label: 'Credit Quality',     value: dc.credit_quality || 0,     max: 100, color: '#8C6239' },
       ]
     });
   }
@@ -1037,17 +1037,17 @@ function dealEconSnapshot(r) {
   const goodwillPct = (r.GOODWILL && eq) ? (r.GOODWILL / eq * 100) : 0;
   const shLabel = (r.qual_components && r.qual_components.shareholder_access_label) || '—';
   const links = [];
-  if (r.fry6_search_url) links.push(`<a href="${r.fry6_search_url}" target="_blank" rel="noopener" style="color:#5b8def;text-decoration:none;font-size:11px">FR Y-6 ↗</a>`);
-  if (r.nic_profile_url) links.push(`<a href="${r.nic_profile_url}" target="_blank" rel="noopener" style="color:#5b8def;text-decoration:none;font-size:11px">NIC ↗</a>`);
-  if (r.sec_filings_url) links.push(`<a href="${r.sec_filings_url}" target="_blank" rel="noopener" style="color:#5b8def;text-decoration:none;font-size:11px">DEF 14A ↗</a>`);
+  if (r.fry6_search_url) links.push(`<a href="${r.fry6_search_url}" target="_blank" rel="noopener" style="color:#1B5E8C;text-decoration:none;font-size:11px">FR Y-6 ↗</a>`);
+  if (r.nic_profile_url) links.push(`<a href="${r.nic_profile_url}" target="_blank" rel="noopener" style="color:#1B5E8C;text-decoration:none;font-size:11px">NIC ↗</a>`);
+  if (r.sec_filings_url) links.push(`<a href="${r.sec_filings_url}" target="_blank" rel="noopener" style="color:#1B5E8C;text-decoration:none;font-size:11px">DEF 14A ↗</a>`);
   const sign = excessCap >= 0 ? '+' : '';
-  const excessColor = excessCap >= 0 ? '#8ed5b3' : '#f0807e';
+  const excessColor = excessCap >= 0 ? '#2F7D5D' : '#DA0C1B';
 
   return `
-    <div style="background:#0e1626;border:1px solid #2a3650;border-radius:6px;padding:12px 14px;margin-top:10px">
+    <div style="background:#F0EBE1;border:1px solid #DDD8CE;border-radius:6px;padding:12px 14px;margin-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-size:11.5px;font-weight:700;color:#c8a951;text-transform:uppercase;letter-spacing:.4px">Deal Economics Snapshot</div>
-        <div style="font-size:11px;color:var(--muted)">Deal Econ Score: <strong style="color:#c8a951">${r.deal_econ_score != null ? fmtNum(r.deal_econ_score) : '—'}</strong></div>
+        <div style="font-size:11.5px;font-weight:700;color:#012A52;text-transform:uppercase;letter-spacing:.4px">Deal Economics Snapshot</div>
+        <div style="font-size:11px;color:var(--muted)">Deal Econ Score: <strong style="color:#012A52">${r.deal_econ_score != null ? fmtNum(r.deal_econ_score) : '—'}</strong></div>
       </div>
       <div class="metric-grid">
         <div class="m"><div class="l">TBVE</div><div class="v">${tbve != null ? '$' + (tbve/1000).toFixed(1) + 'M' : '—'}</div></div>
@@ -1098,16 +1098,16 @@ function renderTop20() {
     const h = DATA.history[String(r.CERT)];
     if (h) {
       Plotly.newPlot('trend-' + r.CERT, [
-        { x: h.year, y: h.asset, mode: 'lines+markers', name: 'Assets',  line: {color: '#5b8def'} },
-        { x: h.year, y: h.loans, mode: 'lines+markers', name: 'Net Loans', line: {color: '#3ea676'} },
-        { x: h.year, y: h.deps,  mode: 'lines+markers', name: 'Deposits', line: {color: '#e0a458'} },
+        { x: h.year, y: h.asset, mode: 'lines+markers', name: 'Assets',  line: {color: '#CB995C'} },
+        { x: h.year, y: h.loans, mode: 'lines+markers', name: 'Net Loans', line: {color: '#2F7D5D'} },
+        { x: h.year, y: h.deps,  mode: 'lines+markers', name: 'Deposits', line: {color: '#B5761F'} },
       ], {
         margin: {l: 50, r: 10, t: 10, b: 30},
-        paper_bgcolor: '#131c2e', plot_bgcolor: '#131c2e',
-        font: {color: '#e6ecf5', size: 11},
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        font: {color: '#5C6670', size: 11},
         legend: {orientation: 'h', y: 1.15},
-        yaxis: {gridcolor: '#2a3650', title: '$000s'},
-        xaxis: {gridcolor: '#2a3650'},
+        yaxis: {gridcolor: '#DDD8CE', title: '$000s'},
+        xaxis: {gridcolor: '#DDD8CE'},
       }, {displayModeBar: false, responsive: true});
     }
   });
@@ -1192,9 +1192,9 @@ function renderPeer() {
   const secIdx  = PEER_METRICS.map((m, i) => i).filter(i =>  isSec(i));
   const orderedLabels = primIdx.concat(secIdx).map(i => labels[i]);
   const seriesDefs = [
-    { name: t.NAME,             vals: tVals, color: '#5b8def' },
-    { name: 'RLSB',             vals: rVals, color: '#e0a458' },
-    { name: 'TX <$200M Median', vals: mVals, color: '#3ea676' },
+    { name: t.NAME,             vals: tVals, color: '#CB995C' },
+    { name: 'RLSB',             vals: rVals, color: '#B5761F' },
+    { name: 'TX <$200M Median', vals: mVals, color: '#2F7D5D' },
   ];
   const peerTraces = [];
   seriesDefs.forEach(s => {
@@ -1212,19 +1212,19 @@ function renderPeer() {
 
   Plotly.newPlot('peerChart', peerTraces, {
     barmode: 'group',
-    paper_bgcolor: '#131c2e', plot_bgcolor: '#131c2e',
-    font: {color: '#e6ecf5'},
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: {color: '#5C6670'},
     margin: {l: 60, r: 70, t: 48, b: 90},
     xaxis: {
-      gridcolor: '#2a3650', tickangle: -30, automargin: true,
+      gridcolor: '#DDD8CE', tickangle: -30, automargin: true,
       categoryorder: 'array', categoryarray: orderedLabels,
     },
-    yaxis: {gridcolor: '#2a3650', rangemode: 'tozero', title: {text: 'Percent / $M', font: {size: 11}}},
+    yaxis: {gridcolor: '#DDD8CE', rangemode: 'tozero', title: {text: 'Percent / $M', font: {size: 11}}},
     yaxis2: {
       overlaying: 'y', side: 'right', rangemode: 'tozero',
       gridcolor: 'transparent', zeroline: false,
-      title: {text: 'Tier 1 Leverage · L/D (%)', font: {size: 11, color: '#d8bf83'}},
-      tickfont: {color: '#d8bf83'},
+      title: {text: 'Tier 1 Leverage · L/D (%)', font: {size: 11, color: '#8C6239'}},
+      tickfont: {color: '#8C6239'},
     },
     legend: {orientation: 'h', y: 1.1, yanchor: 'bottom', x: 0, xanchor: 'left'},
   }, {responsive: true, displayModeBar: false});
@@ -1277,8 +1277,8 @@ function renderOutreach() {
       : '—';
     // Build approach cell with FR Y-6/NIC links where applicable
     const approachLinks = [];
-    if (r.fry6_search_url) approachLinks.push(`<a href="${r.fry6_search_url}" target="_blank" rel="noopener" style="color:#5b8def;font-size:11px">FR Y-6 ↗</a>`);
-    if (r.sec_filings_url) approachLinks.push(`<a href="${r.sec_filings_url}" target="_blank" rel="noopener" style="color:#5b8def;font-size:11px">DEF 14A ↗</a>`);
+    if (r.fry6_search_url) approachLinks.push(`<a href="${r.fry6_search_url}" target="_blank" rel="noopener" style="color:#1B5E8C;font-size:11px">FR Y-6 ↗</a>`);
+    if (r.sec_filings_url) approachLinks.push(`<a href="${r.sec_filings_url}" target="_blank" rel="noopener" style="color:#1B5E8C;font-size:11px">DEF 14A ↗</a>`);
     const approachCell = `<div style="font-size:11.5px">${r.outreach_approach || '—'}</div>${approachLinks.length ? '<div style="margin-top:3px">' + approachLinks.join(' · ') + '</div>' : ''}`;
     tr.innerHTML = `
       <td>${r.rank}</td>
@@ -1363,11 +1363,11 @@ function renderCountySummary() {
       colorbar: {title: 'Score'},
     },
   }], {
-    paper_bgcolor: '#131c2e', plot_bgcolor: '#131c2e',
-    font: {color: '#e6ecf5'},
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: {color: '#5C6670'},
     margin: {l: 50, r: 20, t: 10, b: 100},
-    xaxis: {tickangle: -45, gridcolor: '#2a3650'},
-    yaxis: {gridcolor: '#2a3650', title: 'Top Composite'},
+    xaxis: {tickangle: -45, gridcolor: '#DDD8CE'},
+    yaxis: {gridcolor: '#DDD8CE', title: 'Top Composite'},
   }, {responsive: true, displayModeBar: false});
 
   const body = document.getElementById('countyBody');
@@ -1388,12 +1388,12 @@ let LAYER_CTRL = null;
 let MAP_INITED = false;
 
 function scoreColor(score) {
-  // Sequential green ramp 0..100 → pale green to dark green
-  if (score == null || isNaN(score)) return '#555';
+  // Sequential navy ramp 0..100 → pale navy tint to deep navy
+  if (score == null || isNaN(score)) return '#8B9199';
   const t = Math.max(0, Math.min(1, score / 100));
-  // Interpolate between #c8eed8 (pale) and #1f6f44 (dark)
-  const c0 = [200, 238, 216];
-  const c1 = [31, 111, 68];
+  // Interpolate between #c0cad4 (pale navy tint) and #012a52 (navy)
+  const c0 = [192, 202, 212];
+  const c1 = [1, 42, 82];
   const r = Math.round(c0[0] + (c1[0]-c0[0]) * t);
   const g = Math.round(c0[1] + (c1[1]-c0[1]) * t);
   const b = Math.round(c0[2] + (c1[2]-c0[2]) * t);
@@ -1436,8 +1436,8 @@ function popupHtml(r) {
   const delta = r.rank_delta;
   let deltaHtml = '';
   if (delta != null && delta !== 0) {
-    deltaHtml = delta > 0 ? ` <span style="color:#3ea676;font-size:11px;font-weight:700">▲${delta}</span>`
-                          : ` <span style="color:#e0746a;font-size:11px;font-weight:700">▼${Math.abs(delta)}</span>`;
+    deltaHtml = delta > 0 ? ` <span style="color:#2F7D5D;font-size:11px;font-weight:700">▲${delta}</span>`
+                          : ` <span style="color:#DA0C1B;font-size:11px;font-weight:700">▼${Math.abs(delta)}</span>`;
   }
   const lines = [
     `<h4>${r.NAME}${r.is_public ? ' <span class="badge public">PUBLIC</span>' : ''}</h4>`,
@@ -1468,7 +1468,7 @@ function renderMapMarkers() {
     const m = L.circleMarker([r.latitude, r.longitude], {
       radius: assetRadius(r.ASSET),
       fillColor: scoreColor(r.composite_score),
-      color: '#ffffff',
+      color: 'rgba(1,42,82,.25)',
       weight: 1,
       fillOpacity: 0.9,
     });
@@ -1505,7 +1505,7 @@ function jumpToDetail(cert) {
       for (const tr of rows) {
         if (tr.cells[1] && tr.cells[1].textContent.includes(target.NAME)) {
           tr.scrollIntoView({behavior: 'smooth', block: 'center'});
-          tr.style.background = 'rgba(62,166,118,.25)';
+          tr.style.background = 'rgba(1,42,82,.25)';
           setTimeout(() => { tr.style.background = ''; }, 2200);
           break;
         }
@@ -1532,9 +1532,9 @@ function initMap() {
     if (!spec.bounds) return;
     const isPriority = spec.priority === 'primary';
     const rect = L.rectangle(spec.bounds, {
-      color: isPriority ? '#5b8def' : '#8a99b5',
+      color: isPriority ? '#CB995C' : '#7C8994',
       weight: 2,
-      fillColor: isPriority ? '#5b8def' : '#8a99b5',
+      fillColor: isPriority ? '#CB995C' : '#7C8994',
       fillOpacity: isPriority ? 0.12 : 0.07,
       dashArray: isPriority ? null : '4,4',
     });
@@ -1547,7 +1547,7 @@ function initMap() {
   RLSB_LAYER = L.layerGroup();
   if (DATA.rlsb_latlon) {
     const star = L.divIcon({
-      html: '<div style="font-size:22px;line-height:22px;color:#e0a458;text-shadow:0 0 4px #000,0 0 4px #000;">★</div>',
+      html: '<div style="font-size:22px;line-height:22px;color:#B5761F;text-shadow:0 0 4px #FFFFFF,0 0 4px #FFFFFF;">★</div>',
       className: '',
       iconSize: [22, 22],
       iconAnchor: [11, 11],
@@ -1665,8 +1665,8 @@ function renderRankAudit() {
       <td>${v2.NAME ? `${v2.NAME} <span style="color:var(--muted);font-size:11px">(${fmtNum(v2.composite_score_v2)})</span>` : '—'}</td>
       <td class="right">${v2.rank_delta != null && v2.rank_delta !== 0
           ? (v2.rank_delta > 0
-              ? `<span style="color:#8ed5b3;font-weight:700">▲${v2.rank_delta}</span>`
-              : `<span style="color:#f0807e;font-weight:700">▼${Math.abs(v2.rank_delta)}</span>`)
+              ? `<span style="color:#2F7D5D;font-weight:700">▲${v2.rank_delta}</span>`
+              : `<span style="color:#DA0C1B;font-weight:700">▼${Math.abs(v2.rank_delta)}</span>`)
           : '<span style="color:var(--muted)">—</span>'}</td>
     </tr>`);
   }
@@ -1708,7 +1708,7 @@ const VAL_COLS = [
     fmt:(v,r)=>{
       if (v==null) return '—';
       const arrow = r.norm_vs_simple_pct!=null
-        ? (r.norm_vs_simple_pct>=0?'<span style="color:#f0807e">+':'<span style="color:#8ed5b3">')+r.norm_vs_simple_pct.toFixed(1)+'%</span>'
+        ? (r.norm_vs_simple_pct>=0?'<span style="color:#DA0C1B">+':'<span style="color:#2F7D5D">')+r.norm_vs_simple_pct.toFixed(1)+'%</span>'
         : '';
       return `<strong>${fmtN(v/1000,1)}</strong> <span style="font-size:10px;color:var(--muted)">${arrow}</span>`;
     }
@@ -1718,7 +1718,7 @@ const VAL_COLS = [
     fmt:v=>{
       if (v==null) return '—';
       const sign = v>=0?'+':'';
-      const color = v>=0?'#8ed5b3':'#f0807e';
+      const color = v>=0?'#2F7D5D':'#DA0C1B';
       return `<span style="color:${color}">${sign}${fmtN(v/1000,1)}</span>`;
     }
   },
@@ -1850,16 +1850,16 @@ function renderValuationChart(enriched) {
   const priceNorm = top20.map(e => (e.normalized_price || 0) / 1000);
 
   Plotly.newPlot('val-chart', [
-    { y: labels, x: price10, type: 'bar', orientation: 'h', name: '1.0x TBVE', marker: { color: '#5b8def' } },
-    { y: labels, x: priceMult, type: 'bar', orientation: 'h', name: `${VAL.multiple.toFixed(2)}x TBVE`, marker: { color: '#3ea676' } },
-    { y: labels, x: priceNorm, type: 'bar', orientation: 'h', name: 'Capital-Normalized', marker: { color: '#c8a951' } },
+    { y: labels, x: price10, type: 'bar', orientation: 'h', name: '1.0x TBVE', marker: { color: '#CB995C' } },
+    { y: labels, x: priceMult, type: 'bar', orientation: 'h', name: `${VAL.multiple.toFixed(2)}x TBVE`, marker: { color: '#2F7D5D' } },
+    { y: labels, x: priceNorm, type: 'bar', orientation: 'h', name: 'Capital-Normalized', marker: { color: '#012A52' } },
   ], {
     barmode: 'group',
-    paper_bgcolor: '#131c2e',
-    plot_bgcolor: '#131c2e',
-    font: { color: '#e8eef9', size: 11 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { color: '#5C6670', size: 11 },
     margin: { l: 220, r: 30, t: 10, b: 40 },
-    xaxis: { title: 'Purchase Price ($M)', gridcolor: '#1b2740', zerolinecolor: '#1b2740' },
+    xaxis: { title: 'Purchase Price ($M)', gridcolor: '#DDD8CE', zerolinecolor: '#DDD8CE' },
     yaxis: { automargin: true },
     legend: { orientation: 'h', y: -0.1, x: 0.5, xanchor: 'center' },
     height: 520,

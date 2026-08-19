@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a2342">
+<meta name="theme-color" content="#012A52">
 <title>Texas Physician Private Practice Dashboard</title>
 <link rel="stylesheet" href="../shared/score-weights.css"/>
 <link rel="stylesheet" href="../shared/score-hover.css"/>
@@ -22,7 +22,7 @@
 <script src="../shared/sortable-table.js"></script>
 <style>
 /* === CSS Variables === */
-:root{--navy:#0a2342;--dk:#133c6d;--acc:#2a7fff;--gold:#d4a843;--bg:#f4f6f9;--card:#fff;--txt:#1a1a2e;--mut:#6b7280;--bdr:#e2e6ec;--ok:#22c55e;--warn:#f59e0b;--red:#e11d48;--purple:#8b5cf6;--teal:#14b8a6;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,.08);--shadow-lg:0 4px 16px rgba(0,0,0,.12)}
+:root{--navy:#012A52;--dk:#1B5E8C;--acc:#012A52;--gold:#CB995C;--bg:#F2EFE9;--card:#fff;--txt:#101418;--mut:#5C6670;--bdr:#DDD8CE;--ok:#2F7D5D;--warn:#B5761F;--red:#DA0C1B;--purple:#8C6239;--teal:#7C8994;--radius:10px;--shadow:0 1px 4px rgba(1,42,82,.08);--shadow-lg:0 4px 16px rgba(1,42,82,.12)}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{font-family:-apple-system,'Segoe UI',system-ui,Roboto,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;padding-bottom:0;overflow-x:hidden}
@@ -34,8 +34,8 @@ body{font-family:-apple-system,'Segoe UI',system-ui,Roboto,sans-serif;background
 /* === Header === */
 .hdr{background:linear-gradient(135deg,var(--navy),var(--dk));color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-lg);position:relative;z-index:50}
 .hdr h1{font-size:16px;font-weight:700;line-height:1.2}.hdr h1 span{color:var(--gold)}
-.hdr-sub{font-size:11px;color:#a8bdd9;margin-top:2px}
-.hdr-r{text-align:right;font-size:10px;color:#a8bdd9;display:none}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.65);margin-top:2px}
+.hdr-r{text-align:right;font-size:10px;color:rgba(255,255,255,.65);display:none}
 
 /* === Section Panels (mobile-first: hidden, controlled by bottom nav) === */
 .section-panel{display:none;padding:12px;padding-bottom:80px}
@@ -45,7 +45,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,Roboto,sans-serif;background
 .kpi-strip{display:flex;gap:10px;padding:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;scrollbar-width:none}
 .kpi-strip::-webkit-scrollbar{display:none}
 .kpi{flex:0 0 auto;min-width:140px;max-width:180px;background:var(--card);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);border-left:4px solid var(--acc);scroll-snap-align:start}
-.kpi.g{border-left-color:var(--gold)}.kpi.gr{border-left-color:var(--ok)}.kpi.w{border-left-color:var(--warn)}.kpi.p{border-left-color:var(--purple)}.kpi.tl{border-left-color:var(--teal)}.kpi.rd{border-left-color:var(--red)}.kpi.sc{border-left-color:#22c55e}
+.kpi.g{border-left-color:var(--gold)}.kpi.gr{border-left-color:var(--ok)}.kpi.w{border-left-color:var(--warn)}.kpi.p{border-left-color:var(--purple)}.kpi.tl{border-left-color:var(--teal)}.kpi.rd{border-left-color:var(--red)}.kpi.sc{border-left-color:#2F7D5D}
 .kpi-l{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);font-weight:600}
 .kpi-v{font-size:22px;font-weight:700;margin-top:2px;color:var(--navy)}
 .kpi-d{font-size:10px;color:var(--mut);margin-top:1px}
@@ -76,10 +76,10 @@ body{font-family:-apple-system,'Segoe UI',system-ui,Roboto,sans-serif;background
 /* === Buttons === */
 .btn{padding:10px 16px;background:var(--acc);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s,transform .1s;min-height:44px;min-width:44px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .btn:hover{background:var(--dk)}.btn:active{transform:scale(.97)}
-.btn-g{background:var(--gold)}.btn-g:hover{background:#b8922e}
+.btn-g{background:var(--gold)}.btn-g:hover{background:#8C6239}
 .btn-o{background:transparent;color:var(--acc);border:1.5px solid var(--acc)}.btn-o:hover{background:var(--acc);color:#fff}
 .btn-sm{padding:6px 12px;font-size:12px;min-height:36px}
-.btn-red{background:var(--red)}.btn-red:hover{background:#c01040}
+.btn-red{background:var(--red)}.btn-red:hover{background:#101418}
 
 /* === Status bar === */
 .sb{padding:8px 12px;text-align:center;font-size:12px;color:var(--mut)}
@@ -96,8 +96,8 @@ thead th{position:-webkit-sticky;position:sticky;top:0;background:var(--navy);co
 thead th:hover{background:var(--dk)}
 thead th.sa::after{content:' \u25B2';font-size:8px}thead th.sd::after{content:' \u25BC';font-size:8px}
 tbody tr{border-bottom:1px solid var(--bdr)}
-tbody tr:nth-child(even){background:#f8f9fb}
-tbody tr:hover{background:#edf2ff}
+tbody tr:nth-child(even){background:#FCFAF6}
+tbody tr:hover{background:#F0EBE1}
 tbody td{padding:6px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .money{font-family:'SF Mono','Consolas','Courier New',monospace;text-align:right}
 
@@ -117,16 +117,16 @@ tbody td{padding:6px;white-space:nowrap;max-width:200px;overflow:hidden;text-ove
 
 /* === Score Badge === */
 .score-badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700;min-width:36px;text-align:center;color:#fff}
-.score-red{background:#e11d48}.score-yellow{background:#f59e0b;color:#1a1a2e}.score-green{background:#22c55e}
+.score-red{background:#DA0C1B}.score-yellow{background:#B5761F;color:#101418}.score-green{background:#2F7D5D}
 .score-badge-lg{font-size:16px;padding:4px 12px;border-radius:12px}
 
 /* === Product Pills === */
-.prod-pill{display:inline-block;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#eef2ff;color:#4338ca;margin:2px}
+.prod-pill{display:inline-block;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(1,42,82,.08);color:#012A52;margin:2px}
 
 /* === Tags === */
 .tag{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600}
-.t-s{background:#dbeafe;color:#1e40af}.t-g{background:#d1fae5;color:#065f46}.t-v{background:#dcfce7;color:#166534}
-.t-st{background:#fef3c7;color:#92400e}.t-ag{background:#fff7ed;color:#9a3412}.t-ex{background:#fee2e2;color:#991b1b}
+.t-s{background:rgba(27,94,140,.12);color:#1B5E8C}.t-g{background:rgba(1,42,82,.10);color:#012A52}.t-v{background:rgba(47,125,93,.08);color:#2F7D5D}
+.t-st{background:rgba(181,118,31,.14);color:#8C6239}.t-ag{background:rgba(203,153,92,.14);color:#8C6239}.t-ex{background:rgba(218,12,27,.08);color:#DA0C1B}
 
 /* === Pagination === */
 .pg{display:flex;align-items:center;gap:8px;justify-content:center;padding:12px 0;font-size:12px;flex-wrap:wrap}
@@ -158,7 +158,7 @@ tbody td{padding:6px;white-space:nowrap;max-width:200px;overflow:hidden;text-ove
 
 /* === Tooltips (floating, appended to body to avoid overflow clipping) === */
 .tt{cursor:help;color:var(--acc);text-decoration:underline dotted;text-underline-offset:2px}
-.floating-tip{position:fixed;background:#1a1a2e;color:#fff;padding:10px 14px;border-radius:8px;font-size:12px;white-space:normal;max-width:320px;z-index:9999;line-height:1.5;font-weight:400;box-shadow:var(--shadow-lg);pointer-events:none;opacity:0;transition:opacity .15s}
+.floating-tip{position:fixed;background:#101418;color:#fff;padding:10px 14px;border-radius:8px;font-size:12px;white-space:normal;max-width:320px;z-index:9999;line-height:1.5;font-weight:400;box-shadow:var(--shadow-lg);pointer-events:none;opacity:0;transition:opacity .15s}
 .floating-tip.visible{opacity:1}
 
 /* === Checkbox Dropdown Filter === */
@@ -173,7 +173,7 @@ tbody td{padding:6px;white-space:nowrap;max-width:200px;overflow:hidden;text-ove
 .cb-dropdown-search{width:100%;padding:8px 10px;border:none;border-bottom:1px solid var(--bdr);font-size:14px;outline:none;min-height:40px}
 .cb-dropdown-item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;font-size:13px;min-height:40px;-webkit-tap-highlight-color:transparent;user-select:none}
 .cb-dropdown-item:hover{background:var(--bg)}
-.cb-dropdown-item.checked{background:#eef2ff}
+.cb-dropdown-item.checked{background:rgba(1,42,82,.08)}
 .cb-dropdown-item input[type=checkbox]{width:18px;height:18px;flex-shrink:0;accent-color:var(--acc);cursor:pointer}
 .cb-dropdown-item label{cursor:pointer;flex:1;line-height:1.3}
 .cb-dropdown-item .cb-item-count{color:var(--mut);font-size:11px;flex-shrink:0}
@@ -183,7 +183,7 @@ tbody td{padding:6px;white-space:nowrap;max-width:200px;overflow:hidden;text-ove
 a.wl{color:var(--acc);text-decoration:none;font-size:11px}a.wl:hover{text-decoration:underline}
 
 /* === Bottom Navigation (mobile) === */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--bdr);display:flex;z-index:1000;box-shadow:0 -2px 10px rgba(0,0,0,.1);padding-bottom:env(safe-area-inset-bottom)}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--bdr);display:flex;z-index:1000;box-shadow:0 -2px 10px rgba(1,42,82,.1);padding-bottom:env(safe-area-inset-bottom)}
 .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;border:none;background:none;color:var(--mut);font-size:10px;font-weight:600;cursor:pointer;min-height:56px;-webkit-tap-highlight-color:transparent;transition:color .2s}
 .bottom-nav button.active{color:var(--acc)}
 .bottom-nav button svg{width:22px;height:22px;margin-bottom:2px}
@@ -192,7 +192,7 @@ a.wl{color:var(--acc);text-decoration:none;font-size:11px}a.wl:hover{text-decora
 @media print{
   .bottom-nav,.filter-toggle,.filter-drawer,.saved-filters-bar,.call-list-controls .btn,.sb,.pg,.hdr{display:none!important}
   .section-panel{display:block!important;padding:0!important;padding-bottom:0!important}
-  .call-card{break-inside:avoid;page-break-inside:avoid;border:1px solid #ccc;margin-bottom:8px}
+  .call-card{break-inside:avoid;page-break-inside:avoid;border:1px solid #DDD8CE;margin-bottom:8px}
   .call-card-phone{background:#fff!important;color:var(--navy)!important;border:2px solid var(--navy);-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{font-size:11px}
   .phys-card,.cd{break-inside:avoid}
@@ -464,10 +464,10 @@ a.wl{color:var(--acc);text-decoration:none;font-size:11px}a.wl:hover{text-decora
     <div style="background:var(--card);border-radius:8px;padding:16px 20px;margin-bottom:24px;border:1px solid var(--bdr)">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-bottom:10px">Score Interpretation</div>
       <div style="display:flex;border-radius:6px;overflow:hidden;height:28px;font-size:11px;font-weight:700;color:#fff">
-        <div style="flex:3;background:#e53e3e;display:flex;align-items:center;justify-content:center">0-29 Low</div>
-        <div style="flex:3;background:#dd6b20;display:flex;align-items:center;justify-content:center">30-59 Moderate</div>
-        <div style="flex:2;background:#38a169;display:flex;align-items:center;justify-content:center">60-79 Strong</div>
-        <div style="flex:2;background:#276749;display:flex;align-items:center;justify-content:center">80+ Top</div>
+        <div style="flex:3;background:#DA0C1B;display:flex;align-items:center;justify-content:center">0-29 Low</div>
+        <div style="flex:3;background:#B5761F;display:flex;align-items:center;justify-content:center">30-59 Moderate</div>
+        <div style="flex:2;background:#2F7D5D;display:flex;align-items:center;justify-content:center">60-79 Strong</div>
+        <div style="flex:2;background:#012A52;display:flex;align-items:center;justify-content:center">80+ Top</div>
       </div>
     </div>
 
@@ -644,17 +644,17 @@ function _physScoreHoverAttrs(r){
   if(!r||!r._scoreComponents)return '';
   const c=r._scoreComponents,w=PHYS_WEIGHTS;
   const comps=[
-    {label:'Medicare Volume', value:c.medicare||0,   max:w.medicare,  color:'#3182ce'},
-    {label:'Ownership',       value:c.ownership||0,  max:w.ownership, color:'#38a169'},
-    {label:'Maturity',        value:c.maturity||0,   max:w.maturity,  color:'#319795'},
-    {label:'Specialty',       value:c.specialty||0,  max:w.specialty, color:'#dd6b20'},
-    {label:'Data Quality',    value:c.data||0,       max:w.data,      color:'#805ad5'},
-    {label:'Contact',         value:c.contact||0,    max:w.contact,   color:'#d69e2e'},
-    {label:'Compliance',      value:c.compliance||0, max:w.compliance,color:'#48bb78'}
+    {label:'Medicare Volume', value:c.medicare||0,   max:w.medicare,  color:'#012A52'},
+    {label:'Ownership',       value:c.ownership||0,  max:w.ownership, color:'#2F7D5D'},
+    {label:'Maturity',        value:c.maturity||0,   max:w.maturity,  color:'#7C8994'},
+    {label:'Specialty',       value:c.specialty||0,  max:w.specialty, color:'#CB995C'},
+    {label:'Data Quality',    value:c.data||0,       max:w.data,      color:'#1B5E8C'},
+    {label:'Contact',         value:c.contact||0,    max:w.contact,   color:'#B5761F'},
+    {label:'Compliance',      value:c.compliance||0, max:w.compliance,color:'#8C6239'}
   ];
-  if(c.bonus) comps.push({label:'Premium-signal bonus', value:c.bonus, max:5, color:'#22c55e'});
+  if(c.bonus) comps.push({label:'Premium-signal bonus', value:c.bonus, max:5, color:'rgba(47,125,93,.55)'});
   const penaltyLabels={oig:'− OIG LEIE flag', too_new:'− Practice <3y (too new)', retirement:'− Practice >35y (retirement-track)', stale_data:'− Stale NPPES data (>4y)'};
-  Object.keys(c.penalties||{}).forEach(k => comps.push({label:penaltyLabels[k]||('− '+k), value:c.penalties[k], max:c.penalties[k], color:'#e53e3e'}));
+  Object.keys(c.penalties||{}).forEach(k => comps.push({label:penaltyLabels[k]||('− '+k), value:c.penalties[k], max:c.penalties[k], color:'#DA0C1B'}));
   // Percentile within the filtered set
   const arr = (typeof F!=='undefined' && F.length) ? F : (typeof D!=='undefined' ? D : []);
   let pctStr='';
@@ -950,7 +950,7 @@ function buildCbDropdown(id, key, otherThreshold){
     +'<span class="cb-arrow">&#9660;</span></button>'
     +'<div class="cb-dropdown-list">'
     +'<input type="text" class="cb-dropdown-search" placeholder="Search..." oninput="filterCbDropdown(\''+id+'\',this.value)">'
-    +'<div class="cb-dropdown-actions" style="display:flex;gap:4px;padding:4px 8px;border-bottom:1px solid var(--bdr);background:#f7fafc">'
+    +'<div class="cb-dropdown-actions" style="display:flex;gap:4px;padding:4px 8px;border-bottom:1px solid var(--bdr);background:#FCFAF6">'
     +'<button type="button" onclick="cbSelectAll(\''+id+'\')" style="flex:1;background:var(--acc);color:#fff;border:none;border-radius:4px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer">Select All Visible</button>'
     +'<button type="button" onclick="cbClearAll(\''+id+'\')" style="flex:1;background:#fff;color:var(--mut);border:1px solid var(--bdr);border-radius:4px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer">Clear All</button>'
     +'</div>';
@@ -1166,10 +1166,10 @@ async function ensurePhysGeo() {
 }
 function specialtyColor(spec) {
   const s = (spec || '').toLowerCase();
-  if (/family|internal|pediatric|general practice/.test(s)) return '#3182ce';   // PCP
-  if (/surgery|surgical|orthopaed|orthopedic|ophthal|otolaryng|cardiothoracic|plastic|urology|vascular|colon|neurosurg/.test(s)) return '#c53030'; // Surgical
-  if (/anesthes|radiol|patholog|emergency|hospitalist/.test(s)) return '#805ad5';  // Hospital-based
-  return '#dd6b20'; // Medical specialty / other
+  if (/family|internal|pediatric|general practice/.test(s)) return '#012A52';   // PCP
+  if (/surgery|surgical|orthopaed|orthopedic|ophthal|otolaryng|cardiothoracic|plastic|urology|vascular|colon|neurosurg/.test(s)) return '#DA0C1B'; // Surgical
+  if (/anesthes|radiol|patholog|emergency|hospitalist/.test(s)) return '#1B5E8C';  // Hospital-based
+  return '#CB995C'; // Medical specialty / other
 }
 function renderPhysMap() {
   const el = document.getElementById('phys-map');
@@ -1184,13 +1184,13 @@ function renderPhysMap() {
     const lg = L.control({ position: 'bottomright' });
     lg.onAdd = function() {
       const div = L.DomUtil.create('div');
-      div.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.15);font-size:11px;line-height:1.6';
+      div.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(1,42,82,.15);font-size:11px;line-height:1.6';
       div.innerHTML = '<strong style="display:block;margin-bottom:4px">Specialty group</strong>' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3182ce;margin-right:6px"></span>Primary Care</span><br>' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c53030;margin-right:6px"></span>Surgical</span><br>' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dd6b20;margin-right:6px"></span>Medical Specialty</span><br>' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#805ad5;margin-right:6px"></span>Hospital-Based</span><br>' +
-        '<span style="color:#6b7280;font-style:italic">size ∝ Medicare $</span>';
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#012A52;margin-right:6px"></span>Primary Care</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#DA0C1B;margin-right:6px"></span>Surgical</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#CB995C;margin-right:6px"></span>Medical Specialty</span><br>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1B5E8C;margin-right:6px"></span>Hospital-Based</span><br>' +
+        '<span style="color:#5C6670;font-style:italic">size ∝ Medicare $</span>';
       return div;
     };
     lg.addTo(_physMap);
@@ -1198,7 +1198,7 @@ function renderPhysMap() {
     const fb = L.control({ position: 'topright' });
     fb.onAdd = function() {
       const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-      div.innerHTML = '<a href="#" id="phys-fit-btn" title="Fit to filtered practices" style="background:#fff;color:#0a2342;padding:6px 10px;font-weight:700;font-size:11px;text-decoration:none;display:block">⛶ Fit to filter</a>';
+      div.innerHTML = '<a href="#" id="phys-fit-btn" title="Fit to filtered practices" style="background:#fff;color:#012A52;padding:6px 10px;font-weight:700;font-size:11px;text-decoration:none;display:block">⛶ Fit to filter</a>';
       L.DomEvent.disableClickPropagation(div);
       return div;
     };
@@ -1224,11 +1224,11 @@ function renderPhysMap() {
     m.bindPopup(
       `<div style="font-size:12.5px">` +
       `<strong>${(r.name||'').replace(/[<>]/g,'')}, ${r.credential||''}</strong>` +
-      `<div style="font-size:11px;color:#6b7280;margin-bottom:4px">${r.specialty||'—'}</div>` +
+      `<div style="font-size:11px;color:#5C6670;margin-bottom:4px">${r.specialty||'—'}</div>` +
       `<div>${(r.address||'').replace(/[<>]/g,'')}<br>${(r.city||'')}${r.state ? ', '+r.state : ''} ${r.zip||''}</div>` +
       `<div style="margin-top:4px;font-size:11px"><strong>Medicare $:</strong> ${pay>0 ? '$'+pay.toLocaleString() : 'no data'}</div>` +
       (r.phone ? `<div style="font-size:11px"><strong>Phone:</strong> ${r.phone}</div>` : '') +
-      `<div style="font-size:10px;color:#a0aec0;margin-top:5px;font-style:italic">NPI ${r.npi} · NPPES data</div>` +
+      `<div style="font-size:10px;color:#8B9199;margin-top:5px;font-style:italic">NPI ${r.npi} · NPPES data</div>` +
       `</div>`
     );
     _physMapMarkers.addLayer(m);
@@ -1267,18 +1267,18 @@ function kpis(){
 /* === CHARTS === */
 function charts(){
   if(typeof Chart==='undefined')return;
-  const P=['#2a7fff','#d4a843','#22c55e','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#10b981','#e11d48','#06b6d4','#a855f7','#84cc16','#ef4444'];
+  const P=['#012A52','#CB995C','#1B5E8C','#8C6239','#7C8994','#DA0C1B','#2F7D5D','#B5761F','rgba(1,42,82,.62)','rgba(203,153,92,.62)','rgba(27,94,140,.62)','rgba(140,98,57,.62)','rgba(124,137,148,.62)','rgba(218,12,27,.62)','rgba(47,125,93,.62)'];
   Object.values(CH).forEach(c=>{try{c.destroy();}catch(e){}});CH={};
   const d=F;
   const isMobile=window.innerWidth<768;
   // Subtitle text shows how many physicians the current filter set covers — the
   // freshness/scope indicator analogous to the Deposit dashboard's chart subtitles.
   const _physSubText = `${d.length.toLocaleString()} physicians in current filter · NPPES/CMS data`;
-  const _subCfg = {display:true,text:_physSubText,font:{size:10,style:'italic'},color:'#6b7280',padding:{top:4,bottom:2}};
+  const _subCfg = {display:true,text:_physSubText,font:{size:10,style:'italic'},color:'#5C6670',padding:{top:4,bottom:2}};
   const bar={indexAxis:'y',responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false},subtitle:_subCfg,tooltip:{titleFont:{size:12},bodyFont:{size:11},callbacks:{label:ctx=>`${ctx.raw.toLocaleString()} physicians`}}},
     scales:{
-      x:{beginAtZero:true,title:{display:true,text:'Physician count',font:{size:10},color:'#6b7280'},ticks:{font:{size:isMobile?9:10}}},
+      x:{beginAtZero:true,title:{display:true,text:'Physician count',font:{size:10},color:'#5C6670'},ticks:{font:{size:isMobile?9:10}}},
       y:{ticks:{font:{size:isMobile?9:10}}}
     }};
   const dn={responsive:true,maintainAspectRatio:false,
@@ -1317,16 +1317,16 @@ function charts(){
     CH.c4=new Chart($('c4'),{type:'bar',data:{
       labels:topMetroRev.map(x=>x[0].length>14?x[0].slice(0,12)+'\u2026':x[0]),
       datasets:[
-        {label:'Solo',data:topMetroRev.map(x=>x[1].solo),backgroundColor:'#2a7fff'},
-        {label:'Group',data:topMetroRev.map(x=>x[1].group),backgroundColor:'#d4a843'}
+        {label:'Solo',data:topMetroRev.map(x=>x[1].solo),backgroundColor:'#012A52'},
+        {label:'Group',data:topMetroRev.map(x=>x[1].group),backgroundColor:'#CB995C'}
       ]
     },options:revOpts});
   } else {
     CH.c4=new Chart($('c4'),{type:'bar',data:{
       labels:topMetroRev.map(x=>x[0].length>14?x[0].slice(0,12)+'\u2026':x[0]),
       datasets:[
-        {label:'Solo',data:topMetroRev.map(x=>x[1].solo),backgroundColor:'#2a7fff'},
-        {label:'Group',data:topMetroRev.map(x=>x[1].group),backgroundColor:'#d4a843'}
+        {label:'Solo',data:topMetroRev.map(x=>x[1].solo),backgroundColor:'#012A52'},
+        {label:'Group',data:topMetroRev.map(x=>x[1].group),backgroundColor:'#CB995C'}
       ]
     },options:revOpts});
   }
@@ -1337,7 +1337,7 @@ function charts(){
   const tiers={'No data':0,'<$50K':0,'$50K-$200K':0,'$200K-$500K':0,'$500K-$1M':0,'$1M+':0};
   d.forEach(r=>{const p=r.totalMedicarePayment;if(!p)tiers['No data']++;else if(p<50000)tiers['<$50K']++;else if(p<200000)tiers['$50K-$200K']++;else if(p<500000)tiers['$200K-$500K']++;else if(p<1000000)tiers['$500K-$1M']++;else tiers['$1M+']++;});
   const tierEntries=Object.entries(tiers).filter(x=>x[1]>0);
-  CH.c6=new Chart($('c6'),{type:'doughnut',data:{labels:tierEntries.map(x=>x[0]),datasets:[{data:tierEntries.map(x=>x[1]),backgroundColor:['#9ca3af','#93c5fd','#86efac','#fde68a','#fdba74','#fca5a5']}]},options:dn});
+  CH.c6=new Chart($('c6'),{type:'doughnut',data:{labels:tierEntries.map(x=>x[0]),datasets:[{data:tierEntries.map(x=>x[1]),backgroundColor:['#7C8994','#012A52','#2F7D5D','#CB995C','#8C6239','#DA0C1B']}]},options:dn});
 }
 
 /* === TABLE (Desktop + Mobile Cards) === */

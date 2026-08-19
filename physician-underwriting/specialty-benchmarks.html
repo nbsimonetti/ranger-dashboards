@@ -16,22 +16,22 @@
 <script src="../shared/sortable-table.js"></script>
 <style>
 :root {
-  --navy: #1B365D;
-  --navy2: #254a7a;
-  --gold: #C8A951;
-  --gold-lt: #f5ecd5;
-  --teal: #319795;
-  --teal-lt: #e6fffa;
-  --bg: #f4f6f9;
+  --navy: #012A52;
+  --navy2: #1B5E8C;
+  --gold: #CB995C;
+  --gold-lt: #F0EBE1;
+  --teal: #1B5E8C;
+  --teal-lt: rgba(27,94,140,.08);
+  --bg: #F2EFE9;
   --surface: #ffffff;
-  --border: #e2e8f0;
-  --text: #1a202c;
-  --muted: #718096;
-  --green: #276749;
-  --orange: #c05621;
-  --red: #c53030;
+  --border: #DDD8CE;
+  --text: #101418;
+  --muted: #5C6670;
+  --green: #2F7D5D;
+  --orange: #8C6239;
+  --red: #DA0C1B;
   --r: 8px;
-  --shadow: 0 2px 8px rgba(0,0,0,.09);
+  --shadow: 0 2px 8px rgba(1,42,82,.09);
 }
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -52,12 +52,12 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 
 /* Notice */
 .notice { padding:9px 24px; font-size:12px; background:var(--teal-lt);
-          border-bottom:2px solid var(--teal); color:#234e52; }
+          border-bottom:2px solid var(--teal); color:#1B5E8C; }
 .notice .inner { max-width:1500px; margin:0 auto; }
-.notice strong { color:#1a4040; }
+.notice strong { color:#101418; }
 .badge { display:inline-flex; align-items:center; gap:3px; padding:1px 7px;
          border-radius:12px; font-size:10.5px; font-weight:700; vertical-align:middle;
-         background:#b2f5ea; color:#234e52; }
+         background:rgba(27,94,140,.15); color:#1B5E8C; }
 
 .main { max-width:1500px; margin:0 auto; padding:18px 20px 48px; }
 
@@ -67,10 +67,10 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
              box-shadow:var(--shadow); border-left:4px solid var(--border); }
 .stat-card.teal { border-left-color:var(--teal); }
 .stat-card.gold { border-left-color:var(--gold); }
-.stat-card.green { border-left-color:#38a169; }
-.stat-card.orange { border-left-color:#dd6b20; }
-.stat-card.purple { border-left-color:#805ad5; }
-.stat-card.blue { border-left-color:#3182ce; }
+.stat-card.green { border-left-color:#2F7D5D; }
+.stat-card.orange { border-left-color:#B5761F; }
+.stat-card.purple { border-left-color:#8C6239; }
+.stat-card.blue { border-left-color:#012A52; }
 .stat-label { font-size:10.5px; font-weight:700; color:var(--muted);
               text-transform:uppercase; letter-spacing:.5px; }
 .stat-value { font-size:22px; font-weight:700; margin-top:4px; line-height:1.1; }
@@ -85,21 +85,21 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 .fi label { display:block; font-size:10.5px; font-weight:700; color:var(--muted);
             text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
 .fi select, .fi input { width:100%; border:1px solid var(--border); border-radius:6px;
-  padding:7px 10px; font-size:13px; background:#f8fafc; color:var(--text); }
+  padding:7px 10px; font-size:13px; background:#FCFAF6; color:var(--text); }
 .fi select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 10px center; padding-right:28px;
   appearance:none; -webkit-appearance:none; }
 .fi input:focus, .fi select:focus { outline:2px solid var(--teal); outline-offset:1px; }
 .btn-reset { background:none; border:1px solid var(--border); border-radius:6px;
              padding:5px 12px; font-size:12px; cursor:pointer; color:var(--muted); }
-.btn-reset:hover { background:#f7fafc; color:var(--text); }
+.btn-reset:hover { background:#FCFAF6; color:var(--text); }
 .btn-export { display:inline-flex; align-items:center; gap:5px; padding:6px 14px;
               border:1px solid var(--border); border-radius:6px; font-size:12px;
-              font-weight:600; cursor:pointer; background:#f8fafc; color:var(--muted); }
-.btn-export:hover { background:var(--teal-lt); border-color:var(--teal); color:#234e52; }
+              font-weight:600; cursor:pointer; background:#FCFAF6; color:var(--muted); }
+.btn-export:hover { background:var(--teal-lt); border-color:var(--teal); color:#1B5E8C; }
 .btn-primary { background:var(--teal); color:#fff; border:none; padding:9px 20px;
                border-radius:6px; font-weight:600; font-size:13px; cursor:pointer; }
-.btn-primary:hover { background:#2c7a7b; }
+.btn-primary:hover { background:#012A52; }
 
 /* Tabs */
 .tabbar { display:flex; gap:2px; background:var(--surface);
@@ -117,7 +117,7 @@ header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
 /* Table */
 .tbl-wrap { overflow:auto; max-height:75vh; }
 table { width:100%; border-collapse:collapse; }
-thead th { position:sticky; top:0; background:#f7fafc; z-index:2; padding:10px 12px;
+thead th { position:sticky; top:0; background:#FCFAF6; z-index:2; padding:10px 12px;
            font-size:10.5px; font-weight:700; text-transform:uppercase;
            letter-spacing:.4px; color:var(--muted); text-align:left; white-space:nowrap;
            cursor:pointer; user-select:none; box-shadow:0 1px 0 var(--border); }
@@ -125,24 +125,24 @@ thead th:hover:not(.nosort) { color:var(--text); }
 thead th.nosort { cursor:default; }
 thead th.sort-asc::after { content:' ▲'; color:var(--teal); }
 thead th.sort-desc::after { content:' ▼'; color:var(--teal); }
-td { padding:9px 12px; border-bottom:1px solid #f0f4f8; vertical-align:middle; font-size:13px; }
-tr:hover td { background:#f7fafc; cursor:pointer; }
+td { padding:9px 12px; border-bottom:1px solid #F0EBE1; vertical-align:middle; font-size:13px; }
+tr:hover td { background:#FCFAF6; cursor:pointer; }
 td.right { text-align:right; font-variant-numeric:tabular-nums; }
 
 /* Score badges */
 .bops { display:inline-block; padding:2px 9px; border-radius:12px; font-size:12px;
         font-weight:700; cursor:pointer; min-width:36px; text-align:center; }
-.bops-hi { background:#276749; color:#fff; }
-.bops-mid { background:#dd6b20; color:#fff; }
-.bops-lo { background:#a0aec0; color:#fff; }
+.bops-hi { background:#2F7D5D; color:#fff; }
+.bops-mid { background:#B5761F; color:#fff; }
+.bops-lo { background:#7C8994; color:#fff; }
 
 .payer-mix-bar { display:flex; height:18px; border-radius:9px; overflow:hidden;
                  width:160px; min-width:160px; font-size:0; }
-.pm-medicare { background:#3182ce; }
-.pm-commercial { background:#38a169; }
-.pm-medicaid { background:#dd6b20; }
-.pm-self { background:#805ad5; }
-.pm-other { background:#a0aec0; }
+.pm-medicare { background:#012A52; }
+.pm-commercial { background:#2F7D5D; }
+.pm-medicaid { background:#B5761F; }
+.pm-self { background:#8C6239; }
+.pm-other { background:#7C8994; }
 
 .pm-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; font-size:11px; color:var(--muted); }
 .pm-legend > div { display:flex; align-items:center; gap:4px; }
@@ -151,15 +151,15 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
 /* Tier badges */
 .tier { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px;
         font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
-.tier-surg { background:#fed7d7; color:#9b2c2c; }
-.tier-med  { background:#bee3f8; color:#2b6cb0; }
-.tier-pcp  { background:#c6f6d5; color:#22543d; }
-.tier-hosp { background:#e9d8fd; color:#553c9a; }
+.tier-surg { background:rgba(218,12,27,.08); color:#DA0C1B; }
+.tier-med  { background:rgba(1,42,82,.20); color:#012A52; }
+.tier-pcp  { background:rgba(47,125,93,.08); color:#2F7D5D; }
+.tier-hosp { background:rgba(140,98,57,.12); color:#8C6239; }
 
 .capex { display:inline-block; padding:2px 7px; border-radius:4px; font-size:11px; font-weight:600; }
-.capex-h { background:#fed7d7; color:#9b2c2c; }
-.capex-m { background:#feebc8; color:#7b341e; }
-.capex-l { background:#c6f6d5; color:#22543d; }
+.capex-h { background:rgba(218,12,27,.08); color:#DA0C1B; }
+.capex-m { background:rgba(203,153,92,.20); color:#8C6239; }
+.capex-l { background:rgba(47,125,93,.08); color:#2F7D5D; }
 
 /* Detail view */
 .detail-section { padding:18px 20px; }
@@ -168,18 +168,18 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
 .section-title { font-size:11px; font-weight:700; text-transform:uppercase;
                  letter-spacing:.5px; color:var(--muted); margin-bottom:10px; }
 .metric-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
-.mcard { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; }
+.mcard { background:#FCFAF6; border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; }
 .mcard-l { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); }
 .mcard-v { font-size:18px; font-weight:700; margin-top:4px; }
 .mcard-n { font-size:11px; color:var(--muted); margin-top:3px; }
 
 /* Charts */
 .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:18px 20px; }
-.ccard { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; }
+.ccard { background:#FCFAF6; border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; }
 .ccard.wide { grid-column:1/-1; }
 .clabel { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;
           letter-spacing:.4px; margin-bottom:10px; }
-.clabel span { font-weight:400; color:#a0aec0; margin-left:6px; text-transform:none; letter-spacing:0; }
+.clabel span { font-weight:400; color:#7C8994; margin-left:6px; text-transform:none; letter-spacing:0; }
 
 /* Borrower comparison form */
 .cmp-form { padding:20px; max-width:1200px; margin:0 auto; }
@@ -194,32 +194,32 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
 .cmp-input input:focus, .cmp-input select:focus { outline:2px solid var(--teal); outline-offset:1px; }
 
 /* Comparison output */
-.cmp-output { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r); padding:18px 20px; margin-top:18px; }
-.cmp-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f0f4f8; }
+.cmp-output { background:#FCFAF6; border:1px solid var(--border); border-radius:var(--r); padding:18px 20px; margin-top:18px; }
+.cmp-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #F0EBE1; }
 .cmp-row:last-child { border-bottom:none; }
 .cmp-label { flex:0 0 200px; font-weight:600; font-size:13px; }
 .cmp-val { flex:0 0 110px; font-weight:700; font-size:14px; font-variant-numeric:tabular-nums; }
-.cmp-bar-wrap { flex:1; position:relative; height:24px; background:#edf2f7; border-radius:4px; overflow:visible; }
-.cmp-bar-pctile { position:absolute; top:0; bottom:0; background:linear-gradient(to right,#bee3f8,#3182ce);
+.cmp-bar-wrap { flex:1; position:relative; height:24px; background:#F0EBE1; border-radius:4px; overflow:visible; }
+.cmp-bar-pctile { position:absolute; top:0; bottom:0; background:linear-gradient(to right,rgba(1,42,82,.20),#012A52);
                   border-radius:4px; }
 .cmp-bar-mark { position:absolute; top:-3px; bottom:-3px; width:3px; background:var(--gold);
-                box-shadow:0 0 0 2px rgba(200,169,81,.3); }
+                box-shadow:0 0 0 2px rgba(203,153,92,.3); }
 .cmp-flag { flex:0 0 90px; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:600;
             text-align:center; text-transform:uppercase; letter-spacing:.3px; }
-.flag-good { background:#c6f6d5; color:#22543d; }
-.flag-neutral { background:#feebc8; color:#7b341e; }
-.flag-bad { background:#fed7d7; color:#9b2c2c; }
+.flag-good { background:rgba(47,125,93,.08); color:#2F7D5D; }
+.flag-neutral { background:rgba(203,153,92,.20); color:#8C6239; }
+.flag-bad { background:rgba(218,12,27,.08); color:#DA0C1B; }
 
 .summary-card { padding:14px 18px; border-radius:var(--r); margin-bottom:10px; }
-.summary-strengths { background:#f0fff4; border-left:4px solid #38a169; }
-.summary-concerns { background:#fff5f5; border-left:4px solid #c53030; }
-.summary-considerations { background:#ebf8ff; border-left:4px solid #3182ce; }
+.summary-strengths { background:rgba(47,125,93,.08); border-left:4px solid #2F7D5D; }
+.summary-concerns { background:rgba(218,12,27,.05); border-left:4px solid #DA0C1B; }
+.summary-considerations { background:rgba(1,42,82,.08); border-left:4px solid #012A52; }
 .summary-h { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
 .summary-list { font-size:13px; line-height:1.6; }
 .summary-list li { margin-bottom:4px; }
 
 /* Methodology */
-.method-card { background:#f9fbfd; border:1px solid var(--border); border-radius:var(--r);
+.method-card { background:#FCFAF6; border:1px solid var(--border); border-radius:var(--r);
                padding:14px 18px; margin-bottom:12px; }
 .method-h { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:6px; }
 .method-h a { color:var(--teal); text-decoration:none; font-size:12px; font-weight:600; }
@@ -385,7 +385,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
         <tbody id="tbl-body"></tbody>
       </table>
     </div>
-    <div style="padding:10px 16px;font-size:11.5px;color:var(--muted);background:#f9fbfd;border-top:1px solid var(--border);line-height:1.6">
+    <div style="padding:10px 16px;font-size:11.5px;color:var(--muted);background:#FCFAF6;border-top:1px solid var(--border);line-height:1.6">
       <strong>Bank Opportunity Score</strong> (0–100): Composite of income (25), payer mix (20), income stability (15), capex/loan demand (15), demand outlook (10), overhead efficiency (10), default risk inverse (5).
       <strong>Payer Mix Score</strong> (0–100): Higher commercial = higher score; higher Medicaid = lower score.
       Click any row for specialty detail. Overhead figures are public industry estimates — request borrower P&L for actuals.
@@ -530,7 +530,7 @@ td.right { text-align:right; font-variant-numeric:tabular-nums; }
         </div>
         <div class="ccard wide">
           <div class="clabel">US states by Medicare Composite GAF <span>Higher (green) = Medicare reimburses above national average · interpolated from CMS GPCI localities + cost-tier index</span></div>
-          <div id="state-choropleth" style="height:430px;border-radius:8px;overflow:hidden;background:#f7fafc"></div>
+          <div id="state-choropleth" style="height:430px;border-radius:8px;overflow:hidden;background:#FCFAF6"></div>
         </div>
         <div class="ccard wide">
           <div class="clabel">CMS Geographic Practice Cost Index 2024 <span>Major localities · Higher = Medicare pays more</span></div>
@@ -1108,17 +1108,17 @@ function bopsBadge(s, spec) {
     const w = BOPS_WEIGHTS;
     const c = spec._bopsComponents || {};
     const comps = [
-      {label:'Income Level',     value:c.income||0,      max:w.income,      color:'#3182ce'},
-      {label:'Payer Mix',        value:c.payer||0,       max:w.payer,       color:'#38a169'},
-      {label:'Income Stability', value:c.stability||0,   max:w.stability,   color:'#319795'},
-      {label:'Capex / Loan',     value:c.capex||0,       max:w.capex,       color:'#dd6b20'},
-      {label:'Demand Outlook',   value:c.demand||0,      max:w.demand,      color:'#805ad5'},
-      {label:'Overhead Eff.',    value:c.overhead||0,    max:w.overhead,    color:'#d69e2e'},
-      {label:'Default Risk Inv.',value:c.defaultRisk||0, max:w.defaultRisk, color:'#48bb78'},
+      {label:'Income Level',     value:c.income||0,      max:w.income,      color:'#012A52'},
+      {label:'Payer Mix',        value:c.payer||0,       max:w.payer,       color:'#2F7D5D'},
+      {label:'Income Stability', value:c.stability||0,   max:w.stability,   color:'#1B5E8C'},
+      {label:'Capex / Loan',     value:c.capex||0,       max:w.capex,       color:'#B5761F'},
+      {label:'Demand Outlook',   value:c.demand||0,      max:w.demand,      color:'#8C6239'},
+      {label:'Overhead Eff.',    value:c.overhead||0,    max:w.overhead,    color:'#CB995C'},
+      {label:'Default Risk Inv.',value:c.defaultRisk||0, max:w.defaultRisk, color:'#7C8994'},
     ];
-    if (c.bonus) comps.push({label:'Premium-signal bonus', value:c.bonus, max:5, color:'#22c55e'});
+    if (c.bonus) comps.push({label:'Premium-signal bonus', value:c.bonus, max:5, color:'#2F7D5D'});
     const penaltyLabels = { hospital_dominant:'− Hospital-dominant specialty', capex_heavy:'− Capex-heavy (cyclical refresh)', high_malpractice:'− High malpractice cost' };
-    Object.keys(c.penalties||{}).forEach(k => comps.push({label:penaltyLabels[k]||('− '+k), value:c.penalties[k], max:c.penalties[k], color:'#e53e3e'}));
+    Object.keys(c.penalties||{}).forEach(k => comps.push({label:penaltyLabels[k]||('− '+k), value:c.penalties[k], max:c.penalties[k], color:'#DA0C1B'}));
     // Percentile rank
     const sorted = SPECIALTIES.map(x => x.bops).sort((a,b)=>a-b);
     let cnt = 0;
@@ -1130,17 +1130,17 @@ function bopsBadge(s, spec) {
   return `<span class="bops shv-trigger ${cls}"${attrs}>${s}</span>`;
 }
 function payerScoreBadge(s, spec) {
-  const color = s>=65?'#276749':s>=50?'#dd6b20':'#a0aec0';
+  const color = s>=65?'#2F7D5D':s>=50?'#B5761F':'#7C8994';
   let attrs = '';
   if (spec && spec.payer) {
     const p = spec.payer, w = PMIX_WEIGHTS;
     // Show each payer category's CONTRIBUTION (mix% * weight) so users see which payer is moving the score
     const comps = [
-      {label:`Commercial (${p.commercial}%)`,value:+(p.commercial*w.commercial).toFixed(1), max:100, color:'#38a169'},
-      {label:`Medicare (${p.medicare}%)`,    value:+(p.medicare*w.medicare).toFixed(1),     max:50,  color:'#3182ce'},
-      {label:`Self-Pay (${p.selfpay}%)`,     value:+(p.selfpay*w.selfpay).toFixed(1),       max:40,  color:'#805ad5'},
-      {label:`Other (${p.other}%)`,          value:+(p.other*w.other).toFixed(1),           max:40,  color:'#a0aec0'},
-      {label:`Medicaid (${p.medicaid}%)`,    value:+(p.medicaid*w.medicaid).toFixed(1),     max:10,  color:'#dd6b20'},
+      {label:`Commercial (${p.commercial}%)`,value:+(p.commercial*w.commercial).toFixed(1), max:100, color:'#2F7D5D'},
+      {label:`Medicare (${p.medicare}%)`,    value:+(p.medicare*w.medicare).toFixed(1),     max:50,  color:'#012A52'},
+      {label:`Self-Pay (${p.selfpay}%)`,     value:+(p.selfpay*w.selfpay).toFixed(1),       max:40,  color:'#8C6239'},
+      {label:`Other (${p.other}%)`,          value:+(p.other*w.other).toFixed(1),           max:40,  color:'#7C8994'},
+      {label:`Medicaid (${p.medicaid}%)`,    value:+(p.medicaid*w.medicaid).toFixed(1),     max:10,  color:'#B5761F'},
     ];
     const json = JSON.stringify(comps).replace(/"/g,'&quot;');
     attrs = ` tabindex="0" data-shv-title="Payer Mix Score" data-shv-total="${s}" data-shv-max="100" data-shv-theme="light" data-shv-components="${json}" data-shv-foot="Each row is mix% × payer weight. Commercial weighted 1.0; Medicaid 0.1."`;
@@ -1255,7 +1255,7 @@ function selectSpecialty(name) {
 function renderDetail(s) {
   const subspecHtml = s.subspec.length
     ? `<div class="section-title" style="margin-top:18px">Sub-Specialties</div>
-       <div style="font-size:13px;line-height:1.8">${s.subspec.map(ss=>`<span style="display:inline-block;background:#edf2f7;padding:3px 10px;border-radius:14px;margin:2px;font-size:12px">${esc(ss)}</span>`).join('')}</div>
+       <div style="font-size:13px;line-height:1.8">${s.subspec.map(ss=>`<span style="display:inline-block;background:#F0EBE1;padding:3px 10px;border-radius:14px;margin:2px;font-size:12px">${esc(ss)}</span>`).join('')}</div>
        <div style="font-size:11px;color:var(--muted);margin-top:6px">Sub-specialty income data not separately tracked at this dashboard's data granularity. Request narrowed comp data via specialty society reports.</div>`
     : '';
 
@@ -1272,7 +1272,7 @@ function renderDetail(s) {
         </div>
         <div style="text-align:center">
           <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Payer Mix Score</div>
-          <div style="font-size:18px;font-weight:700;color:${s.payerScore>=65?'#276749':s.payerScore>=50?'#dd6b20':'#a0aec0'}">${s.payerScore}</div>
+          <div style="font-size:18px;font-weight:700;color:${s.payerScore>=65?'#2F7D5D':s.payerScore>=50?'#B5761F':'#7C8994'}">${s.payerScore}</div>
         </div>
       </div>
     </div>
@@ -1290,7 +1290,7 @@ function renderDetail(s) {
     </div>
 
     <div class="section-title">Payer Mix</div>
-    <div style="background:#f9fbfd;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:18px">
+    <div style="background:#FCFAF6;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:18px">
       <div style="display:flex;height:32px;border-radius:6px;overflow:hidden;font-size:11px;font-weight:700;color:#fff">
         <div class="pm-medicare" style="flex:${s.payer.medicare};display:flex;align-items:center;justify-content:center;${s.payer.medicare<8?'font-size:0':''}">Medicare ${s.payer.medicare}%</div>
         <div class="pm-commercial" style="flex:${s.payer.commercial};display:flex;align-items:center;justify-content:center;${s.payer.commercial<8?'font-size:0':''}">Commercial ${s.payer.commercial}%</div>
@@ -1318,15 +1318,15 @@ function renderDetail(s) {
     </div>
 
     <div class="section-title">Bank Opportunity Score Components</div>
-    <div style="background:#f9fbfd;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:18px">
+    <div style="background:#FCFAF6;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:18px">
       ${[
-        ['Income Level','25','#3182ce',Math.min(25,Math.max(0,((s.medMean-250000)/450000)*25))],
-        ['Payer Mix','20','#38a169',(s.payerScore/100)*20],
-        ['Income Stability','15','#319795',s.incomeStability==='High'?15:s.incomeStability==='Med'?10:5],
-        ['Capex / Loan Demand','15','#dd6b20',s.capexLevel==='M'?15:s.capexLevel==='H'?12:8],
-        ['Demand Outlook','10','#805ad5',Math.min(10,Math.max(0,(s.demandOutlook+2)))],
-        ['Overhead Efficiency','10','#d69e2e',Math.min(10,Math.max(0,((85-s.overhead)/55)*10))],
-        ['Default Risk Inverse','5','#9b2c2c',Math.min(5,(s.payerScore/100)*5)]
+        ['Income Level','25','#012A52',Math.min(25,Math.max(0,((s.medMean-250000)/450000)*25))],
+        ['Payer Mix','20','#2F7D5D',(s.payerScore/100)*20],
+        ['Income Stability','15','#1B5E8C',s.incomeStability==='High'?15:s.incomeStability==='Med'?10:5],
+        ['Capex / Loan Demand','15','#B5761F',s.capexLevel==='M'?15:s.capexLevel==='H'?12:8],
+        ['Demand Outlook','10','#8C6239',Math.min(10,Math.max(0,(s.demandOutlook+2)))],
+        ['Overhead Efficiency','10','#CB995C',Math.min(10,Math.max(0,((85-s.overhead)/55)*10))],
+        ['Default Risk Inverse','5','#DA0C1B',Math.min(5,(s.payerScore/100)*5)]
       ].map(c => {
         const v = Math.round(c[3]*10)/10;
         const pct = (v / parseInt(c[1])) * 100;
@@ -1335,14 +1335,14 @@ function renderDetail(s) {
             <span style="font-weight:600">${c[0]}</span>
             <span style="font-weight:700">${v.toFixed(1)} / ${c[1]}</span>
           </div>
-          <div style="height:8px;background:#edf2f7;border-radius:4px;overflow:hidden">
+          <div style="height:8px;background:#F0EBE1;border-radius:4px;overflow:hidden">
             <div style="height:100%;width:${pct}%;background:${c[2]};border-radius:4px"></div>
           </div>
         </div>`;
       }).join('')}
       <div style="display:flex;justify-content:space-between;border-top:2px solid var(--border);margin-top:12px;padding-top:10px;font-size:13px;font-weight:700">
         <span>Total Bank Opportunity Score</span>
-        <span style="color:${s.bops>=70?'#276749':s.bops>=50?'#dd6b20':'#a0aec0'}">${s.bops} / 100</span>
+        <span style="color:${s.bops>=70?'#2F7D5D':s.bops>=50?'#B5761F':'#7C8994'}">${s.bops} / 100</span>
       </div>
     </div>
 
@@ -1613,10 +1613,10 @@ function runComparison() {
 // ═════════════════════════════════════════════════════════════════════════════
 function renderGeo() {
   $('geo-top10').innerHTML = TOP_METROS.map(m =>
-    `<tr><td style="padding:5px 4px">${m.rank}</td><td style="padding:5px 4px;font-weight:600">${esc(m.metro)}</td><td style="text-align:right;padding:5px 4px;font-weight:700;color:#276749">$${(m.comp/1000).toFixed(0)}K</td></tr>`
+    `<tr><td style="padding:5px 4px">${m.rank}</td><td style="padding:5px 4px;font-weight:600">${esc(m.metro)}</td><td style="text-align:right;padding:5px 4px;font-weight:700;color:#2F7D5D">$${(m.comp/1000).toFixed(0)}K</td></tr>`
   ).join('');
   $('geo-bot10').innerHTML = BOTTOM_METROS.map(m =>
-    `<tr><td style="padding:5px 4px">${m.rank}</td><td style="padding:5px 4px;font-weight:600">${esc(m.metro)}</td><td style="text-align:right;padding:5px 4px;font-weight:700;color:#a0aec0">$${(m.comp/1000).toFixed(0)}K</td></tr>`
+    `<tr><td style="padding:5px 4px">${m.rank}</td><td style="padding:5px 4px;font-weight:600">${esc(m.metro)}</td><td style="text-align:right;padding:5px 4px;font-weight:700;color:#7C8994">$${(m.comp/1000).toFixed(0)}K</td></tr>`
   ).join('');
   $('geo-gpci').innerHTML = GPCI_DATA.map(g => {
     const gaf = (g.work*0.5089 + g.pe*0.4484 + g.mp*0.0428).toFixed(3);
@@ -1625,7 +1625,7 @@ function renderGeo() {
       <td style="text-align:right;padding:5px 4px">${g.work.toFixed(3)}</td>
       <td style="text-align:right;padding:5px 4px">${g.pe.toFixed(3)}</td>
       <td style="text-align:right;padding:5px 4px">${g.mp.toFixed(3)}</td>
-      <td style="text-align:right;padding:5px 4px;font-weight:700;color:${parseFloat(gaf)>=1.05?'#276749':parseFloat(gaf)>=0.98?'#dd6b20':'#c53030'}">${gaf}</td>
+      <td style="text-align:right;padding:5px 4px;font-weight:700;color:${parseFloat(gaf)>=1.05?'#2F7D5D':parseFloat(gaf)>=0.98?'#B5761F':'#DA0C1B'}">${gaf}</td>
     </tr>`;
   }).join('');
   renderStateChoropleth();
@@ -1635,16 +1635,16 @@ renderGeo();
 // ─── US-state Composite GAF choropleth ────────────────────────────────────
 let _gafMap = null, _gafGeoJson = null;
 function gafColor(v) {
-  if (v == null) return '#e2e8f0';
+  if (v == null) return '#DDD8CE';
   // Diverging scale centered on 1.0: red below, neutral around 1.00, green above
-  if (v >= 1.07) return '#1a5e2e';
-  if (v >= 1.04) return '#2f855a';
-  if (v >= 1.02) return '#48bb78';
-  if (v >= 1.00) return '#9ae6b4';
-  if (v >= 0.98) return '#fefcbf';
-  if (v >= 0.96) return '#fbd38d';
-  if (v >= 0.94) return '#f6ad55';
-  return '#c05621';
+  if (v >= 1.07) return '#2F7D5D';
+  if (v >= 1.04) return 'rgba(47,125,93,.80)';
+  if (v >= 1.02) return 'rgba(47,125,93,.58)';
+  if (v >= 1.00) return 'rgba(47,125,93,.34)';
+  if (v >= 0.98) return 'rgba(203,153,92,.34)';
+  if (v >= 0.96) return 'rgba(203,153,92,.58)';
+  if (v >= 0.94) return '#CB995C';
+  return '#8C6239';
 }
 function renderStateChoropleth() {
   const el = document.getElementById('state-choropleth');
@@ -1659,7 +1659,7 @@ function renderStateChoropleth() {
     const lg = L.control({ position: 'bottomright' });
     lg.onAdd = function() {
       const div = L.DomUtil.create('div');
-      div.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.15);font-size:11px;line-height:1.4';
+      div.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(1,42,82,.15);font-size:11px;line-height:1.4';
       const bands = [
         { v: 1.07, l: '≥ 1.07' }, { v: 1.04, l: '1.04 – 1.07' },
         { v: 1.02, l: '1.02 – 1.04' }, { v: 1.00, l: '1.00 – 1.02' },
@@ -1668,7 +1668,7 @@ function renderStateChoropleth() {
       ];
       div.innerHTML = '<strong>Composite GAF</strong><br>' + bands.map(b =>
         `<span style="display:inline-block;width:14px;height:10px;background:${gafColor(b.v)};vertical-align:middle"></span> ${b.l}`
-      ).join('<br>') + '<div style="margin-top:4px;color:#6b7280;font-size:10px">National avg = 1.00</div>';
+      ).join('<br>') + '<div style="margin-top:4px;color:#5C6670;font-size:10px">National avg = 1.00</div>';
       return div;
     };
     lg.addTo(_gafMap);
@@ -1680,7 +1680,7 @@ function renderStateChoropleth() {
         { cache: 'force-cache' })
     .then(r => r.ok ? r.json() : null)
     .then(gj => { _gafGeoJson = gj; if (gj) _drawGafLayer(); })
-    .catch(() => { el.innerHTML = '<div style="padding:24px;text-align:center;color:#a0aec0;font-size:12px">State map could not be loaded (CDN reachability). The CMS GPCI table below carries the same data per-locality.</div>'; });
+    .catch(() => { el.innerHTML = '<div style="padding:24px;text-align:center;color:#7C8994;font-size:12px">State map could not be loaded (CDN reachability). The CMS GPCI table below carries the same data per-locality.</div>'; });
 }
 function _drawGafLayer() {
   const STATE_NAME_TO_ABBR = {
@@ -1707,7 +1707,7 @@ function _drawGafLayer() {
       const pct = g != null ? ((g - 1) * 100).toFixed(1) + '%' : '—';
       lyr.bindTooltip(`<strong>${f.properties.name}</strong><br>Composite GAF: <strong>${txt}</strong><br>vs national avg: ${g != null ? (g >= 1 ? '+' : '') + pct : '—'}`,
                        { sticky: true });
-      lyr.on('mouseover', e => e.target.setStyle({ weight: 2, color: '#1B365D', fillOpacity: 1 }));
+      lyr.on('mouseover', e => e.target.setStyle({ weight: 2, color: '#012A52', fillOpacity: 1 }));
       lyr.on('mouseout',  e => layer.resetStyle(e.target));
     },
   });
