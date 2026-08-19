@@ -691,9 +691,9 @@ function classifyLender(rec){
 //  LOAD DATA
 // ═══════════════════════════════════════════════════════════════════════════════
 async function loadData() {
-  // Try external loans.json first; fall back to embedded JSON
+  // Statewide (all-Texas) SBA loans; fall back to embedded JSON
   try {
-    const r = await fetch('loans.json', { cache: 'no-store' });
+    const r = await fetch('loans_statewide.json', { cache: 'no-store' });
     if (r.ok) {
       const j = await r.json();
       if (Array.isArray(j.loans)) return j;
@@ -1287,15 +1287,58 @@ function renderLender() {
 //  MAP
 // ═══════════════════════════════════════════════════════════════════════════════
 const COUNTY_CENTROIDS = {
-  // approximate centroids for the 32-county footprint
-  'Angelina':[31.25,-94.61],'Bell':[31.04,-97.48],'Bexar':[29.43,-98.49],'Brazoria':[29.17,-95.43],
-  'Brazos':[30.65,-96.40],'Caldwell':[29.83,-97.61],'Cameron':[26.13,-97.44],'Chambers':[29.78,-94.66],
-  'Coryell':[31.39,-97.79],'Dallas':[32.78,-96.80],'Ector':[31.87,-102.55],'Fort Bend':[29.53,-95.77],
-  'Galveston':[29.30,-94.79],'Grayson':[33.63,-96.68],'Gregg':[32.49,-94.82],'Hardin':[30.30,-94.39],
-  'Harris':[29.76,-95.37],'Jefferson':[29.95,-94.05],'Johnson':[32.38,-97.36],'Kaufman':[32.59,-96.30],
-  'Kerr':[30.06,-99.35],'Liberty':[30.14,-94.81],'Nueces':[27.74,-97.40],'Panola':[32.16,-94.31],
-  'Rusk':[32.11,-94.76],'Tarrant':[32.78,-97.29],'Taylor':[32.30,-99.89],'Titus':[33.22,-94.97],
-  'Travis':[30.32,-97.78],'Victoria':[28.79,-97.00],'Wichita':[33.99,-98.70],'Williamson':[30.67,-97.59],'Wise':[33.21,-97.65],
+  // all 254 Texas counties (2024 Census Gazetteer centroids)
+  'Anderson':[31.84,-95.66],'Andrews':[32.31,-102.64],'Angelina':[31.25,-94.61],'Aransas':[28.12,-96.97],'Archer':[33.62,-98.69],
+  'Armstrong':[34.96,-101.36],'Atascosa':[28.89,-98.54],'Austin':[29.89,-96.27],'Bailey':[34.07,-102.83],'Bandera':[29.76,-99.25],
+  'Bastrop':[30.10,-97.31],'Baylor':[33.62,-99.21],'Bee':[28.42,-97.74],'Bell':[31.04,-97.48],'Bexar':[29.45,-98.52],
+  'Blanco':[30.27,-98.40],'Borden':[32.74,-101.44],'Bosque':[31.90,-97.64],'Bowie':[33.45,-94.42],'Brazoria':[29.17,-95.43],
+  'Brazos':[30.66,-96.30],'Brewster':[29.81,-103.25],'Briscoe':[34.53,-101.21],'Brooks':[27.03,-98.22],'Brown':[31.76,-99.00],
+  'Burleson':[30.49,-96.62],'Burnet':[30.79,-98.20],'Caldwell':[29.83,-97.63],'Calhoun':[28.44,-96.58],'Callahan':[32.29,-99.37],
+  'Cameron':[26.10,-97.48],'Camp':[32.97,-94.98],'Carson':[35.41,-101.36],'Cass':[33.08,-94.36],'Castro':[34.53,-102.26],
+  'Chambers':[29.70,-94.67],'Cherokee':[31.84,-95.16],'Childress':[34.52,-100.21],'Clay':[33.79,-98.21],'Cochran':[33.61,-102.83],
+  'Coke':[31.88,-100.64],'Coleman':[31.91,-99.35],'Collin':[33.19,-96.58],'Collingsworth':[34.96,-100.27],'Colorado':[29.60,-96.51],
+  'Comal':[29.81,-98.26],'Comanche':[31.95,-98.55],'Concho':[31.32,-99.86],'Cooke':[33.64,-97.21],'Coryell':[31.39,-97.80],
+  'Cottle':[34.09,-100.28],'Crane':[31.42,-102.49],'Crockett':[30.72,-101.40],'Crosby':[33.61,-101.30],'Culberson':[31.45,-104.53],
+  'Dallam':[36.29,-102.59],'Dallas':[32.77,-96.78],'Dawson':[32.74,-101.95],'Dewitt':[29.08,-97.36],'Deaf Smith':[34.94,-102.61],
+  'Delta':[33.39,-95.67],'Denton':[33.21,-97.12],'Dickens':[33.62,-100.79],'Dimmit':[28.42,-99.77],'Donley':[34.96,-100.82],
+  'Duval':[27.68,-98.50],'Eastland':[32.32,-98.84],'Ector':[31.87,-102.54],'Edwards':[29.99,-100.31],'El Paso':[31.77,-106.24],
+  'Ellis':[32.35,-96.80],'Erath':[32.24,-98.22],'Falls':[31.25,-96.93],'Fannin':[33.59,-96.10],'Fayette':[29.88,-96.92],
+  'Fisher':[32.74,-100.40],'Floyd':[34.07,-101.30],'Foard':[33.96,-99.82],'Fort Bend':[29.53,-95.77],'Franklin':[33.18,-95.22],
+  'Freestone':[31.70,-96.14],'Frio':[28.87,-99.11],'Gaines':[32.74,-102.63],'Galveston':[29.23,-94.89],'Garza':[33.18,-101.30],
+  'Gillespie':[30.33,-98.94],'Glasscock':[31.87,-101.52],'Goliad':[28.66,-97.43],'Gonzales':[29.46,-97.49],'Gray':[35.40,-100.81],
+  'Grayson':[33.62,-96.68],'Gregg':[32.49,-94.82],'Grimes':[30.54,-95.99],'Guadalupe':[29.58,-97.95],'Hale':[34.07,-101.82],
+  'Hall':[34.45,-100.58],'Hamilton':[31.71,-98.11],'Hansford':[36.27,-101.36],'Hardeman':[34.29,-99.75],'Hardin':[30.33,-94.39],
+  'Harris':[29.86,-95.39],'Harrison':[32.55,-94.37],'Hartley':[35.84,-102.61],'Haskell':[33.18,-99.73],'Hays':[30.06,-98.03],
+  'Hemphill':[35.82,-100.28],'Henderson':[32.21,-95.85],'Hidalgo':[26.40,-98.18],'Hill':[31.98,-97.13],'Hockley':[33.61,-102.34],
+  'Hood':[32.43,-97.83],'Hopkins':[33.15,-95.57],'Houston':[31.32,-95.42],'Howard':[32.30,-101.44],'Hudspeth':[31.45,-105.38],
+  'Hunt':[33.12,-96.08],'Hutchinson':[35.84,-101.36],'Irion':[31.30,-100.98],'Jack':[33.23,-98.17],'Jackson':[28.96,-96.59],
+  'Jasper':[30.75,-94.02],'Jeff Davis':[30.63,-104.19],'Jefferson':[29.85,-94.15],'Jim Hogg':[27.05,-98.75],'Jim Wells':[27.73,-98.09],
+  'Johnson':[32.38,-97.36],'Jones':[32.74,-99.87],'Karnes':[28.91,-97.85],'Kaufman':[32.60,-96.29],'Kendall':[29.94,-98.71],
+  'Kenedy':[26.89,-97.59],'Kent':[33.18,-100.77],'Kerr':[30.06,-99.35],'Kimble':[30.48,-99.75],'King':[33.61,-100.25],
+  'Kinney':[29.35,-100.42],'Kleberg':[27.44,-97.66],'Knox':[33.61,-99.73],'La Salle':[28.35,-99.10],'Lamar':[33.67,-95.57],
+  'Lamb':[34.07,-102.35],'Lampasas':[31.20,-98.24],'Lavaca':[29.38,-96.92],'Lee':[30.32,-96.98],'Leon':[31.30,-96.00],
+  'Liberty':[30.16,-94.84],'Limestone':[31.55,-96.59],'Lipscomb':[36.28,-100.27],'Live Oak':[28.35,-98.13],'Llano':[30.71,-98.68],
+  'Loving':[31.84,-103.56],'Lubbock':[33.61,-101.82],'Lynn':[33.18,-101.82],'Madison':[30.97,-95.93],'Marion':[32.80,-94.36],
+  'Martin':[32.31,-101.96],'Mason':[30.70,-99.24],'Matagorda':[28.77,-96.00],'Maverick':[28.73,-100.32],'Mcculloch':[31.21,-99.36],
+  'Mclennan':[31.55,-97.20],'Mcmullen':[28.38,-98.58],'Medina':[29.35,-99.11],'Menard':[30.89,-99.86],'Midland':[31.81,-102.00],
+  'Milam':[30.79,-96.98],'Mills':[31.49,-98.59],'Mitchell':[32.30,-100.92],'Montague':[33.68,-97.73],'Montgomery':[30.30,-95.50],
+  'Moore':[35.84,-101.89],'Morris':[33.12,-94.73],'Motley':[34.06,-100.79],'Nacogdoches':[31.62,-94.62],'Navarro':[32.05,-96.48],
+  'Newton':[30.79,-93.74],'Nolan':[32.31,-100.42],'Nueces':[27.74,-97.52],'Ochiltree':[36.28,-100.82],'Oldham':[35.40,-102.60],
+  'Orange':[30.12,-93.89],'Palo Pinto':[32.75,-98.32],'Panola':[32.16,-94.31],'Parker':[32.78,-97.81],'Parmer':[34.53,-102.78],
+  'Pecos':[30.77,-102.72],'Polk':[30.78,-94.84],'Potter':[35.40,-101.89],'Presidio':[30.01,-104.26],'Rains':[32.87,-95.80],
+  'Randall':[34.96,-101.90],'Reagan':[31.38,-101.51],'Real':[29.83,-99.81],'Red River':[33.62,-95.05],'Reeves':[31.31,-103.71],
+  'Refugio':[28.32,-97.16],'Roberts':[35.84,-100.84],'Robertson':[31.03,-96.51],'Rockwall':[32.90,-96.41],'Runnels':[31.85,-99.98],
+  'Rusk':[32.11,-94.76],'Sabine':[31.34,-93.85],'San Augustine':[31.38,-94.16],'San Jacinto':[30.57,-95.16],'San Patricio':[28.01,-97.52],
+  'San Saba':[31.16,-98.82],'Schleicher':[30.90,-100.53],'Scurry':[32.74,-100.91],'Shackelford':[32.74,-99.35],'Shelby':[31.79,-94.14],
+  'Sherman':[36.28,-101.90],'Smith':[32.38,-95.27],'Somervell':[32.22,-97.77],'Starr':[26.53,-98.74],'Stephens':[32.74,-98.84],
+  'Sterling':[31.84,-101.05],'Stonewall':[33.18,-100.25],'Sutton':[30.52,-100.51],'Swisher':[34.53,-101.74],'Tarrant':[32.77,-97.29],
+  'Taylor':[32.30,-99.89],'Terrell':[30.23,-102.07],'Terry':[33.17,-102.34],'Throckmorton':[33.17,-99.21],'Titus':[33.21,-94.97],
+  'Tom Green':[31.40,-100.46],'Travis':[30.24,-97.69],'Trinity':[31.10,-95.15],'Tyler':[30.77,-94.38],'Upshur':[32.74,-94.94],
+  'Upton':[31.35,-102.04],'Uvalde':[29.35,-99.77],'Val Verde':[29.88,-101.14],'Van Zandt':[32.56,-95.84],'Victoria':[28.80,-96.97],
+  'Walker':[30.74,-95.57],'Waller':[30.01,-95.98],'Ward':[31.51,-103.11],'Washington':[30.22,-96.41],'Webb':[27.76,-99.34],
+  'Wharton':[29.28,-96.23],'Wheeler':[35.39,-100.25],'Wichita':[33.99,-98.71],'Wilbarger':[34.08,-99.24],'Willacy':[26.48,-97.59],
+  'Williamson':[30.65,-97.61],'Wilson':[29.17,-98.09],'Winkler':[31.83,-103.05],'Wise':[33.22,-97.65],'Wood':[32.78,-95.38],
+  'Yoakum':[33.16,-102.83],'Young':[33.16,-98.68],'Zapata':[27.00,-99.18],'Zavala':[28.86,-99.76],
 };
 
 // Lazy-loaded geocoded coordinate cache (loans-geocoded.json), keyed by loan_id.
@@ -1657,16 +1700,19 @@ function wireEvents() {
   // Score weights drawer
   if (window.ScoreWeights) {
     ScoreWeights.init({
-      mount: { triggerEl: qs('#sw-trigger-mount') },
+      dashboardId: 'loan-maturity',
+      triggerSelector: '#sw-trigger-mount',
       title: 'Maturity Opportunity Score',
-      groups: [{
-        groupKey: 'oppScore',
-        groupLabel: 'Components',
-        items: [
+      scoringSystems: [{
+        id: 'oppScore',
+        label: 'Maturity Opportunity Score',
+        tabLabel: 'Opportunity',
+        normalizeTo: 100,
+        components: [
           { key:'proximity',     label:'Time-to-maturity proximity', desc:'Linear: 30 pts at 0 months, 0 pts at 36 months.', default: 30, min: 0, max: 50 },
           { key:'size',          label:'Loan size',                  desc:'Linear: 20 pts at ≥$5M, 0 pts at <$250K.',       default: 20, min: 0, max: 40 },
           { key:'lender_exit',   label:'Lender exit risk',           desc:'Full points if lender is out-of-state OR non-bank.', default: 15, min: 0, max: 30 },
-          { key:'geo',           label:'Geographic fit',             desc:'County is in Ranger 32-county footprint.',         default: 15, min: 0, max: 25 },
+          { key:'geo',           label:'Geographic fit',             desc:'Proximity to a Ranger anchor market.',             default: 15, min: 0, max: 25 },
           { key:'concentration', label:'Borrower concentration',     desc:'More points if borrower has multiple loans rolling off.', default: 10, min: 0, max: 25 },
           { key:'source_conf',   label:'Source confidence',          desc:'Full for SBA explicit dates; half for inferred UCC lapse.', default: 10, min: 0, max: 20 },
         ],

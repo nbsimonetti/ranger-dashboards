@@ -1,12 +1,14 @@
 """
-Statewide (all-Texas) SBA extract for the Professional Services BD and Small
-Business & Ag Lending dashboards.
+Statewide (all-Texas) SBA extract feeding three dashboards: Loan Maturity,
+Professional Services BD, and Small Business & Ag Lending.
 
 Same source and filters as pull_sba.py (TX, active status, still in its maturity
-window) but with NO county restriction, and a slim field set. Writes
-loan-maturity/loans_statewide.json. The raw FOIA CSVs are large and untracked, so
-this runs offline (quarterly, alongside the footprint pull) and the JSON is
-committed for the dashboards + CI to consume.
+window) but with NO county restriction. Emits the SAME full record schema and the
+SAME loan_id scheme as pull_sba.py, so the sparse geocode cache (loans-geocoded.json,
+keyed by loan_id) still matches. Writes loan-maturity/loans_statewide.json.
+
+The raw FOIA CSVs are large and untracked, so this runs offline (quarterly,
+alongside the footprint pull) and the JSON is committed for the dashboards to fetch.
 
 Run:  python loan-maturity/data-collection/pull_sba_statewide.py
 """
@@ -14,12 +16,14 @@ import csv
 import json
 import re
 import datetime as dt
+from collections import Counter
 from pathlib import Path
 
 csv.field_size_limit(10 ** 7)
 HERE = Path(__file__).resolve().parent
 OUT = HERE.parent / "loans_statewide.json"
 TODAY = dt.date.today()
+NOW_ISO = dt.datetime.now(dt.timezone.utc).isoformat()
 
 INACTIVE = {"P I F", "PIF", "CHGOFF", "CANCLD", "CANCELLED"}
 INPUT_FILES = [
@@ -61,6 +65,13 @@ def normalize_county(c):
     return re.sub(r"\s+", " ", c.upper().replace("COUNTY", "").replace("CO.", "").strip())
 
 
+def loan_id(program, locationid, borrname, approval):
+    base = "sba-%s-%s" % (program, locationid)
+    if not locationid:
+        base = "sba-%s-%s-%s" % (program, borrname.strip()[:30], approval)
+    return base.lower().replace(" ", "_").replace("/", "_")
+
+
 def process(program, filename):
     path = HERE / filename
     if not path.exists():
@@ -78,29 +89,55 @@ def process(program, filename):
             if status in INACTIVE:
                 continue
             approval = parse_date(row.get("approvaldate"))
-            maturity = add_months(approval, row.get("terminmonths"))
+            term = row.get("terminmonths")
+            maturity = add_months(approval, term)
             if not maturity or maturity < TODAY:
                 continue
+            gross = float(row.get("grossapproval") or 0) or 0
             lender = (row.get("bankname") or "").strip()
+            lstate = (row.get("bankstate") or "").strip().upper()
             if program == "504" and not lender:
                 lender = "(SBA 504 - partner bank not disclosed)"
+                lstate = ""
+            county = normalize_county(row.get("projectcounty"))
             out.append({
+                "loan_id": loan_id(program, row.get("locationid", ""),
+                                   row.get("borrname", ""), row.get("approvaldate", "")),
+                "source": "sba-" + program,
+                "source_url": "https://data.sba.gov/dataset/7-a-504-foia",
+                "source_doc_id": row.get("locationid") or None,
                 "borrower": (row.get("borrname") or "").strip(),
+                "borrower_address": ((row.get("borrstreet") or "") + ", " + (row.get("borrcity") or "")
+                                     + ", " + (row.get("borrstate") or "") + " "
+                                     + (row.get("borrzip") or "")).strip(", "),
                 "borrower_city": (row.get("borrcity") or "").strip().title(),
-                "county": normalize_county(row.get("projectcounty")).title(),
+                "borrower_state": (row.get("borrstate") or "").strip().upper(),
+                "borrower_zip": (row.get("borrzip") or "").strip(),
                 "lender": lender,
-                "loan_amount": float(row.get("grossapproval") or 0) or 0,
+                "lender_state": lstate,
+                "lender_city": (row.get("bankcity") or "").strip().title(),
+                "lender_fdic_cert": (row.get("bankfdicnumber") or "").strip(),
+                "county": county.title(),
+                "project_state": "TX",
+                "loan_amount": gross,
                 "sba_guaranteed_amount": float(row.get("sbaguaranteedapproval") or 0) or 0,
                 "approval_date": approval.isoformat() if approval else None,
+                "term_months": int(term) if term and term.isdigit() else None,
                 "maturity_date": maturity.isoformat(),
+                "months_to_maturity": (maturity.year - TODAY.year) * 12 + (maturity.month - TODAY.month),
                 "interest_rate": float(row.get("initialinterestrate") or 0) or None,
                 "rate_type": (row.get("fixedorvariableinterestind") or "").strip(),
                 "naics_code": (row.get("naicscode") or "").strip(),
                 "naics_description": (row.get("naicsdescription") or "").strip(),
+                "jobs_supported": int(row.get("jobssupported") or 0) or None,
+                "business_type": (row.get("businesstype") or "").strip(),
                 "loan_status": status,
-                "source": "sba-" + program,
+                "has_collateral": (row.get("collateralind") or "").strip().upper() == "Y",
+                "source_context": "SBA %s approval %s - term %smo - status %s"
+                                  % (program, row.get("approvaldate", ""), term, status),
+                "scraped_at": NOW_ISO,
             })
-    print("    kept %d TX active/in-window from %s" % (len(out), filename))
+    print("    kept %d TX active/in-window" % len(out))
     return out
 
 
@@ -108,19 +145,26 @@ def main():
     loans = []
     for program, filename in INPUT_FILES:
         loans.extend(process(program, filename))
+    loans.sort(key=lambda r: r["maturity_date"])
     counties = sorted({r["county"] for r in loans if r["county"]})
+    # Match loans.json's meta schema exactly (the dashboard JS reads these keys;
+    # sources_seen is a {source: count} dict, not a list). footprint_counties keeps
+    # its name for JS compatibility but now counts all statewide counties.
     meta = {
-        "as_of": "2026-03-31", "scope": "all Texas (statewide)",
-        "generated": TODAY.isoformat(), "loans": len(loans),
-        "counties": len(counties),
-        "total_amount": round(sum(r["loan_amount"] for r in loans)),
-        "source": "SBA 7(a)/504 FOIA bulk (data.sba.gov)",
+        "generated_at": NOW_ISO,
+        "sba_asof": "2026-03-31",
+        "sba_asof_tag": "260331",
+        "total_loans": len(loans),
+        "total_dollars": float(sum(r["loan_amount"] for r in loans)),
+        "sources_seen": dict(Counter(r["source"] for r in loans)),
+        "footprint_counties": len(counties),
+        "scope": "all Texas (statewide)",
     }
     OUT.write_text(json.dumps({"meta": meta, "loans": loans}, separators=(",", ":")),
                    encoding="utf-8")
     print("wrote %s: %d loans, %d counties, $%.1fB, %.0f MB"
           % (OUT.name, len(loans), len(counties),
-             meta["total_amount"] / 1e9, OUT.stat().st_size / 1e6))
+             meta["total_dollars"] / 1e9, OUT.stat().st_size / 1e6))
 
 
 if __name__ == "__main__":
