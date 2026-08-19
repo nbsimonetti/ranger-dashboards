@@ -20,7 +20,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
-from footprint import (http_get_json, inject_data, stamp, FOOTPRINT, in_footprint)  # noqa: E402
+from footprint import (http_get_json, inject_data, stamp, FOOTPRINT, in_footprint, COUNTY_GEO)  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 HTML = HERE / "structure-tx.html"
@@ -33,29 +33,6 @@ FAIL = "https://banks.data.fdic.gov/api/failures"
 # oil-bust & S&L collapse -> long consolidation arc without survivorship noise).
 START_YEAR = 1980
 
-# Footprint county centroids, derived once from the mean of every FDIC Summary
-# of Deposits branch coordinate reported in that county (187,975 branch-years).
-# Authentic FDIC-sourced geography - used only to place the footprint bubble map.
-# [lat, lng]
-CENTROIDS = {
-    "Angelina": [31.3040, -94.7144], "Bell": [31.0844, -97.5398],
-    "Bexar": [29.5407, -98.5213], "Brazoria": [29.3516, -95.4233],
-    "Brazos": [30.6552, -96.4240], "Caldwell": [29.7896, -97.6683],
-    "Cameron": [26.0540, -97.5351], "Chambers": [29.8024, -94.6422],
-    "Coryell": [31.2820, -97.8422], "Dallas": [32.8345, -96.8693],
-    "Ector": [31.8678, -102.3598], "Fort Bend": [29.6404, -95.7270],
-    "Galveston": [29.4257, -95.0170], "Grayson": [33.6348, -96.6291],
-    "Gregg": [32.4808, -94.8166], "Hardin": [30.2856, -94.2947],
-    "Harris": [29.8327, -95.5474], "Jefferson": [30.0555, -94.1885],
-    "Johnson": [32.4251, -97.3500], "Kaufman": [32.6476, -96.3654],
-    "Kerr": [30.0566, -99.1736], "Liberty": [30.1594, -94.8913],
-    "Nueces": [27.7585, -97.4066], "Panola": [32.1395, -94.3749],
-    "Rusk": [32.0983, -94.8261], "Tarrant": [32.7704, -97.3037],
-    "Taylor": [32.4379, -99.7419], "Titus": [33.1785, -94.9796],
-    "Travis": [30.3241, -97.7990], "Victoria": [28.8229, -96.9990],
-    "Wichita": [33.8387, -98.5182], "Williamson": [30.5711, -97.7179],
-    "Wise": [33.1972, -97.6609],
-}
 
 
 def year_of(s):
@@ -160,7 +137,7 @@ def build(inst, fail, cur):
                        and r["end"] in last5)
     footprint = []
     for county, fips in FOOTPRINT.items():
-        c = CENTROIDS.get(county, [None, None])
+        c = list(COUNTY_GEO.get(fips, (None, None, None))[1:])
         footprint.append({
             "county": county, "fips": fips, "lat": c[0], "lng": c[1],
             "active": fp_active.get(county, 0),

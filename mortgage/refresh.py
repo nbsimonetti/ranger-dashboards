@@ -21,7 +21,7 @@ import datetime as dt
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
-from footprint import (http_get_json, inject_data, stamp, FOOTPRINT)  # noqa: E402
+from footprint import (http_get_json, inject_data, stamp, FOOTPRINT, COUNTY_GEO)  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 HTML = HERE / "mortgage-tx.html"
@@ -34,22 +34,6 @@ HDRS = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
 CONFORMING = {2020: 510400, 2021: 548250, 2022: 647200, 2023: 726200,
               2024: 766550, 2025: 806500, 2026: 838150}
 
-# Approximate geographic centroid (lat, lng) of each footprint county, keyed by
-# 5-digit FIPS. HMDA aggregations carry no coordinates, so the map plots one
-# bubble per county at its center. Fixed public reference values.
-CENTROID = {
-    "48005": (31.25, -94.61), "48027": (31.04, -97.48), "48029": (29.45, -98.52),
-    "48039": (29.17, -95.43), "48041": (30.66, -96.30), "48055": (29.84, -97.62),
-    "48061": (26.13, -97.53), "48071": (29.71, -94.62), "48099": (31.39, -97.80),
-    "48113": (32.77, -96.78), "48135": (31.87, -102.54), "48157": (29.53, -95.77),
-    "48167": (29.38, -94.94), "48181": (33.63, -96.68), "48183": (32.48, -94.82),
-    "48199": (30.33, -94.39), "48201": (29.86, -95.39), "48245": (29.86, -94.15),
-    "48251": (32.38, -97.37), "48257": (32.60, -96.29), "48265": (30.06, -99.35),
-    "48291": (30.15, -94.81), "48355": (27.73, -97.52), "48365": (32.16, -94.31),
-    "48401": (32.11, -94.76), "48439": (32.77, -97.29), "48441": (32.30, -99.89),
-    "48449": (33.22, -94.97), "48453": (30.33, -97.78), "48469": (28.80, -96.98),
-    "48485": (33.99, -98.70), "48491": (30.65, -97.60), "48497": (33.22, -97.65),
-}
 
 
 def _agg(url, tries=2):
@@ -119,7 +103,7 @@ def build(year):
     for i, (name, fips) in enumerate(sorted(FOOTPRINT.items()), 1):
         print("  [%2d/%d] %-12s %s" % (i, len(FOOTPRINT), name, fips), end=" ")
         d = pull_county(year, fips)
-        lat, lng = CENTROID.get(fips, (None, None))
+        _, lat, lng = COUNTY_GEO.get(fips, (None, None, None))
         d.update({"county": name, "fips": fips, "lat": lat, "lng": lng})
         print("orig=%-7s denials=%-6s dr=%s%%"
               % (d["orig"], d["denials"], d["denial_rate"]))

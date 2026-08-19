@@ -43,7 +43,7 @@ import urllib.error
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
-from footprint import (http_get, inject_data, stamp, FOOTPRINT, USER_AGENT)  # noqa: E402
+from footprint import (http_get, inject_data, stamp, FOOTPRINT, USER_AGENT, COUNTY_GEO)  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 HTML = HERE / "economic-tx.html"
@@ -67,25 +67,7 @@ VITALITY_WEIGHTS = {
 # Authoritative county name + centroid (Census 2023 Gazetteer, INTPTLAT/LONG)
 # keyed by 5-digit FIPS. Used for display labels and the map so the label always
 # matches the FIPS actually queried.
-GEO = {
-    "48005": ("Angelina", 31.2549, -94.6118), "48027": ("Bell", 31.0428, -97.4813),
-    "48029": ("Bexar", 29.4487, -98.5201), "48039": ("Brazoria", 29.1678, -95.4346),
-    "48041": ("Brazos", 30.6567, -96.3024), "48055": ("Caldwell", 29.8324, -97.6281),
-    "48061": ("Cameron", 26.1029, -97.479), "48071": ("Chambers", 29.6964, -94.6694),
-    "48099": ("Coryell", 31.3912, -97.798), "48113": ("Dallas", 32.767, -96.7784),
-    "48135": ("Ector", 31.8653, -102.5425), "48157": ("Fort Bend", 29.5266, -95.771),
-    "48167": ("Galveston", 29.2339, -94.8882), "48181": ("Grayson", 33.6245, -96.6758),
-    "48183": ("Gregg", 32.4864, -94.8163), "48199": ("Hardin", 30.3296, -94.3932),
-    "48201": ("Harris", 29.8573, -95.393), "48245": ("Jefferson", 29.854, -94.1493),
-    "48251": ("Johnson", 32.3797, -97.3649), "48257": ("Kaufman", 32.5989, -96.2884),
-    "48265": ("Kerr", 30.06, -99.3533), "48291": ("Liberty", 30.1585, -94.8441),
-    "48355": ("Nueces", 27.74, -97.5162), "48365": ("Panola", 32.164, -94.3052),
-    "48401": ("Rusk", 32.1094, -94.7564), "48439": ("Tarrant", 32.7721, -97.2912),
-    "48441": ("Taylor", 32.2971, -99.8904), "48449": ("Titus", 33.2146, -94.9668),
-    "48453": ("Travis", 30.2395, -97.6913), "48469": ("Victoria", 28.7964, -96.9712),
-    "48485": ("Wichita", 33.9882, -98.708), "48491": ("Williamson", 30.6491, -97.6051),
-    "48497": ("Wise", 33.2191, -97.654),
-}
+GEO = COUNTY_GEO  # all 254 TX counties: fips -> (name, lat, lng)
 
 FIPS_LIST = sorted(set(FOOTPRINT.values()))
 _MONTHS = {"M01": "Jan", "M02": "Feb", "M03": "Mar", "M04": "Apr", "M05": "May",
