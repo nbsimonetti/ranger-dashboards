@@ -16,6 +16,7 @@ county and returns the whole state. See METHODOLOGY in mortgage-tx.html.
 Run:  python refresh.py         (auto-detects the latest available HMDA year)
 """
 import sys
+import re
 import time
 import datetime as dt
 from pathlib import Path
@@ -28,6 +29,26 @@ HTML = HERE / "mortgage-tx.html"
 BASE = "https://ffiec.cfpb.gov/v2/data-browser-api/view/aggregations"
 # The FFIEC data browser rejects a stdlib/default UA with 403; a browser UA works.
 HDRS = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+# HMDA (ffiec.cfpb.gov) blocks GitHub Actions runner IPs (403), so this can't run
+# in CI - it is refreshed from a non-blocked network and committed (like the SBA
+# data). Skip when the dashboard already holds fresh data so the weekly CI job
+# doesn't repeatedly fail against HMDA. HMDA is annual, so the window is generous.
+SKIP_DAYS = 40
+
+
+def _fresh():
+    if not HTML.exists():
+        return False
+    txt = HTML.read_text(encoding="utf-8")
+    mo = re.search(r'"generated_at":"([0-9T:\-]+Z)".{0,300}?"footprint_originations":(\d+)',
+                   txt, re.S)
+    if not mo:
+        return False
+    try:
+        gen = dt.datetime.strptime(mo.group(1), "%Y-%m-%dT%H:%M:%SZ").date()
+    except ValueError:
+        return False
+    return int(mo.group(2)) > 0 and (dt.date.today() - gen).days < SKIP_DAYS
 
 # FHFA baseline conforming-loan limit (1-unit) by year. Used only as the jumbo
 # reference line / "jumbo-lean" flag on the physician-proxy view.
@@ -134,9 +155,13 @@ def build(year):
 
 
 def main():
+    if "--force" not in sys.argv and _fresh():
+        print("mortgage data is fresh (< %d days) - skipping HMDA pull "
+              "(HMDA blocks CI; refresh from a non-blocked network)." % SKIP_DAYS)
+        return
     year = latest_year()
     print("latest HMDA year:", year)
-    print("pulling %d footprint counties (2 requests each)..." % len(FOOTPRINT))
+    print("pulling %d Texas counties (2 requests each)..." % len(FOOTPRINT))
     data = build(year)
     m = data["_meta"]
     print("footprint originations:", format(m["footprint_originations"], ","),
