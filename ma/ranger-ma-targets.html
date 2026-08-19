@@ -287,6 +287,48 @@
     .tabcontent:not(.active) { display: none !important; }
   }
 </style>
+<!-- rb-brand-typography : Ranger Bank brand fonts — Rockwell (headings) / Calibri (body).
+     Both ship with Microsoft Office, so they resolve locally for the team; the
+     stacks fall back to a slab serif / humanist sans elsewhere. Loaded last so it
+     wins the cascade without touching the existing stylesheet. Numeric/monospace
+     elements keep their own declarations (element rules beat inherited values). -->
+<style>
+  body { font-family: Calibri, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  h1, h2, h3, h4, h5, h6,
+  .card-title, .panel > h3, .val-card-title, .sec-title {
+    font-family: Rockwell, "Rockwell Nova", "Roboto Slab", Georgia, "Times New Roman", serif;
+    letter-spacing: .002em;
+  }
+  input, select, textarea, button { font-family: inherit; }
+</style>
+<script>
+/* Match the charts to the page: Plotly and Chart.js both default to their own
+   font stacks, and Plotly writes font-family inline on SVG text (CSS can't reach
+   it), so set the library defaults here — after the CDN tags, before any chart is
+   built. Existing per-chart font settings are preserved. */
+(function () {
+  var BODY = 'Calibri, "Segoe UI", system-ui, -apple-system, sans-serif';
+  function apply() {
+    if (window.Plotly && Plotly.newPlot && !Plotly.__rbFont) {
+      var orig = Plotly.newPlot;
+      Plotly.newPlot = function (gd, data, layout, config) {
+        layout = layout || {};
+        layout.font = Object.assign({ family: BODY }, layout.font || {});
+        return orig.call(this, gd, data, layout, config);
+      };
+      Plotly.__rbFont = true;
+    }
+    if (window.Chart) {
+      try {
+        if (Chart.defaults && Chart.defaults.font) Chart.defaults.font.family = BODY;          // v3+
+        else if (Chart.defaults && Chart.defaults.global) Chart.defaults.global.defaultFontFamily = BODY; // v2
+      } catch (e) {}
+    }
+  }
+  apply();
+  document.addEventListener('DOMContentLoaded', apply);
+})();
+</script>
 </head>
 <body>
 <header style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
