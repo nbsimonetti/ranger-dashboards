@@ -106,7 +106,7 @@
         <li>Tenure is inferred from NPI enumeration date, not actual practice-opening date.</li>
         <li>Dentists bill little Medicare, so (unlike the physician dashboard) there is no Medicare-volume signal; scoring is registry-based.</li>
       </ul>
-      <p class="small">Refresh: <code>python dental/refresh.py</code>. Scheduled weekly via GitHub Actions (NPPES resolves in CI).</p>
+      <p class="small">Refresh: <code>python dental/refresh.py</code>. Requires network access to <code>npiregistry.cms.gov</code>, which is presently DNS-unreachable from the CI runner — populate from a network that can reach it. The scheduled workflow retries weekly.</p>
     </div>
   </section>
 </div>
@@ -170,7 +170,7 @@ function renderSpecialty(){
 }
 function boot(){
   if(!D||!D.providers||!D.providers.length){
-    $('#empty-note').innerHTML='<div class="empty">No provider data loaded yet. This dashboard populates on the first scheduled refresh — NPPES (<code>npiregistry.cms.gov</code>) resolves inside GitHub Actions. Run <code>python dental/refresh.py</code> from an environment that can reach it, or trigger the <b>Refresh dashboard data</b> workflow with <code>only=dental</code>.</div>';
+    $('#empty-note').innerHTML='<div class="empty"><b>Awaiting data.</b> The pipeline is complete, but the data source — NPPES (<code>npiregistry.cms.gov</code>) — is currently DNS-unreachable from both this project’s build sandbox and GitHub Actions runners (every request fails to resolve). Run <code>python dental/refresh.py</code> from a network that can reach npiregistry.cms.gov (the same source the physician dataset was built from) to populate this dashboard; the scheduled workflow will pick it up automatically once the host resolves.</div>';
     $('#stamp').textContent='Awaiting first data refresh.';
     return;
   }

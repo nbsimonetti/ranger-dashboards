@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranger Bank — Small Business &amp; Agricultural Lending (TX)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root{--bg:#0e1622;--panel:#141f33;--panel2:#1b2942;--border:#28374f;--text:#e6ecf5;--muted:#93a6c4;--faint:#6b7d9b;--accent:#c8a951;--accent2:#5b8def;--good:#3ea676;--warn:#e0a458;--bad:#d9694f;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
+  a{color:var(--accent)}
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 22px 70px}
+  header.top h1{font-size:22px;margin:0 0 4px;font-weight:600}
+  header.top .sub{color:var(--muted);font-size:13px;max-width:76ch}
+  .stamp{margin-top:8px;font-size:11px;color:var(--faint)} .stamp b{color:var(--muted);font-weight:500}
+  nav{display:flex;flex-wrap:wrap;gap:4px;margin:18px 0 20px;border-bottom:1px solid var(--border)}
+  nav button{background:none;border:none;color:var(--muted);padding:9px 14px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit}
+  nav button:hover{color:var(--text)} nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+  .view{display:none} .view.active{display:block}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  .kpi .value{font-size:22px;margin-top:5px;font-variant-numeric:tabular-nums}
+  .kpi .value small{font-size:13px;color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:18px}
+  .panel h3{margin:0 0 4px;font-size:15px} .panel .note{color:var(--muted);font-size:12px;margin-bottom:12px}
+  .controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:14px}
+  .controls label{font-size:12px;color:var(--muted);display:block}
+  input[type=text]{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;min-width:220px}
+  .table-wrap{max-height:70vh;overflow:auto;border:1px solid var(--border);border-radius:10px}
+  table.data{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.data th,table.data td{padding:8px 11px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  table.data th.l,table.data td.l{text-align:left}
+  table.data thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;z-index:2;font-weight:600;color:var(--muted)}
+  table.data thead th.sort-asc::after{content:" ▲";color:var(--accent)} table.data thead th.sort-desc::after{content:" ▼";color:var(--accent)}
+  table.data tbody tr:hover{background:rgba(200,169,81,.06)}
+  .pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+  .pill.ag{color:var(--good);border-color:rgba(62,166,118,.4);background:rgba(62,166,118,.1)}
+  .muted{color:var(--muted)} .small{font-size:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px} @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .prose p{color:var(--muted);max-width:76ch;margin:0 0 10px} .prose h4{margin:16px 0 6px;color:var(--text);font-size:13px}
+  .prose ul{color:var(--muted);max-width:76ch;padding-left:18px} .prose li{margin-bottom:5px}
+  code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
+  .callout{background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:8px;padding:12px 16px;margin:8px 0 4px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Small Business &amp; Agricultural Lending <span class="muted" style="font-weight:400">— Texas</span></h1>
+    <div class="sub">The small-business and agricultural lending landscape across the footprint — by sector, county, and lender, with a dedicated agriculture view for the rural markets. Built from SBA 7(a)/504 originations.</div>
+    <div class="stamp" id="stamp">—</div>
+  </header>
+  <nav id="nav">
+    <button data-view="overview" class="active">Overview</button>
+    <button data-view="sector">By Sector</button>
+    <button data-view="ag">Agriculture</button>
+    <button data-view="lenders">Lender Competition</button>
+    <button data-view="county">By County</button>
+    <button data-view="method">Methodology</button>
+  </nav>
+
+  <section class="view active" id="v-overview">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="panel"><h3>Credit by sector</h3><div class="note">SBA-financed small-business credit by NAICS sector.</div><div id="chart-sector" style="height:400px"></div></div>
+      <div class="panel"><h3>Credit by county</h3><div class="note">Where the small-business borrowing is.</div><div id="chart-county" style="height:400px"></div></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-sector">
+    <div class="panel"><h3>By sector</h3><div class="note">Loan count and dollars by NAICS sector.</div>
+      <div class="table-wrap"><table class="data" id="sector-table"></table></div></div>
+  </section>
+
+  <section class="view" id="v-ag">
+    <div class="panel">
+      <h3>Agriculture focus</h3>
+      <div class="note">Agricultural, forestry &amp; fishing borrowers (NAICS 11) — the rural-footprint lending segment. Top ag lenders and the individual ag loans.</div>
+      <div class="grid2" style="margin-bottom:14px">
+        <div class="kpi"><div class="label">Ag loans</div><div class="value" id="ag-n">—</div></div>
+        <div class="kpi"><div class="label">Ag credit</div><div class="value" id="ag-amt">—</div></div>
+      </div>
+      <h4 style="font-size:13px;color:var(--muted);margin:8px 0 6px">Top agricultural lenders</h4>
+      <div class="table-wrap" style="max-height:32vh;margin-bottom:14px"><table class="data" id="ag-lender-table"></table></div>
+      <h4 style="font-size:13px;color:var(--muted);margin:8px 0 6px">Ag borrowers</h4>
+      <div class="controls"><label>Search<br><input type="text" id="ag-search" placeholder="borrower, county, lender…"></label></div>
+      <div class="table-wrap"><table class="data" id="ag-loan-table"></table></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-lenders">
+    <div class="panel"><h3>Lender competition</h3><div class="note">SBA small-business lenders ranked by footprint credit — who Ranger competes with for the small-business relationship.</div>
+      <div class="table-wrap"><table class="data" id="lender-table"></table></div></div>
+  </section>
+
+  <section class="view" id="v-county">
+    <div class="panel"><h3>By county</h3><div class="note">Small-business credit and loan counts by county, with the agricultural share.</div>
+      <div class="table-wrap"><table class="data" id="county-table"></table></div></div>
+  </section>
+
+  <section class="view" id="v-method">
+    <div class="panel prose">
+      <h3>Methodology &amp; sources</h3>
+      <h4>Data source</h4>
+      <p><strong>SBA 7(a) &amp; 504 FOIA</strong> borrower data (the same free public dataset behind the Loan Maturity dashboard) — real originations carrying borrower, NAICS code, county, lender, amount, and rate. Aggregated here by NAICS sector, county, and lender, with agriculture (NAICS&nbsp;11) broken out.</p>
+      <div class="callout"><strong>Coverage note.</strong> SBA loans are a <em>subset</em> of small-business lending — conventional (non-SBA) bank small-business and farm loans are not here. The definitive competitive census is the <strong>FFIEC CRA</strong> small-business/small-farm disclosure data, but ffiec.gov bot-blocks automated pulls (HTTP&nbsp;403) and requires a manual bulk download; and <strong>USDA NASS</strong> agricultural context needs a free API key. Both are wired-ready augmentation paths — set them up to layer the full market over this SBA baseline.</p>
+      <h4>Limitations</h4>
+      <ul>
+        <li>SBA-only — undercounts conventional bank small-business and ag lending.</li>
+        <li>NAICS sector is as-reported on the SBA record; agriculture excludes agriculture-adjacent processing/wholesale.</li>
+        <li>504 partner-bank names are sometimes redacted in the source.</li>
+      </ul>
+      <p class="small">Refresh: <code>python smallbiz-ag/refresh.py</code>. Scheduled weekly via GitHub Actions.</p>
+    </div>
+  </section>
+</div>
+
+<script>window.DASH=/*__DATA_START__*/{"_meta":{"generated_at":"2026-08-19T17:06:03Z","source":"SBA 7(a)/504 FOIA borrowers (in-repo)","loans":19737,"total_credit":16269254800,"sectors":21,"counties":33,"ag_loans":45,"ag_credit":46264700},"by_sector":[{"sector":"Accommodation & Food","n":2911,"amt":3490512500},{"sector":"Health Care & Social Assistance","n":2685,"amt":2422258800},{"sector":"Retail Trade","n":2246,"amt":1959346100},{"sector":"Other Services","n":2321,"amt":1667697400},{"sector":"Manufacturing","n":1151,"amt":1169916500},{"sector":"Professional Services","n":1845,"amt":1032928200},{"sector":"Wholesale Trade","n":833,"amt":861125200},{"sector":"Construction","n":1657,"amt":837819900},{"sector":"Arts & Recreation","n":831,"amt":675849700},{"sector":"Real Estate & Rental","n":494,"amt":447103100},{"sector":"Admin & Support","n":915,"amt":440087700},{"sector":"Transportation & Warehousing","n":662,"amt":394562100},{"sector":"Educational Services","n":428,"amt":339096400},{"sector":"Finance & Insurance","n":382,"amt":208922500},{"sector":"Information","n":192,"amt":142000200},{"sector":"Mining & Oil/Gas","n":58,"amt":69389700},{"sector":"Agriculture, Forestry & Fishing","n":45,"amt":46264700},{"sector":"Unclassified","n":38,"amt":35787000},{"sector":"Management","n":15,"amt":14654400},{"sector":"Utilities","n":25,"amt":13374200},{"sector":"Public Administration","n":3,"amt":558500}],"counties":[{"county":"Harris","n":5225,"amt":4451999900,"ag_amt":1557000},{"county":"Dallas","n":3069,"amt":2624417200,"ag_amt":1746500},{"county":"Tarrant","n":2423,"amt":1986134700,"ag_amt":2514000},{"county":"Travis","n":1951,"amt":1487780300,"ag_amt":5954200},{"county":"Bexar","n":1764,"amt":1309894200,"ag_amt":573900},{"county":"Fort Bend","n":1084,"amt":905595200,"ag_amt":10000},{"county":"Williamson","n":1086,"amt":843009200,"ag_amt":2975200},{"county":"Brazoria","n":402,"amt":316405300,"ag_amt":0},{"county":"Galveston","n":322,"amt":264839200,"ag_amt":0},{"county":"Brazos","n":204,"amt":194937700,"ag_amt":1490000},{"county":"Jefferson","n":180,"amt":193251700,"ag_amt":0},{"county":"Bell","n":271,"amt":185944200,"ag_amt":0},{"county":"Ector","n":157,"amt":160699100,"ag_amt":0},{"county":"Kaufman","n":147,"amt":145453900,"ag_amt":0},{"county":"Nueces","n":208,"amt":145176100,"ag_amt":0},{"county":"Grayson","n":125,"amt":129150400,"ag_amt":0},{"county":"Johnson","n":160,"amt":126609600,"ag_amt":348000},{"county":"Gregg","n":117,"amt":116238200,"ag_amt":0},{"county":"Taylor","n":139,"amt":115326700,"ag_amt":0},{"county":"Cameron","n":170,"amt":82368100,"ag_amt":5784100},{"county":"Victoria","n":70,"amt":74769700,"ag_amt":7500},{"county":"Chambers","n":69,"amt":69284300,"ag_amt":0},{"county":"Wise","n":71,"amt":66597600,"ag_amt":0},{"county":"Wichita","n":73,"amt":59296600,"ag_amt":0},{"county":"Angelina","n":43,"amt":33750700,"ag_amt":0},{"county":"Liberty","n":44,"amt":33461200,"ag_amt":2072000},{"county":"Hardin","n":31,"amt":28820900,"ag_amt":65000},{"county":"Panola","n":18,"amt":24099200,"ag_amt":9727000},{"county":"Kerr","n":43,"amt":23850200,"ag_amt":1487300},{"county":"Caldwell","n":26,"amt":20434700,"ag_amt":0},{"county":"Rusk","n":17,"amt":19523200,"ag_amt":9953000},{"county":"Titus","n":12,"amt":18052600,"ag_amt":0},{"county":"Coryell","n":16,"amt":12083000,"ag_amt":0}],"lenders":[{"lender":"(SBA 504 — partner bank not disclosed)","amt":3819160000},{"lender":"Live Oak Banking Company","amt":802747500},{"lender":"The Huntington National Bank","amt":748872500},{"lender":"Wallis Bank","amt":452840300},{"lender":"Wells Fargo Bank National Association","amt":449418000},{"lender":"PNC Bank, National Association","amt":329395200},{"lender":"JPMorgan Chase Bank, National Association","amt":323747100},{"lender":"Readycap Lending, LLC","amt":253492200},{"lender":"Frost Bank","amt":245706200},{"lender":"Stellar Bank","amt":241894000},{"lender":"Fifth Third Bank","amt":220881800},{"lender":"Celtic Bank Corporation","amt":212325200},{"lender":"Newtek Bank, National Association","amt":198975500},{"lender":"First Internet Bank of Indiana","amt":197172700},{"lender":"Enterprise Bank & Trust","amt":188007300},{"lender":"Metro City Bank","amt":170713600},{"lender":"Zions Bank, A Division of","amt":166281100},{"lender":"Texas Capital Bank","amt":165514100},{"lender":"T Bank, National Association","amt":156388700},{"lender":"Regions Bank","amt":155849400},{"lender":"Plains State Bank","amt":151180500},{"lender":"Bank of America, National Association","amt":147667800},{"lender":"SouthState Bank, National Association","amt":143000700},{"lender":"Byline Bank","amt":139967500},{"lender":"Bank of Hope","amt":139939100},{"lender":"Commonwealth Business Bank","amt":131962300},{"lender":"First Bank of the Lake","amt":127498000},{"lender":"Newtek Small Business Finance, Inc.","amt":124414000},{"lender":"US Metro Bank","amt":123757000},{"lender":"Capital One, National Association","amt":123550500},{"lender":"PlainsCapital Bank","amt":114271700},{"lender":"Citizens Bank","amt":102633400},{"lender":"b1BANK","amt":101723000},{"lender":"BayFirst National Bank","amt":100899400},{"lender":"Midwest Regional Bank","amt":97396000},{"lender":"PCB Bank","amt":96873000},{"lender":"Hancock Whitney Bank","amt":92477900},{"lender":"Open Bank","amt":90826800},{"lender":"United Midwest Savings Bank National Association","amt":88080000},{"lender":"Third Coast Bank","amt":87406200}],"ag":{"by_lender":[{"lender":"First Financial Bank","amt":11580000},{"lender":"Live Oak Banking Company","amt":5539000},{"lender":"Prosperity Bank","amt":4585000},{"lender":"PlainsCapital Bank","amt":4160500},{"lender":"SouthState Bank, National Association","amt":2603200},{"lender":"Southern Bancorp Bank","amt":2561000},{"lender":"Greater Nevada CU","amt":2200000},{"lender":"b1BANK","amt":2062000},{"lender":"First Community Bank","amt":1623600},{"lender":"Simmons Bank","amt":1490000},{"lender":"Security State Bank and Trust","amt":1437300},{"lender":"Bank of America, National Association","amt":1209200},{"lender":"Newtek Bank, National Association","amt":1131000},{"lender":"(SBA 504 — partner bank not disclosed)","amt":1019000},{"lender":"Harvest Small Business Finance, LLC","amt":977500},{"lender":"Citizens Bank","amt":619000},{"lender":"Third Coast Bank","amt":617000},{"lender":"Lendistry SBLC, LLC","amt":150000},{"lender":"Celtic Bank Corporation","amt":150000},{"lender":"Peoples Bank","amt":150000},{"lender":"Wallis Bank","amt":125000},{"lender":"BayFirst National Bank","amt":92900},{"lender":"Newtek Small Business Finance, Inc.","amt":65000},{"lender":"Wells Fargo Bank National Association","amt":57500},{"lender":"Fifth Third Bank","amt":50000}],"loans":[{"borrower":"BAYGA Farm","county":"Rusk","city":"Mount Enterprise","lender":"First Financial Bank","amount":4750000,"naics":"112320","rate":6.15,"status":"CURR","approved":"2022-06-24"},{"borrower":"Native Texas Growers, LTD.","county":"Travis","city":"Austin","lender":"Prosperity Bank","amount":4585000,"naics":"111421","rate":7.0,"status":"CURR","approved":"2025-01-23"},{"borrower":"Sang's Farm","county":"Panola","city":"Carthage","lender":"First Financial Bank","amount":3120000,"naics":"112320","rate":6.4,"status":"CURR","approved":"2022-06-07"},{"borrower":"Los Fresnos Nursery, LLC","county":"Cameron","city":"Los Fresnos","lender":"PlainsCapital Bank","amount":2660600,"naics":"111421","rate":8.0,"status":"CURR","approved":"2025-01-31"},{"borrower":"Ransom Ranch and Farm","county":"Panola","city":"Gary","lender":"Live Oak Banking Company","amount":2660000,"naics":"112310","rate":5.0,"status":"CURR","approved":"2022-05-12"},{"borrower":"GPA2.76 HTX LLC","county":"Williamson","city":"Hutto","lender":"SouthState Bank, National Association","amount":2603200,"naics":"115210","rate":7.65,"status":"CURR","approved":"2022-11-17"},{"borrower":"Floyd Rambin Equities LLC","county":"Rusk","city":"Garrison","lender":"Southern Bancorp Bank","amount":2561000,"naics":"112390","rate":8.0,"status":"COMMIT","approved":"2025-04-30"},{"borrower":"Seville Farms Inc.","county":"Tarrant","city":"Fort Worth","lender":"Greater Nevada CU","amount":2200000,"naics":"111422","rate":7.0,"status":"PURCH(NOT C/O)","approved":"2018-03-27"},{"borrower":"Morace Cattle Company, LLC","county":"Liberty","city":"Cleveland","lender":"b1BANK","amount":2062000,"naics":"112111","rate":6.25,"status":"CURR","approved":"2022-04-05"},{"borrower":"Tetra Hemp Company LLC","county":"Cameron","city":"Harlingen","lender":"First Community Bank","amount":1623600,"naics":"111998","rate":6.0,"status":"CURR","approved":"2021-08-29"},{"borrower":"Ricky Dean Johnson and Virginia Leigh Johnson","county":"Panola","city":"Gary","lender":"Live Oak Banking Company","amount":1532000,"naics":"112310","rate":8.5,"status":"CURR","approved":"2025-04-21"},{"borrower":"New Dawn Gin Company, Inc.","county":"Brazos","city":"Bryan","lender":"Simmons Bank","amount":1490000,"naics":"115111","rate":4.0,"status":"CURR","approved":"2021-09-24"},{"borrower":"HP Dittmar 701 Company, LLC","county":"Kerr","city":"Ingram","lender":"Security State Bank and Trust","amount":1437300,"naics":"115210","rate":9.0,"status":"PURCH(NOT C/O)","approved":"2023-03-29"},{"borrower":"J.R. Pope Farms","county":"Rusk","city":"Mount Enterprise","lender":"Live Oak Banking Company","amount":1347000,"naics":"112320","rate":8.25,"status":"CURR","approved":"2023-06-16"},{"borrower":"RNL FARM, LLC","county":"Travis","city":"Austin","lender":"Bank of America, National Association","amount":1109200,"naics":"115210","rate":2.99,"status":"CURR","approved":"2022-10-06"},{"borrower":"Spring Valley Farm, LLC","county":"Rusk","city":"Garrison","lender":"First Financial Bank","amount":1000000,"naics":"112320","rate":8.05,"status":"CURR","approved":"2024-05-10"},{"borrower":"Los Fresnos Nursery, LLC","county":"Cameron","city":"Los Fresnos","lender":"PlainsCapital Bank","amount":999900,"naics":"111421","rate":7.75,"status":"COMMIT","approved":"2026-03-06"},{"borrower":"J&J Sod Company, LLC","county":"Dallas","city":"Dallas","lender":"Harvest Small Business Finance, LLC","amount":977500,"naics":"111421","rate":10.5,"status":"CURR","approved":"2025-03-25"},{"borrower":"Billy W. Anderson, II & Carla R. Anderson","county":"Panola","city":"Gary","lender":"First Financial Bank","amount":975000,"naics":"112320","rate":7.33,"status":"CURR","approved":"2013-03-28"},{"borrower":"Anderson Farms","county":"Panola","city":"Gary","lender":"First Financial Bank","amount":855000,"naics":"112320","rate":6.05,"status":"CURR","approved":"2022-04-21"},{"borrower":"Astra Stables LLC","county":"Dallas","city":"Richardson","lender":"Citizens Bank","amount":619000,"naics":"112920","rate":11.25,"status":"CURR","approved":"2023-12-09"},{"borrower":"MoonFlower Farms 1, LLC","county":"Harris","city":"Houston","lender":"Third Coast Bank","amount":617000,"naics":"111419","rate":5.5,"status":"CURR","approved":"2016-07-28"},{"borrower":"LaGrone Farms","county":"Panola","city":"Carthage","lender":"First Financial Bank","amount":585000,"naics":"112320","rate":8.15,"status":"CURR","approved":"2024-12-23"},{"borrower":"Assured Quality Care Services LLC","county":"Harris","city":"Houston","lender":"Newtek Bank, National Association","amount":500000,"naics":"111120","rate":11.0,"status":"CURR","approved":"2024-10-21"},{"borrower":"Los Fresnos Nursery, LLC","county":"Cameron","city":"Los Fresnos","lender":"PlainsCapital Bank","amount":500000,"naics":"111421","rate":8.5,"status":"CURR","approved":"2025-01-31"},{"borrower":"Trilateral Consulting, LLC","county":"Bexar","city":"San Antonio","lender":"Newtek Bank, National Association","amount":481000,"naics":"111120","rate":10.5,"status":"COMMIT","approved":"2025-01-24"},{"borrower":"Pacesetter K9 LLC","county":"Williamson","city":"Liberty Hill","lender":"(SBA 504 — partner bank not disclosed)","amount":372000,"naics":"115210","rate":null,"status":"CURRENT","approved":"2022-06-22"},{"borrower":"Enger Farms, LLC","county":"Johnson","city":"Joshua","lender":"(SBA 504 — partner bank not disclosed)","amount":348000,"naics":"111199","rate":null,"status":"PREPAID IN FULL","approved":"2015-02-11"},{"borrower":"Genes Greens, L.P.","county":"Tarrant","city":"Azle","lender":"(SBA 504 — partner bank not disclosed)","amount":299000,"naics":"111219","rate":null,"status":"CANCELED","approved":"2012-10-26"},{"borrower":"ARIEL FARM INC","county":"Rusk","city":"Garrison","lender":"First Financial Bank","amount":295000,"naics":"112320","rate":8.45,"status":"CURR","approved":"2023-11-29"},{"borrower":"Carnivero LLC","county":"Travis","city":"Austin","lender":"Lendistry SBLC, LLC","amount":150000,"naics":"111422","rate":13.0,"status":"CURR","approved":"2024-01-19"},{"borrower":"JSH Microgreens; JSH Hydroponics","county":"Harris","city":"Houston","lender":"Celtic Bank Corporation","amount":150000,"naics":"111998","rate":11.25,"status":"PURCH(NOT C/O)","approved":"2024-07-19"},{"borrower":"Gateway Pups, LLC","county":"Dallas","city":"Dallas","lender":"Peoples Bank","amount":150000,"naics":"112990","rate":10.5,"status":"CURR","approved":"2025-01-06"},{"borrower":"Claremont Way LLC","county":"Harris","city":"Humble","lender":"Newtek Bank, National Association","amount":150000,"naics":"111120","rate":9.75,"status":"COMMIT","approved":"2026-03-03"},{"borrower":"Royal Vessels LLC","county":"Harris","city":"Humble","lender":"Wallis Bank","amount":125000,"naics":"114111","rate":8.75,"status":"COMMIT","approved":"2026-02-27"},{"borrower":"RNL FARM, LLC","county":"Travis","city":"Austin","lender":"Bank of America, National Association","amount":100000,"naics":"115210","rate":3.24,"status":"CURR","approved":"2022-05-10"},{"borrower":"IN THE IRONS, INC.","county":"Bexar","city":"Boerne","lender":"BayFirst National Bank","amount":92900,"naics":"112920","rate":12.75,"status":"CURR","approved":"2024-11-06"},{"borrower":"Fascination Herpetoculture & Imports","county":"Hardin","city":"Thicket","lender":"Newtek Small Business Finance, Inc.","amount":65000,"naics":"112990","rate":10.5,"status":"CURR","approved":"2023-02-03"},{"borrower":"Trails End Cattle Company, LLC","county":"Kerr","city":"Comfort","lender":"Fifth Third Bank","amount":50000,"naics":"112111","rate":6.5,"status":"CURR","approved":"2018-05-03"},{"borrower":"CROOKED BAR T LLC","county":"Tarrant","city":"Fort Worth","lender":"Wells Fargo Bank National Association","amount":15000,"naics":"112111","rate":12.0,"status":"CURR","approved":"2019-03-27"},{"borrower":"HILLARY LLC","county":"Harris","city":"Pearland","lender":"Wells Fargo Bank National Association","amount":15000,"naics":"112390","rate":9.0,"status":"CURR","approved":"2022-05-13"},{"borrower":"HILL COUNTRY CHIPPING LLC","county":"Travis","city":"Austin","lender":"Wells Fargo Bank National Association","amount":10000,"naics":"113310","rate":7.75,"status":"CURR","approved":"2021-04-01"},{"borrower":"TORRES HONEY BEE'S REMOVAL AND","county":"Liberty","city":"Liberty","lender":"Wells Fargo Bank National Association","amount":10000,"naics":"112910","rate":10.75,"status":"CURR","approved":"2022-10-13"},{"borrower":"Caldwell Nursery","county":"Fort Bend","city":"Rosenberg","lender":"Zions Bank, A Division of","amount":10000,"naics":"111421","rate":15.0,"status":"CURR","approved":"2023-09-28"},{"borrower":"COLETO BLUFF FARM","county":"Victoria","city":"Victoria","lender":"Wells Fargo Bank National Association","amount":7500,"naics":"111940","rate":7.75,"status":"CURR","approved":"2021-05-25"}]}}/*__DATA_END__*/;</script>
+<script>
+const D=window.DASH,$=s=>document.querySelector(s);
+function fmtUsd(v){if(v==null)return '—';if(v>=1e9)return '$'+(v/1e9).toFixed(2)+'B';if(v>=1e6)return '$'+(v/1e6).toFixed(1)+'M';if(v>=1e3)return '$'+(v/1e3).toFixed(0)+'K';return '$'+Math.round(v);}
+function fmtN(v){return v==null?'—':v.toLocaleString();}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');$('#v-'+b.dataset.view).classList.add('active');
+  if(b.dataset.view==='overview')drawCharts();
+});
+function sortableTable(el,cols,rows,opts){opts=opts||{};let sk=opts.sortKey||cols[0].key,asc=opts.asc||false;
+  function r(){const s=rows.slice().sort((a,b)=>{let av=a[sk],bv=b[sk];if(typeof av==='string')return asc?(''+av).localeCompare(bv):(''+bv).localeCompare(av);av=av==null?-Infinity:av;bv=bv==null?-Infinity:bv;return asc?av-bv:bv-av;});
+    el.innerHTML='<thead><tr>'+cols.map(c=>`<th class="${c.l?'l':''} ${c.key===sk?(asc?'sort-asc':'sort-desc'):''}" data-k="${c.key}">${c.label}</th>`).join('')+'</tr></thead><tbody>'+
+      s.map(row=>'<tr>'+cols.map(c=>`<td class="${c.l?'l':''}">${c.fmt?c.fmt(row[c.key],row):(row[c.key]??'—')}</td>`).join('')+'</tr>').join('')+'</tbody>';
+    el.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(k===sk)asc=!asc;else{sk=k;asc=false;}r();});}
+  r();}
+let charted=false;
+function drawCharts(){if(charted||!D||typeof Plotly==='undefined')return;charted=true;
+  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},margin:{l:180,r:14,t:8,b:36},xaxis:{gridcolor:'#28374f',title:'Credit ($M)'},yaxis:{gridcolor:'#28374f'}};
+  const sec=D.by_sector.slice(0,12).reverse();
+  Plotly.newPlot('chart-sector',[{type:'bar',orientation:'h',x:sec.map(s=>s.amt/1e6),y:sec.map(s=>s.sector),marker:{color:sec.map(s=>s.sector.startsWith('Agriculture')?'#3ea676':'#c8a951')},hovertemplate:'%{y}: $%{x:.1f}M<extra></extra>'}],lay,{displayModeBar:false,responsive:true});
+  const co=D.counties.slice(0,14).reverse();
+  Plotly.newPlot('chart-county',[{type:'bar',orientation:'h',x:co.map(c=>c.amt/1e6),y:co.map(c=>c.county),marker:{color:'#5b8def'},hovertemplate:'%{y}: $%{x:.1f}M<extra></extra>'}],Object.assign({},lay,{margin:{l:110,r:14,t:8,b:36}}),{displayModeBar:false,responsive:true});
+}
+function renderSector(){
+  sortableTable($('#sector-table'),[
+    {key:'sector',label:'NAICS sector',l:1,fmt:(v)=>esc(v)+(v.startsWith('Agriculture')?' <span class="pill ag">ag</span>':'')},
+    {key:'n',label:'Loans',fmt:v=>fmtN(v)},
+    {key:'amt',label:'Credit',fmt:v=>fmtUsd(v)},
+  ],D.by_sector,{sortKey:'amt'});
+}
+function renderLenders(){
+  sortableTable($('#lender-table'),[
+    {key:'lender',label:'Lender',l:1,fmt:v=>esc(v)},
+    {key:'amt',label:'Footprint credit',fmt:v=>fmtUsd(v)},
+  ],D.lenders,{sortKey:'amt'});
+}
+function renderCounty(){
+  const rows=D.counties.map(c=>Object.assign({},c,{ag_share:c.amt?+(c.ag_amt/c.amt*100).toFixed(1):0}));
+  sortableTable($('#county-table'),[
+    {key:'county',label:'County',l:1,fmt:v=>esc(v)},
+    {key:'n',label:'Loans',fmt:v=>fmtN(v)},
+    {key:'amt',label:'Credit',fmt:v=>fmtUsd(v)},
+    {key:'ag_amt',label:'Ag credit',fmt:v=>v?fmtUsd(v):'—'},
+    {key:'ag_share',label:'Ag %',fmt:v=>v?v+'%':'—'},
+  ],rows,{sortKey:'amt'});
+}
+function renderAg(){
+  $('#ag-n').textContent=fmtN(D._meta.ag_loans);
+  $('#ag-amt').textContent=fmtUsd(D._meta.ag_credit);
+  sortableTable($('#ag-lender-table'),[
+    {key:'lender',label:'Ag lender',l:1,fmt:v=>esc(v)},
+    {key:'amt',label:'Ag credit',fmt:v=>fmtUsd(v)},
+  ],D.ag.by_lender,{sortKey:'amt'});
+  const cols=[
+    {key:'borrower',label:'Borrower',l:1,fmt:v=>esc(v)},
+    {key:'city',label:'City',l:1,fmt:v=>esc(v)},
+    {key:'county',label:'County',l:1,fmt:v=>esc(v)},
+    {key:'lender',label:'Lender',l:1,fmt:v=>esc(v)},
+    {key:'amount',label:'Amount',fmt:v=>fmtUsd(v)},
+    {key:'rate',label:'Rate',fmt:v=>v!=null?(+v).toFixed(2)+'%':'—'},
+    {key:'status',label:'Status',l:1,fmt:v=>esc(v)},
+    {key:'approved',label:'Approved',l:1,fmt:v=>esc(v)},
+  ];
+  const el=$('#ag-loan-table');
+  function apply(){
+    const q=$('#ag-search').value.trim().toLowerCase();
+    let rows=D.ag.loans;
+    if(q)rows=rows.filter(l=>((l.borrower||'')+' '+(l.county||'')+' '+(l.lender||'')+' '+(l.city||'')).toLowerCase().includes(q));
+    sortableTable(el,cols,rows,{sortKey:'amount'});
+  }
+  $('#ag-search').oninput=apply;apply();
+}
+function boot(){
+  if(!D){document.querySelector('.wrap').insertAdjacentHTML('afterbegin','<div class="panel" style="border-color:var(--bad)">No data. Run <code>python smallbiz-ag/refresh.py</code>.</div>');return;}
+  const m=D._meta;
+  $('#stamp').innerHTML=`<b>Source:</b> ${esc(m.source)} &nbsp;·&nbsp; <b>Loans:</b> ${fmtN(m.loans)} &nbsp;·&nbsp; <b>Credit:</b> ${fmtUsd(m.total_credit)} &nbsp;·&nbsp; <b>Refreshed:</b> ${m.generated_at.replace('T',' ').replace('Z',' UTC')}`;
+  const topSec=D.by_sector[0];
+  $('#kpis').innerHTML=[
+    ['Small-business credit',fmtUsd(m.total_credit),fmtN(m.loans)+' loans'],
+    ['Sectors',fmtN(m.sectors),m.counties+' counties'],
+    ['Agriculture credit',fmtUsd(m.ag_credit),fmtN(m.ag_loans)+' ag loans'],
+    ['Top sector',topSec?esc(topSec.sector.split(',')[0]):'—',topSec?fmtUsd(topSec.amt):''],
+  ].map(x=>`<div class="kpi"><div class="label">${x[0]}</div><div class="value">${x[1]} <small>${x[2]||''}</small></div></div>`).join('');
+  drawCharts();renderSector();renderLenders();renderCounty();renderAg();
+}
+boot();
+</script>
+</body>
+</html>
