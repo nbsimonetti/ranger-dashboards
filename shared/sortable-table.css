@@ -22,7 +22,7 @@ th.sortable-th:hover {
   background-color: rgba(200, 169, 81, 0.08);
 }
 th.sortable-th:focus-visible {
-  outline: 2px solid #C8A951;
+  outline: 2px solid #CB995C;
   outline-offset: -2px;
 }
 
@@ -39,7 +39,7 @@ th.sortable-th::after {
 }
 th.sortable-th.sort-asc::after,
 th.sortable-th.sort-desc::after {
-  color: #c8a951;
+  color: #CB995C;
 }
 th.sortable-th.sort-asc::after  { content: ' ▲'; }
 th.sortable-th.sort-desc::after { content: ' ▼'; }

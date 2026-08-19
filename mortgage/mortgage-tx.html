@@ -9,9 +9,9 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
-    --bg:#0e1622; --panel:#141f33; --panel2:#1b2942; --panel3:#22334f;
-    --border:#28374f; --text:#e6ecf5; --muted:#93a6c4; --faint:#6b7d9b;
-    --accent:#c8a951; --accent2:#5b8def; --good:#3ea676; --warn:#e0a458; --bad:#d9694f;
+    --bg:#F2EFE9; --panel:#FFFFFF; --panel2:#FCFAF6; --panel3:#F0EBE1;
+    --border:#DDD8CE; --text:#101418; --muted:#5C6670; --faint:#8B9199;
+    --accent:#012A52; --accent2:#CB995C; --good:#2F7D5D; --warn:#B5761F; --bad:#DA0C1B;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
@@ -46,11 +46,11 @@
   table.data thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;z-index:2;font-weight:600;color:var(--muted)}
   table.data thead th.sort-asc::after{content:" ▲";color:var(--accent)}
   table.data thead th.sort-desc::after{content:" ▼";color:var(--accent)}
-  table.data tbody tr:hover{background:rgba(200,169,81,.06)}
+  table.data tbody tr:hover{background:rgba(1,42,82,.06)}
   .bar{display:inline-block;height:8px;background:var(--accent2);border-radius:2px;vertical-align:middle;margin-left:6px;opacity:.8}
   .pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
-  .pill.fp{color:var(--accent);border-color:rgba(200,169,81,.4);background:rgba(200,169,81,.08)}
-  .pill.jumbo{color:#0e1622;background:var(--accent);border-color:var(--accent);font-weight:600}
+  .pill.fp{color:var(--accent);border-color:rgba(1,42,82,.4);background:rgba(1,42,82,.08)}
+  .pill.jumbo{color:#FFFFFF;background:var(--accent);border-color:var(--accent);font-weight:600}
   .mix{display:inline-flex;height:9px;width:118px;border-radius:2px;overflow:hidden;vertical-align:middle;border:1px solid var(--border)}
   .mix i{display:block;height:100%}
   .mix .pu{background:var(--accent)} .mix .re{background:var(--accent2)} .mix .ot{background:var(--faint)}
@@ -58,7 +58,7 @@
   #map{height:560px;border-radius:10px;border:1px solid var(--border)}
   .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-size:12px;color:var(--muted)}
   .legend span{display:inline-flex;align-items:center;gap:6px}
-  .sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.3)}
+  .sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(1,42,82,.25)}
   .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel2);color:var(--text)}
   .leaflet-popup-content{font-size:12.5px}
   .muted{color:var(--muted)} .small{font-size:12px}
@@ -243,33 +243,33 @@ function renderKpis(){
 let charted=false;
 function drawCharts(){
   if(charted||typeof Plotly==='undefined')return; charted=true;
-  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},margin:{l:96,r:14,t:8,b:40},yaxis:{gridcolor:'#28374f'},xaxis:{gridcolor:'#28374f'}};
+  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#5C6670',size:11},margin:{l:96,r:14,t:8,b:40},yaxis:{gridcolor:'#DDD8CE'},xaxis:{gridcolor:'#DDD8CE'}};
   // originations by county
   const top=D.counties.slice().sort((a,b)=>b.orig-a.orig).slice(0,15).reverse();
-  Plotly.newPlot('chart-county',[{type:'bar',orientation:'h',x:top.map(c=>c.orig),y:top.map(c=>c.county),marker:{color:'#c8a951'},hovertemplate:'%{y}: %{x:,} originations<extra></extra>'}],
-    Object.assign({},lay,{xaxis:{title:'Originations',gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+  Plotly.newPlot('chart-county',[{type:'bar',orientation:'h',x:top.map(c=>c.orig),y:top.map(c=>c.county),marker:{color:'#012A52'},hovertemplate:'%{y}: %{x:,} originations<extra></extra>'}],
+    Object.assign({},lay,{xaxis:{title:'Originations',gridcolor:'#DDD8CE'}}),{displayModeBar:false,responsive:true});
   // purpose mix stacked (top 12 by volume)
   const t2=D.counties.slice().sort((a,b)=>b.orig-a.orig).slice(0,12).reverse();
   const share=(c,k)=>100*(k==='ot'?Math.max(0,c.orig-c.purchase-c.refi):c[k==='pu'?'purchase':'refi'])/(c.orig||1);
   const names=t2.map(c=>c.county);
   Plotly.newPlot('chart-purpose',[
-    {type:'bar',orientation:'h',name:'Purchase',x:t2.map(c=>share(c,'pu')),y:names,marker:{color:'#c8a951'},hovertemplate:'%{y} · purchase %{x:.0f}%<extra></extra>'},
-    {type:'bar',orientation:'h',name:'Refinance',x:t2.map(c=>share(c,'re')),y:names,marker:{color:'#5b8def'},hovertemplate:'%{y} · refinance %{x:.0f}%<extra></extra>'},
-    {type:'bar',orientation:'h',name:'Other',x:t2.map(c=>share(c,'ot')),y:names,marker:{color:'#6b7d9b'},hovertemplate:'%{y} · other %{x:.0f}%<extra></extra>'},
-  ],Object.assign({},lay,{barmode:'stack',showlegend:true,legend:{orientation:'h',y:-0.12,font:{size:10}},xaxis:{title:'Share of originations (%)',range:[0,100],gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+    {type:'bar',orientation:'h',name:'Purchase',x:t2.map(c=>share(c,'pu')),y:names,marker:{color:'#012A52'},hovertemplate:'%{y} · purchase %{x:.0f}%<extra></extra>'},
+    {type:'bar',orientation:'h',name:'Refinance',x:t2.map(c=>share(c,'re')),y:names,marker:{color:'#CB995C'},hovertemplate:'%{y} · refinance %{x:.0f}%<extra></extra>'},
+    {type:'bar',orientation:'h',name:'Other',x:t2.map(c=>share(c,'ot')),y:names,marker:{color:'#8B9199'},hovertemplate:'%{y} · other %{x:.0f}%<extra></extra>'},
+  ],Object.assign({},lay,{barmode:'stack',showlegend:true,legend:{orientation:'h',y:-0.12,font:{size:10}},xaxis:{title:'Share of originations (%)',range:[0,100],gridcolor:'#DDD8CE'}}),{displayModeBar:false,responsive:true});
   // denial vs volume scatter
   const cs=D.counties;
   const mx=Math.max.apply(null,cs.map(c=>c.orig));
   Plotly.newPlot('chart-denial',[{
     type:'scatter',mode:'markers+text',
     x:cs.map(c=>c.orig),y:cs.map(c=>c.denial_rate),
-    text:cs.map(c=>c.orig>mx*0.10?c.county:''),textposition:'top center',textfont:{size:9,color:'#93a6c4'},
+    text:cs.map(c=>c.orig>mx*0.10?c.county:''),textposition:'top center',textfont:{size:9,color:'#5C6670'},
     marker:{size:cs.map(c=>Math.max(7,Math.min(42,Math.sqrt(c.orig)/3.2))),
-      color:cs.map(c=>c.denial_rate),colorscale:[[0,'#3ea676'],[0.5,'#e0a458'],[1,'#d9694f']],
-      cmin:10,cmax:40,line:{color:'#0e1622',width:1},opacity:.85},
+      color:cs.map(c=>c.denial_rate),colorscale:[[0,'#2F7D5D'],[0.5,'#B5761F'],[1,'#DA0C1B']],
+      cmin:10,cmax:40,line:{color:'#F2EFE9',width:1},opacity:.85},
     customdata:cs.map(c=>[c.county,c.denials]),
     hovertemplate:'<b>%{customdata[0]}</b><br>%{x:,} originations<br>%{y:.1f}% denial rate<br>%{customdata[1]:,} denials<extra></extra>'
-  }],Object.assign({},lay,{margin:{l:54,r:14,t:8,b:44},xaxis:{title:'Originations',gridcolor:'#28374f'},yaxis:{title:'Denial rate (%)',gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+  }],Object.assign({},lay,{margin:{l:54,r:14,t:8,b:44},xaxis:{title:'Originations',gridcolor:'#DDD8CE'},yaxis:{title:'Denial rate (%)',gridcolor:'#DDD8CE'}}),{displayModeBar:false,responsive:true});
 }
 
 // ---- county table ----
@@ -296,7 +296,7 @@ function renderCounty(){
 
 // ---- map ----
 let map, mapInit=false;
-function drColor(r){ return r>=30?'#d9694f':(r>=20?'#e0a458':'#3ea676'); }
+function drColor(r){ return r>=30?'#DA0C1B':(r>=20?'#B5761F':'#2F7D5D'); }
 function initMap(){
   if(mapInit)return; mapInit=true;
   map=L.map('map',{scrollWheelZoom:true}).setView([31.3,-97.5],6);
@@ -330,15 +330,15 @@ function renderProxy(){
 let proxyCharted=false;
 function drawProxyChart(){
   if(proxyCharted||typeof Plotly==='undefined')return; proxyCharted=true;
-  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},margin:{l:96,r:14,t:8,b:44}};
+  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#5C6670',size:11},margin:{l:96,r:14,t:8,b:44}};
   const ref=D._meta.footprint_avg_purchase;
   const top=D.counties.slice().filter(c=>c.purchase>=50).sort((a,b)=>b.avg_purchase-a.avg_purchase).slice(0,15).reverse();
   Plotly.newPlot('chart-proxy',[{type:'bar',orientation:'h',x:top.map(c=>c.avg_purchase/1e3),y:top.map(c=>c.county),
-    marker:{color:top.map(c=>c.avg_purchase>=ref?'#c8a951':'#5b8def')},
+    marker:{color:top.map(c=>c.avg_purchase>=ref?'#012A52':'#CB995C')},
     hovertemplate:'%{y}: $%{x:.0f}K avg purchase<extra></extra>'}],
-    Object.assign({},lay,{xaxis:{title:'Average purchase-loan size ($000)',gridcolor:'#28374f'},yaxis:{gridcolor:'#28374f'},
-      shapes:[{type:'line',x0:ref/1e3,x1:ref/1e3,y0:-0.5,y1:top.length-0.5,line:{color:'#e6ecf5',width:1.5,dash:'dash'}}],
-      annotations:[{x:ref/1e3,y:top.length-0.5,text:'footprint avg $'+(ref/1e3).toFixed(0)+'K',showarrow:false,font:{size:10,color:'#e6ecf5'},yanchor:'bottom',xanchor:'left'}]}),
+    Object.assign({},lay,{xaxis:{title:'Average purchase-loan size ($000)',gridcolor:'#DDD8CE'},yaxis:{gridcolor:'#DDD8CE'},
+      shapes:[{type:'line',x0:ref/1e3,x1:ref/1e3,y0:-0.5,y1:top.length-0.5,line:{color:'#101418',width:1.5,dash:'dash'}}],
+      annotations:[{x:ref/1e3,y:top.length-0.5,text:'footprint avg $'+(ref/1e3).toFixed(0)+'K',showarrow:false,font:{size:10,color:'#101418'},yanchor:'bottom',xanchor:'left'}]}),
     {displayModeBar:false,responsive:true});
 }
 

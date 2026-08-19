@@ -1,0 +1,71 @@
+/* ============================================================
+   Ranger Bank — Brand tokens for the dashboard suite
+   Source: Ranger Bank Brand Quick Reference / Ranger Bank.thmx
+   (Brand/Office Templates). These hexes are the authoritative
+   brand palette — do not substitute approximations.
+
+   Core palette
+     Navy    #012A52   primary / headers / primary accent   (theme dk2+accent1)
+     Red     #DA0C1B   alerts, negative, critical           (accent2)
+     Gold    #CB995C   highlights, secondary accent         (accent3)
+     Steel   #1B5E8C   secondary data series / links        (accent4, hlink)
+     Slate   #7C8994   muted text / tertiary series         (accent5)
+     Brown   #8C6239   tertiary series                      (accent6)
+     Cream   #F2EFE9   page ground                          (lt2)
+     White   #FFFFFF   panels/surfaces                      (lt1)
+     Ink     #101418   body text                            (dk1)
+
+   Typography: Rockwell (headings), Calibri (body). Both are
+   Office fonts, so web pages fall back gracefully — headings use
+   a slab-serif stack, body a humanist sans stack.
+
+   Semantic note: the brand palette has no green. Data views need a
+   positive/negative pair, so --rb-good is a deep green chosen to sit
+   with navy; --rb-warn is a darker amber so it stays distinct from
+   the gold accent. Everything else is brand-exact.
+   ============================================================ */
+
+:root {
+  /* brand core */
+  --rb-navy:   #012A52;
+  --rb-red:    #DA0C1B;
+  --rb-gold:   #CB995C;
+  --rb-steel:  #1B5E8C;
+  --rb-slate:  #7C8994;
+  --rb-brown:  #8C6239;
+  --rb-cream:  #F2EFE9;
+  --rb-white:  #FFFFFF;
+  --rb-ink:    #101418;
+
+  /* surfaces & lines (cream-biased neutrals, not flat grey) */
+  --rb-bg:        #F2EFE9;
+  --rb-surface:   #FFFFFF;
+  --rb-surface-2: #FCFAF6;
+  --rb-surface-3: #F0EBE1;
+  --rb-border:    #DDD8CE;
+  --rb-border-strong: #C7BFB1;
+
+  /* text */
+  --rb-text:  #101418;
+  --rb-muted: #5C6670;
+  --rb-faint: #8B9199;
+
+  /* semantic (good/warn are extensions — see note above) */
+  --rb-good: #2F7D5D;
+  --rb-warn: #B5761F;
+  --rb-bad:  #DA0C1B;
+
+  /* categorical series order for charts */
+  --rb-series-1: #012A52;  /* navy  */
+  --rb-series-2: #CB995C;  /* gold  */
+  --rb-series-3: #1B5E8C;  /* steel */
+  --rb-series-4: #8C6239;  /* brown */
+  --rb-series-5: #7C8994;  /* slate */
+  --rb-series-6: #DA0C1B;  /* red — use sparingly, reads as alert */
+
+  /* type stacks */
+  --rb-font-head: Rockwell, "Rockwell Nova", "Roboto Slab", Georgia, serif;
+  --rb-font-body: Calibri, "Segoe UI", system-ui, -apple-system, sans-serif;
+
+  --rb-shadow: 0 1px 2px rgba(1,42,82,.06), 0 6px 18px rgba(1,42,82,.07);
+}

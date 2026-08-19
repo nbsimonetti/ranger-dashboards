@@ -6,7 +6,7 @@
 <title>Ranger Bank — Practice Transition &amp; Solo-Target Radar (TX)</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
-  :root{--bg:#0e1622;--panel:#141f33;--panel2:#1b2942;--border:#28374f;--text:#e6ecf5;--muted:#93a6c4;--faint:#6b7d9b;--accent:#c8a951;--accent2:#5b8def;--good:#3ea676;--warn:#e0a458;--bad:#d9694f;}
+  :root{--bg:#F2EFE9;--panel:#FFFFFF;--panel2:#FCFAF6;--border:#DDD8CE;--text:#101418;--muted:#5C6670;--faint:#8B9199;--accent:#012A52;--accent2:#CB995C;--good:#2F7D5D;--warn:#B5761F;--bad:#DA0C1B;}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
   a{color:var(--accent)}
@@ -34,10 +34,10 @@
   table.data th.l,table.data td.l{text-align:left}
   table.data thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;z-index:2;font-weight:600;color:var(--muted)}
   table.data thead th.sort-asc::after{content:" ▲";color:var(--accent)} table.data thead th.sort-desc::after{content:" ▼";color:var(--accent)}
-  table.data tbody tr:hover{background:rgba(200,169,81,.06)}
+  table.data tbody tr:hover{background:rgba(1,42,82,.06)}
   .pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
-  .pill.solo{color:var(--accent);border-color:rgba(200,169,81,.4);background:rgba(200,169,81,.08)}
-  .pill.hot{color:#0e1622;background:var(--accent);font-weight:600}
+  .pill.solo{color:var(--accent);border-color:rgba(1,42,82,.4);background:rgba(1,42,82,.08)}
+  .pill.hot{color:#FFFFFF;background:var(--accent);font-weight:600}
   .muted{color:var(--muted)} .small{font-size:12px}
   .prose p{color:var(--muted);max-width:76ch;margin:0 0 10px} .prose h4{margin:16px 0 6px;color:var(--text);font-size:13px}
   .prose ul{color:var(--muted);max-width:76ch;padding-left:18px} .prose li{margin-bottom:5px}
@@ -119,11 +119,11 @@ function sortableTable(el,cols,rows,opts){opts=opts||{};let sk=opts.sortKey||col
   r();}
 let charted=false;
 function drawCharts(){if(charted||!D||typeof Plotly==='undefined')return;charted=true;
-  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},margin:{l:170,r:14,t:8,b:34},xaxis:{gridcolor:'#28374f'},yaxis:{gridcolor:'#28374f'}};
+  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#5C6670',size:11},margin:{l:170,r:14,t:8,b:34},xaxis:{gridcolor:'#DDD8CE'},yaxis:{gridcolor:'#DDD8CE'}};
   const sp=D.by_specialty.slice(0,14).reverse();
-  Plotly.newPlot('chart-spec',[{type:'bar',orientation:'h',x:sp.map(s=>s.n),y:sp.map(s=>s.k),marker:{color:'#c8a951'}}],lay,{displayModeBar:false,responsive:true});
+  Plotly.newPlot('chart-spec',[{type:'bar',orientation:'h',x:sp.map(s=>s.n),y:sp.map(s=>s.k),marker:{color:'#012A52'}}],lay,{displayModeBar:false,responsive:true});
   const mt=D.by_metro.slice(0,12).reverse();
-  Plotly.newPlot('chart-metro',[{type:'bar',orientation:'h',x:mt.map(s=>s.n),y:mt.map(s=>s.k),marker:{color:'#5b8def'}}],Object.assign({},lay,{margin:{l:150,r:14,t:8,b:34}}),{displayModeBar:false,responsive:true});
+  Plotly.newPlot('chart-metro',[{type:'bar',orientation:'h',x:mt.map(s=>s.n),y:mt.map(s=>s.k),marker:{color:'#CB995C'}}],Object.assign({},lay,{margin:{l:150,r:14,t:8,b:34}}),{displayModeBar:false,responsive:true});
 }
 function renderTargets(){
   const specs=[...new Set(D.targets.map(p=>p.specialty))].sort();

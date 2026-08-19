@@ -9,9 +9,9 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
-    --bg:#0e1622; --panel:#141f33; --panel2:#1b2942; --panel3:#22334f;
-    --border:#28374f; --text:#e6ecf5; --muted:#93a6c4; --faint:#6b7d9b;
-    --accent:#c8a951; --accent2:#5b8def; --good:#3ea676; --warn:#e0a458; --bad:#d9694f;
+    --bg:#F2EFE9; --panel:#FFFFFF; --panel2:#FCFAF6; --panel3:#F0EBE1;
+    --border:#DDD8CE; --text:#101418; --muted:#5C6670; --faint:#8B9199;
+    --accent:#012A52; --accent2:#CB995C; --good:#2F7D5D; --warn:#B5761F; --bad:#DA0C1B;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
@@ -46,16 +46,16 @@
   table.data thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;z-index:2;font-weight:600;color:var(--muted)}
   table.data thead th.sort-asc::after{content:" ▲";color:var(--accent)}
   table.data thead th.sort-desc::after{content:" ▼";color:var(--accent)}
-  table.data tbody tr:hover{background:rgba(200,169,81,.06)}
+  table.data tbody tr:hover{background:rgba(1,42,82,.06)}
   .bar{display:inline-block;height:8px;background:var(--accent2);border-radius:2px;vertical-align:middle;margin-left:6px;opacity:.8}
   .pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
-  .pill.fp{color:var(--accent);border-color:rgba(200,169,81,.4);background:rgba(200,169,81,.08)}
-  .pill.ranger{color:#0e1622;background:var(--accent);border-color:var(--accent);font-weight:600}
+  .pill.fp{color:var(--accent);border-color:rgba(1,42,82,.4);background:rgba(1,42,82,.08)}
+  .pill.ranger{color:#FFFFFF;background:var(--accent);border-color:var(--accent);font-weight:600}
   .conc-hi{color:var(--bad)} .conc-md{color:var(--warn)} .conc-lo{color:var(--good)}
   #map{height:560px;border-radius:10px;border:1px solid var(--border)}
   .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-size:12px;color:var(--muted)}
   .legend span{display:inline-flex;align-items:center;gap:6px}
-  .sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.3)}
+  .sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(1,42,82,.25)}
   .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel2);color:var(--text)}
   .leaflet-popup-content{font-size:12.5px}
   .muted{color:var(--muted)} .small{font-size:12px}
@@ -237,13 +237,13 @@ function renderKpis(){
 let charted=false;
 function drawCharts(){
   if(charted||typeof Plotly==='undefined')return; charted=true;
-  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},margin:{l:90,r:14,t:8,b:36},yaxis:{gridcolor:'#28374f'},xaxis:{gridcolor:'#28374f'}};
+  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#5C6670',size:11},margin:{l:90,r:14,t:8,b:36},yaxis:{gridcolor:'#DDD8CE'},xaxis:{gridcolor:'#DDD8CE'}};
   const top=D.counties.slice(0,12).reverse();
-  Plotly.newPlot('chart-county',[{type:'bar',orientation:'h',x:top.map(c=>c.deposits/1e6),y:top.map(c=>c.county),marker:{color:'#c8a951'},hovertemplate:'%{y}: $%{x:.2f}B<extra></extra>'}],
-    Object.assign({},lay,{xaxis:{title:'Deposits ($B)',gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+  Plotly.newPlot('chart-county',[{type:'bar',orientation:'h',x:top.map(c=>c.deposits/1e6),y:top.map(c=>c.county),marker:{color:'#012A52'},hovertemplate:'%{y}: $%{x:.2f}B<extra></extra>'}],
+    Object.assign({},lay,{xaxis:{title:'Deposits ($B)',gridcolor:'#DDD8CE'}}),{displayModeBar:false,responsive:true});
   const hh=D.counties.slice().sort((a,b)=>b.hhi-a.hhi).slice(0,12).reverse();
-  Plotly.newPlot('chart-hhi',[{type:'bar',orientation:'h',x:hh.map(c=>c.hhi),y:hh.map(c=>c.county),marker:{color:hh.map(c=>c.hhi>=2500?'#d9694f':'#e0a458')},hovertemplate:'%{y}: HHI %{x}<extra></extra>'}],
-    Object.assign({},lay,{xaxis:{title:'HHI',gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+  Plotly.newPlot('chart-hhi',[{type:'bar',orientation:'h',x:hh.map(c=>c.hhi),y:hh.map(c=>c.county),marker:{color:hh.map(c=>c.hhi>=2500?'#DA0C1B':'#B5761F')},hovertemplate:'%{y}: HHI %{x}<extra></extra>'}],
+    Object.assign({},lay,{xaxis:{title:'HHI',gridcolor:'#DDD8CE'}}),{displayModeBar:false,responsive:true});
 }
 
 // ---- county table ----
@@ -293,7 +293,7 @@ function initMap(){
   D.branches.forEach(b=>{
     const isLarge=large.has(b.c);
     const r=Math.max(3,Math.min(22,Math.sqrt((b.d||1)/1e3)));
-    L.circleMarker([b.la,b.lo],{radius:r,color:isLarge?'#5b8def':'#c8a951',weight:1,fillOpacity:.5}).addTo(map)
+    L.circleMarker([b.la,b.lo],{radius:r,color:isLarge?'#CB995C':'#012A52',weight:1,fillOpacity:.5}).addTo(map)
       .bindPopup(`<b>${esc(b.n)}</b><br>${esc(b.b||'')}<br>${esc(b.ci)}, ${esc(b.co)} County<br><b>${fmtDep(b.d)}</b> deposits${b.mo?' · main office':''}`);
     n++;
   });

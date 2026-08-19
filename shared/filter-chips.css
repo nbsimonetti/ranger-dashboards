@@ -71,7 +71,7 @@
 }
 .fc-chip-x:hover {
   background: rgba(229, 62, 62, 0.15);
-  color: #e53e3e;
+  color: #DA0C1B;
   opacity: 1;
 }
 .fc-clear-all {
@@ -89,8 +89,8 @@
 .fc-clear-all:hover {
   opacity: 1;
   background: rgba(229, 62, 62, 0.1);
-  border-color: #e53e3e;
-  color: #e53e3e;
+  border-color: #DA0C1B;
+  color: #DA0C1B;
 }
 
 @media print { .fc-chip-x, .fc-clear-all { display: none !important; } }

@@ -7,9 +7,9 @@
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   :root{
-    --bg:#0e1622; --panel:#141f33; --panel2:#1b2942; --panel3:#22334f;
-    --border:#28374f; --text:#e6ecf5; --muted:#93a6c4; --faint:#6b7d9b;
-    --accent:#c8a951; --accent2:#5b8def; --good:#3ea676; --warn:#e0a458; --bad:#d9694f;
+    --bg:#F2EFE9; --panel:#FFFFFF; --panel2:#FCFAF6; --panel3:#F0EBE1;
+    --border:#DDD8CE; --text:#101418; --muted:#5C6670; --faint:#8B9199;
+    --accent:#012A52; --accent2:#CB995C; --good:#2F7D5D; --warn:#B5761F; --bad:#DA0C1B;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
@@ -41,7 +41,7 @@
   .filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
   .filters button{background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:6px 13px;border-radius:20px;font-size:12.5px;cursor:pointer;font-family:inherit}
   .filters button:hover{color:var(--text)}
-  .filters button.active{background:rgba(200,169,81,.12);border-color:rgba(200,169,81,.5);color:var(--accent);font-weight:600}
+  .filters button.active{background:rgba(1,42,82,.12);border-color:rgba(1,42,82,.5);color:var(--accent);font-weight:600}
   .table-wrap{max-height:70vh;overflow:auto;border:1px solid var(--border);border-radius:10px}
   table.data{width:100%;border-collapse:collapse;font-size:12.5px}
   table.data th,table.data td{padding:8px 11px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -49,16 +49,16 @@
   table.data thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;z-index:2;font-weight:600;color:var(--muted)}
   table.data thead th.sort-asc::after{content:" ▲";color:var(--accent)}
   table.data thead th.sort-desc::after{content:" ▼";color:var(--accent)}
-  table.data tbody tr:hover{background:rgba(200,169,81,.06)}
+  table.data tbody tr:hover{background:rgba(1,42,82,.06)}
   .pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
-  .pill.grp{color:var(--accent2);border-color:rgba(91,141,239,.4);background:rgba(91,141,239,.08)}
-  .pill.v{color:var(--warn);border-color:rgba(224,164,88,.4)}
+  .pill.grp{color:var(--accent2);border-color:rgba(203,153,92,.4);background:rgba(203,153,92,.08)}
+  .pill.v{color:var(--warn);border-color:rgba(181,118,31,.4)}
   .sclass-Active{color:var(--good)} .sclass-Committed{color:var(--accent)}
   .sclass-Servicing{color:var(--muted)} .sclass-Distressed{color:var(--warn)}
   .sclass-Closed{color:var(--faint)} .sclass-Other{color:var(--faint)}
   .score{display:inline-block;min-width:30px;text-align:center;padding:1px 7px;border-radius:20px;font-weight:600;font-size:11.5px}
-  .score-hot{background:var(--accent);color:#0e1622} .score-warm{background:rgba(200,169,81,.22);color:var(--accent)}
-  .score-med{background:rgba(91,141,239,.18);color:var(--accent2)} .score-cool{background:var(--panel3);color:var(--muted)}
+  .score-hot{background:var(--accent);color:#FFFFFF} .score-warm{background:rgba(1,42,82,.22);color:var(--accent)}
+  .score-med{background:rgba(203,153,92,.18);color:var(--accent2)} .score-cool{background:var(--panel3);color:var(--muted)}
   .muted{color:var(--muted)} .small{font-size:12px} .faint{color:var(--faint)}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media(max-width:820px){.grid2{grid-template-columns:1fr}}
@@ -69,7 +69,7 @@
   code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
   .bar-cell{display:flex;align-items:center;justify-content:flex-end;gap:7px}
   .bar{display:inline-block;height:8px;background:var(--accent2);border-radius:2px;opacity:.75}
-  .warnbox{border-color:var(--warn);background:rgba(224,164,88,.06)}
+  .warnbox{border-color:var(--warn);background:rgba(181,118,31,.06)}
 </style>
 </head>
 <body>
@@ -195,7 +195,7 @@ function titleCase(s){ return (s||'').replace(/\w\S*/g,t=>t.charAt(0).toUpperCas
 function scoreClass(s){ return s>=65?'score-hot':(s>=50?'score-warm':(s>=35?'score-med':'score-cool')); }
 function scoreBadge(s){ return `<span class="score ${scoreClass(s)}">${s}</span>`; }
 
-const PLOT_LAY={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},margin:{l:150,r:14,t:8,b:40},yaxis:{gridcolor:'#28374f'},xaxis:{gridcolor:'#28374f'}};
+const PLOT_LAY={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#5C6670',size:11},margin:{l:150,r:14,t:8,b:40},yaxis:{gridcolor:'#DDD8CE'},xaxis:{gridcolor:'#DDD8CE'}};
 const PLOT_CFG={displayModeBar:false,responsive:true};
 
 // ---- nav ----
@@ -252,12 +252,12 @@ function drawOverview(){
   if(overviewDrawn||typeof Plotly==='undefined')return; overviewDrawn=true;
   const subs=D.subsectors.slice().filter(s=>s.count>0).sort((a,b)=>a.count-b.count);
   Plotly.newPlot('chart-sub',[{type:'bar',orientation:'h',x:subs.map(s=>s.count),y:subs.map(s=>s.label),
-      marker:{color:'#c8a951'},hovertemplate:'%{y}: %{x} firms<extra></extra>'}],
-    Object.assign({},PLOT_LAY,{xaxis:{title:'Firms',gridcolor:'#28374f'}}),PLOT_CFG);
+      marker:{color:'#012A52'},hovertemplate:'%{y}: %{x} firms<extra></extra>'}],
+    Object.assign({},PLOT_LAY,{xaxis:{title:'Firms',gridcolor:'#DDD8CE'}}),PLOT_CFG);
   const cty=D.counties.slice(0,14).reverse();
   Plotly.newPlot('chart-county',[{type:'bar',orientation:'h',x:cty.map(c=>c.amt/1e6),y:cty.map(c=>c.county),
-      marker:{color:'#5b8def'},hovertemplate:'%{y}: $%{x:.2f}M<extra></extra>'}],
-    Object.assign({},PLOT_LAY,{xaxis:{title:'SBA credit ($M)',gridcolor:'#28374f'}}),PLOT_CFG);
+      marker:{color:'#CB995C'},hovertemplate:'%{y}: $%{x:.2f}M<extra></extra>'}],
+    Object.assign({},PLOT_LAY,{xaxis:{title:'SBA credit ($M)',gridcolor:'#DDD8CE'}}),PLOT_CFG);
 }
 
 // ---- prospects ----
@@ -341,12 +341,12 @@ function drawMarket(){
   // sort subsector bars by value
   const idxE=order.map((_,i)=>i).sort((a,b)=>estabs[a]-estabs[b]);
   Plotly.newPlot('chart-tam',[{type:'bar',orientation:'h',x:idxE.map(i=>estabs[i]),y:idxE.map(i=>labels[i]),
-      marker:{color:'#c8a951'},hovertemplate:'%{y}: %{x:,} establishments<extra></extra>'}],
-    Object.assign({},PLOT_LAY,{xaxis:{title:'Establishments (footprint)',gridcolor:'#28374f'}}),PLOT_CFG);
+      marker:{color:'#012A52'},hovertemplate:'%{y}: %{x:,} establishments<extra></extra>'}],
+    Object.assign({},PLOT_LAY,{xaxis:{title:'Establishments (footprint)',gridcolor:'#DDD8CE'}}),PLOT_CFG);
   const idxP=order.map((_,i)=>i).sort((a,b)=>empl[a]-empl[b]);
   Plotly.newPlot('chart-emp',[{type:'bar',orientation:'h',x:idxP.map(i=>empl[i]),y:idxP.map(i=>labels[i]),
-      marker:{color:'#5b8def'},hovertemplate:'%{y}: %{x:,} employed<extra></extra>'}],
-    Object.assign({},PLOT_LAY,{xaxis:{title:'Employment (footprint)',gridcolor:'#28374f'}}),PLOT_CFG);
+      marker:{color:'#CB995C'},hovertemplate:'%{y}: %{x:,} employed<extra></extra>'}],
+    Object.assign({},PLOT_LAY,{xaxis:{title:'Employment (footprint)',gridcolor:'#DDD8CE'}}),PLOT_CFG);
 
   // heatmap county x subsector (log-scaled color, raw in hover)
   const mat=q.matrix||[];
@@ -354,7 +354,7 @@ function drawMarket(){
   const zLog=zRaw.map(row=>row.map(v=>v>0?Math.log10(v):null));
   Plotly.newPlot('heat',[{type:'heatmap',z:zLog,x:labels,y:mat.map(c=>c.county),
       customdata:zRaw,hovertemplate:'%{y} · %{x}<br>%{customdata:,} establishments<extra></extra>',
-      colorscale:[[0,'#141f33'],[0.5,'#3a5680'],[1,'#c8a951']],showscale:true,
+      colorscale:[[0,'#FFFFFF'],[0.5,'#C7BFB1'],[1,'#012A52']],showscale:true,
       colorbar:{title:'log₁₀ est.',titlefont:{size:10},tickfont:{size:9},len:.5}}],
     Object.assign({},PLOT_LAY,{margin:{l:110,r:14,t:8,b:120},xaxis:{tickangle:-40,side:'top',automargin:true},yaxis:{automargin:true}}),PLOT_CFG);
 

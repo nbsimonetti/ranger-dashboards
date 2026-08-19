@@ -9,9 +9,9 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
-    --bg:#0e1622; --panel:#141f33; --panel2:#1b2942; --panel3:#22334f;
-    --border:#28374f; --text:#e6ecf5; --muted:#93a6c4; --faint:#6b7d9b;
-    --accent:#c8a951; --accent2:#5b8def; --good:#3ea676; --warn:#e0a458; --bad:#d9694f;
+    --bg:#F2EFE9; --panel:#FFFFFF; --panel2:#FCFAF6; --panel3:#F0EBE1;
+    --border:#DDD8CE; --text:#101418; --muted:#5C6670; --faint:#8B9199;
+    --accent:#012A52; --accent2:#CB995C; --good:#2F7D5D; --warn:#B5761F; --bad:#DA0C1B;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
@@ -46,15 +46,15 @@
   table.data thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;z-index:2;font-weight:600;color:var(--muted)}
   table.data thead th.sort-asc::after{content:" ▲";color:var(--accent)}
   table.data thead th.sort-desc::after{content:" ▼";color:var(--accent)}
-  table.data tbody tr:hover{background:rgba(200,169,81,.06)}
+  table.data tbody tr:hover{background:rgba(1,42,82,.06)}
   .pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
-  .pill.fp{color:var(--accent);border-color:rgba(200,169,81,.4);background:rgba(200,169,81,.08)}
-  .pill.fail{color:var(--bad);border-color:rgba(217,105,79,.4);background:rgba(217,105,79,.08)}
-  .pill.assist{color:var(--warn);border-color:rgba(224,164,88,.4);background:rgba(224,164,88,.08)}
+  .pill.fp{color:var(--accent);border-color:rgba(1,42,82,.4);background:rgba(1,42,82,.08)}
+  .pill.fail{color:var(--bad);border-color:rgba(218,12,27,.4);background:rgba(218,12,27,.08)}
+  .pill.assist{color:var(--warn);border-color:rgba(181,118,31,.4);background:rgba(181,118,31,.08)}
   #map{height:520px;border-radius:10px;border:1px solid var(--border)}
   .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-size:12px;color:var(--muted)}
   .legend span{display:inline-flex;align-items:center;gap:6px}
-  .sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.3)}
+  .sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(1,42,82,.25)}
   .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel2);color:var(--text)}
   .leaflet-popup-content{font-size:12.5px}
   .muted{color:var(--muted)} .small{font-size:12px}
@@ -244,25 +244,25 @@ function renderKpis(){
 let charted=false;
 function drawCharts(){
   if(charted||typeof Plotly==='undefined')return; charted=true;
-  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},
-    margin:{l:52,r:14,t:8,b:40},yaxis:{gridcolor:'#28374f'},xaxis:{gridcolor:'#28374f'},
+  const lay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#5C6670',size:11},
+    margin:{l:52,r:14,t:8,b:40},yaxis:{gridcolor:'#DDD8CE'},xaxis:{gridcolor:'#DDD8CE'},
     hovermode:'x unified',legend:{orientation:'h',y:1.12,x:0,font:{size:11}}};
   const AS=D.active_series, FS=D.flow_series;
   // active charters over time
   Plotly.newPlot('chart-active',[{
     type:'scatter',mode:'lines',x:AS.map(d=>d.year),y:AS.map(d=>d.active),
-    line:{color:'#c8a951',width:2.5},fill:'tozeroy',fillcolor:'rgba(200,169,81,.10)',
+    line:{color:'#012A52',width:2.5},fill:'tozeroy',fillcolor:'rgba(1,42,82,.10)',
     hovertemplate:'%{y} active<extra></extra>'
-  }],Object.assign({},lay,{yaxis:{title:'Active charters',gridcolor:'#28374f',rangemode:'tozero'}}),
+  }],Object.assign({},lay,{yaxis:{title:'Active charters',gridcolor:'#DDD8CE',rangemode:'tozero'}}),
     {displayModeBar:false,responsive:true});
   // formations vs exits
   Plotly.newPlot('chart-flow',[
     {type:'bar',name:'Formations',x:FS.map(d=>d.year),y:FS.map(d=>d.formations),
-     marker:{color:'#3ea676'},hovertemplate:'%{y} formed<extra>%{x}</extra>'},
+     marker:{color:'#2F7D5D'},hovertemplate:'%{y} formed<extra>%{x}</extra>'},
     {type:'bar',name:'Exits',x:FS.map(d=>d.year),y:FS.map(d=>d.exits),
-     marker:{color:'#d9694f'},hovertemplate:'%{y} exited<extra>%{x}</extra>'}
+     marker:{color:'#DA0C1B'},hovertemplate:'%{y} exited<extra>%{x}</extra>'}
   ],Object.assign({},lay,{barmode:'group',bargap:.15,bargroupgap:.05,
-     yaxis:{title:'Charters',gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+     yaxis:{title:'Charters',gridcolor:'#DDD8CE'}}),{displayModeBar:false,responsive:true});
 }
 
 // ---- recent activity tables ----
@@ -337,7 +337,7 @@ function initMap(){
     if(c.lat==null||c.lng==null)return;
     const has=c.active>0;
     const r=has?Math.max(6,Math.min(30,6+Math.sqrt(c.active)*4.2)):4;
-    L.circleMarker([c.lat,c.lng],{radius:r,color:has?'#c8a951':'#6b7d9b',
+    L.circleMarker([c.lat,c.lng],{radius:r,color:has?'#012A52':'#8B9199',
       weight:1,fillOpacity:has?.5:.35}).addTo(map)
       .bindPopup(`<b>${esc(c.county)} County</b> <span class="muted">(${c.fips})</span><br>`+
         `<b>${c.active}</b> bank${c.active===1?'':'s'} headquartered here<br>`+

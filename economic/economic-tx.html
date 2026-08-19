@@ -9,9 +9,9 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
-    --bg:#0e1622; --panel:#141f33; --panel2:#1b2942; --panel3:#22334f;
-    --border:#28374f; --text:#e6ecf5; --muted:#93a6c4; --faint:#6b7d9b;
-    --accent:#c8a951; --accent2:#5b8def; --good:#3ea676; --warn:#e0a458; --bad:#d9694f;
+    --bg:#F2EFE9; --panel:#FFFFFF; --panel2:#FCFAF6; --panel3:#F0EBE1;
+    --border:#DDD8CE; --text:#101418; --muted:#5C6670; --faint:#8B9199;
+    --accent:#012A52; --accent2:#CB995C; --good:#2F7D5D; --warn:#B5761F; --bad:#DA0C1B;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
@@ -46,15 +46,15 @@
   table.data thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;z-index:2;font-weight:600;color:var(--muted)}
   table.data thead th.sort-asc::after{content:" ▲";color:var(--accent)}
   table.data thead th.sort-desc::after{content:" ▼";color:var(--accent)}
-  table.data tbody tr:hover{background:rgba(200,169,81,.06)}
+  table.data tbody tr:hover{background:rgba(1,42,82,.06)}
   .pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
-  .pill.fp{color:var(--accent);border-color:rgba(200,169,81,.4);background:rgba(200,169,81,.08)}
+  .pill.fp{color:var(--accent);border-color:rgba(1,42,82,.4);background:rgba(1,42,82,.08)}
   .conc-hi{color:var(--bad)} .conc-md{color:var(--warn)} .conc-lo{color:var(--good)}
   #map{height:560px;border-radius:10px;border:1px solid var(--border)}
   .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-size:12px;color:var(--muted)}
   .legend span{display:inline-flex;align-items:center;gap:6px}
-  .sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.3)}
-  .ramp{width:150px;height:12px;border-radius:3px;display:inline-block;background:linear-gradient(90deg,#d9694f,#e0a458,#3ea676)}
+  .sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(1,42,82,.25)}
+  .ramp{width:150px;height:12px;border-radius:3px;display:inline-block;background:linear-gradient(90deg,#DA0C1B,#B5761F,#2F7D5D)}
   .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel2);color:var(--text)}
   .leaflet-popup-content{font-size:12.5px}
   .muted{color:var(--muted)} .small{font-size:12px}
@@ -194,7 +194,7 @@ function resizeChart(id){ const el=document.getElementById(id); if(el&&window.Pl
 function unempClass(v){ return v==null?'':(v>=6?'conc-hi':(v>=4.5?'conc-md':'conc-lo')); }
 // vitality colour ramp: 0 red -> 50 amber -> 100 green
 function scoreColor(v){
-  if(v==null) return '#6b7d9b';
+  if(v==null) return '#8B9199';
   const stops=[[0,[217,105,79]],[50,[224,164,88]],[100,[62,166,118]]];
   v=Math.max(0,Math.min(100,v));
   let a=stops[0],b=stops[2];
@@ -264,18 +264,18 @@ function renderKpis(){
     ['Top vitality market', esc(m.top_county||'—'), m.top_vitality!=null?('score '+scoreTxt(m.top_vitality)):''],
   ].map(x=>`<div class="kpi"><div class="label">${x[0]}</div><div class="value">${x[1]} <small>${x[2]||''}</small></div></div>`).join('');
 }
-const baseLay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#93a6c4',size:11},margin:{l:104,r:14,t:8,b:40},yaxis:{gridcolor:'#28374f',automargin:true},xaxis:{gridcolor:'#28374f'}};
+const baseLay={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#5C6670',size:11},margin:{l:104,r:14,t:8,b:40},yaxis:{gridcolor:'#DDD8CE',automargin:true},xaxis:{gridcolor:'#DDD8CE'}};
 let overviewDrawn=false;
 function drawOverview(){
   if(overviewDrawn||typeof Plotly==='undefined')return; overviewDrawn=true;
   const emp=D.counties.filter(c=>c.employment!=null).slice().sort((a,b)=>a.employment-b.employment).slice(-15);
   Plotly.newPlot('chart-emp',[{type:'bar',orientation:'h',x:emp.map(c=>c.employment/1000),y:emp.map(c=>c.county),
-      marker:{color:'#c8a951'},hovertemplate:'%{y}: %{x:,.0f}K jobs<extra></extra>'}],
-    Object.assign({},baseLay,{xaxis:{title:'Employment (000s)',gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+      marker:{color:'#012A52'},hovertemplate:'%{y}: %{x:,.0f}K jobs<extra></extra>'}],
+    Object.assign({},baseLay,{xaxis:{title:'Employment (000s)',gridcolor:'#DDD8CE'}}),{displayModeBar:false,responsive:true});
   const wage=D.counties.filter(c=>c.wkly_wage!=null).slice().sort((a,b)=>a.wkly_wage-b.wkly_wage).slice(-15);
   Plotly.newPlot('chart-wage',[{type:'bar',orientation:'h',x:wage.map(c=>c.wkly_wage),y:wage.map(c=>c.county),
-      marker:{color:'#5b8def'},hovertemplate:'%{y}: $%{x:,.0f}/wk<extra></extra>'}],
-    Object.assign({},baseLay,{xaxis:{title:'Avg weekly wage ($)',gridcolor:'#28374f'}}),{displayModeBar:false,responsive:true});
+      marker:{color:'#CB995C'},hovertemplate:'%{y}: $%{x:,.0f}/wk<extra></extra>'}],
+    Object.assign({},baseLay,{xaxis:{title:'Avg weekly wage ($)',gridcolor:'#DDD8CE'}}),{displayModeBar:false,responsive:true});
 }
 
 // ---- county table ----
@@ -336,7 +336,7 @@ function drawVitChart(){
   const data=[{type:'bar',orientation:'h',x:rows.map(c=>c.vit),y:rows.map(c=>c.county),
     marker:{color:rows.map(c=>scoreColor(c.vit))},
     hovertemplate:'%{y}: vitality %{x:.1f}<extra></extra>'}];
-  const lay=Object.assign({},baseLay,{margin:{l:104,r:14,t:8,b:40},xaxis:{title:'Vitality score',range:[0,100],gridcolor:'#28374f'}});
+  const lay=Object.assign({},baseLay,{margin:{l:104,r:14,t:8,b:40},xaxis:{title:'Vitality score',range:[0,100],gridcolor:'#DDD8CE'}});
   Plotly.react('chart-vit',data,lay,{displayModeBar:false,responsive:true});
   vitChartInit=true;
 }
@@ -360,7 +360,7 @@ function initMap(){
   D.counties.forEach(c=>{
     if(c.lat==null||c.lng==null)return;
     const r=Math.max(6,Math.min(34,Math.sqrt(c.employment||400)/40));
-    const mk=L.circleMarker([c.lat,c.lng],{radius:r,color:'#0e1622',weight:1,
+    const mk=L.circleMarker([c.lat,c.lng],{radius:r,color:'#F2EFE9',weight:1,
       fillColor:scoreColor(scores[c.fips]),fillOpacity:.82}).addTo(map);
     mk._fips=c.fips; mk._county=c;
     mk.bindPopup(popupHtml(c,scores[c.fips]));

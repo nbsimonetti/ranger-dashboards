@@ -19,7 +19,7 @@
   opacity: 0.8;
 }
 .cp-trigger:hover { opacity: 1; background: rgba(127, 127, 127, 0.1); }
-.cp-trigger.cp-modified { color: #c8a951; border-color: #c8a951; opacity: 1; }
+.cp-trigger.cp-modified { color: #CB995C; border-color: #CB995C; opacity: 1; }
 
 /* Backdrop */
 .cp-backdrop {
@@ -102,7 +102,7 @@
 .cp-list label:hover { background: rgba(127, 127, 127, 0.08); }
 .cp-list input[type=checkbox] {
   width: 16px; height: 16px;
-  accent-color: #c8a951;
+  accent-color: #CB995C;
   cursor: pointer;
 }
 .cp-list-locked {

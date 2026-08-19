@@ -10,27 +10,27 @@
   background: #f8fafc; color: #4a5568; border: 1px solid #e2e8f0;
   transition: background .15s, border-color .15s;
 }
-.sw-trigger:hover { background: #ebf4ff; border-color: #bee3f8; color: #2b6cb0; }
+.sw-trigger:hover { background: #ebf4ff; border-color: #bee3f8; color: #1B5E8C; }
 .sw-trigger.sw-active {
-  background: #c8a951; color: #1a202c; border-color: #b8995a;
+  background: #CB995C; color: #1a202c; border-color: #b8995a;
 }
 .sw-trigger.sw-active::after {
   content: ''; width: 7px; height: 7px; border-radius: 50%;
-  background: #c53030; display: inline-block; margin-left: 2px;
+  background: #B00A16; display: inline-block; margin-left: 2px;
   box-shadow: 0 0 0 2px rgba(197,48,48,0.25);
 }
 
 /* "Custom Weights Active" banner */
 .sw-banner {
   background: linear-gradient(90deg, #fef5e7 0%, #faf4e8 100%);
-  border: 1px solid #c8a951; border-left-width: 4px;
+  border: 1px solid #CB995C; border-left-width: 4px;
   padding: 8px 16px; margin: 0 0 12px 0; border-radius: 6px;
   display: flex; align-items: center; justify-content: space-between;
   font-size: 12.5px; color: #744210;
 }
 .sw-banner-dark {
   background: linear-gradient(90deg, #2d2519 0%, #3a3025 100%);
-  color: #f0d589; border-color: #c8a951;
+  color: #E3C48F; border-color: #CB995C;
 }
 .sw-banner-msg { display: inline-flex; align-items: center; gap: 8px; }
 .sw-banner-msg::before {
@@ -68,17 +68,17 @@
 .sw-drawer-dark { background: #131c2e; color: #e8eef9; }
 .sw-drawer-dark .sw-section, .sw-drawer-dark .sw-preset-bar { background: #1b2740; border-color: #2a3650; }
 .sw-drawer-dark .sw-tab-btn { color: #8a99b5; }
-.sw-drawer-dark .sw-tab-btn.sw-active { color: #c8a951; border-bottom-color: #c8a951; }
+.sw-drawer-dark .sw-tab-btn.sw-active { color: #CB995C; border-bottom-color: #CB995C; }
 .sw-drawer-dark .sw-input, .sw-drawer-dark .sw-select {
   background: #0e1626; color: #e8eef9; border-color: #2a3650;
 }
 .sw-drawer-dark .sw-row { border-bottom-color: #2a3650; }
-.sw-drawer-dark .sw-total { background: #1b2740; color: #c8a951; }
+.sw-drawer-dark .sw-total { background: #1b2740; color: #CB995C; }
 .sw-drawer-dark .sw-foot { background: #0e1626; border-top-color: #2a3650; }
 .sw-drawer-dark .sw-default { color: #8a99b5; }
 .sw-drawer-dark .sw-btn { background: #2a3650; color: #e8eef9; border-color: #2a3650; }
 .sw-drawer-dark .sw-btn:hover { background: #3a4a70; }
-.sw-drawer-dark .sw-btn-primary { background: #c8a951; color: #131c2e; }
+.sw-drawer-dark .sw-btn-primary { background: #CB995C; color: #131c2e; }
 .sw-drawer-dark .sw-btn-primary:hover { background: #d4b865; }
 
 .sw-head {
@@ -108,7 +108,7 @@
   background: none; border: none; cursor: pointer; color: #718096;
   border-bottom: 3px solid transparent; margin-bottom: -1px;
 }
-.sw-tab-btn.sw-active { color: #2b6cb0; border-bottom-color: #2b6cb0; }
+.sw-tab-btn.sw-active { color: #1B5E8C; border-bottom-color: #1B5E8C; }
 .sw-tab-btn:hover:not(.sw-active) { color: #1a202c; }
 
 /* Body */
@@ -157,16 +157,16 @@
   -webkit-appearance: none; appearance: none;
   width: 100%; height: 5px; border-radius: 3px;
   background: #cbd5e0; outline: none;
-  accent-color: #2b6cb0;
+  accent-color: #1B5E8C;
 }
 .sw-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 14px; height: 14px; border-radius: 50%;
-  background: #2b6cb0; cursor: pointer; border: none;
+  background: #1B5E8C; cursor: pointer; border: none;
 }
 .sw-slider::-moz-range-thumb {
   width: 14px; height: 14px; border-radius: 50%;
-  background: #2b6cb0; cursor: pointer; border: none;
+  background: #1B5E8C; cursor: pointer; border: none;
 }
 .sw-num {
   border: 1px solid #e2e8f0; border-radius: 5px;
@@ -174,8 +174,8 @@
   text-align: right; background: #fff;
   font-variant-numeric: tabular-nums;
 }
-.sw-num.sw-modified { background: #fef5e7; border-color: #c8a951; color: #744210; }
-.sw-drawer-dark .sw-num.sw-modified { background: #3a3025; color: #f0d589; border-color: #c8a951; }
+.sw-num.sw-modified { background: #fef5e7; border-color: #CB995C; color: #744210; }
+.sw-drawer-dark .sw-num.sw-modified { background: #3a3025; color: #E3C48F; border-color: #CB995C; }
 .sw-default {
   font-size: 10px; color: #a0aec0;
   font-variant-numeric: tabular-nums;
@@ -184,7 +184,7 @@
 
 /* Total indicator */
 .sw-total {
-  background: #ebf8ff; border: 1px solid #bee3f8; color: #2b6cb0;
+  background: #ebf8ff; border: 1px solid #bee3f8; color: #1B5E8C;
   border-radius: 5px; padding: 7px 12px; margin-top: 8px;
   display: flex; justify-content: space-between; align-items: center;
   font-size: 12px; font-weight: 600;
@@ -209,11 +209,11 @@
   padding: 7px 14px; border-radius: 5px; font-size: 12px; font-weight: 600;
   cursor: pointer; border: 1px solid #e2e8f0; background: #fff; color: #4a5568;
 }
-.sw-btn:hover { background: #ebf4ff; border-color: #bee3f8; color: #2b6cb0; }
-.sw-btn-primary { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
+.sw-btn:hover { background: #ebf4ff; border-color: #bee3f8; color: #1B5E8C; }
+.sw-btn-primary { background: #1B5E8C; color: #fff; border-color: #1B5E8C; }
 .sw-btn-primary:hover { background: #2c5282; color: #fff; }
-.sw-btn-danger { color: #c53030; }
-.sw-btn-danger:hover { background: #fff5f5; color: #c53030; border-color: #fbb6b6; }
+.sw-btn-danger { color: #B00A16; }
+.sw-btn-danger:hover { background: #fff5f5; color: #B00A16; border-color: #fbb6b6; }
 
 /* Toast feedback after share-link copy or save */
 .sw-toast {

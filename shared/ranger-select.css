@@ -70,7 +70,7 @@ select.sf:focus,
 select.so:focus,
 select.pipe-status-filter:focus {
   outline: none;
-  border-color: #c8a951;
+  border-color: #CB995C;
   box-shadow: 0 0 0 2px rgba(200, 169, 81, 0.25);
 }
 select.ranger-select:disabled,
