@@ -64,15 +64,18 @@
   pointer-events: none;
 }
 
-/* Two layered range inputs */
+/* Two layered range inputs.
+   width/height are !important so a host page's own `input[type=range]` rule
+   (e.g. `.controls input[type=range] { width: 180px }`) can't shrink the thumbs
+   below the track width and knock the handles out of alignment with the fill. */
 .dr-range {
   -webkit-appearance: none;
   appearance: none;
   position: absolute;
   left: 0;
   right: 0;
-  width: 100%;
-  height: 26px;
+  width: 100% !important;
+  height: 26px !important;
   background: transparent;
   pointer-events: none;
   margin: 0;

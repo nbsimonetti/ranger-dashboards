@@ -189,15 +189,6 @@
   .map-controls select, .map-controls input[type="text"] {
     width: 100%;
   }
-  .multi-select {
-    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
-    border-radius: 6px; padding: 6px 8px; font-size: 12px; max-height: 110px;
-    overflow-y: auto;
-  }
-  .multi-select label {
-    display: block; color: var(--text); font-size: 12px; padding: 2px 0; cursor: pointer;
-  }
-  .multi-select label:hover { background: rgba(255,255,255,.04); }
   .not-mapped {
     background: var(--panel2); border-radius: 8px; padding: 10px 14px;
     margin-top: 12px; font-size: 12px; color: var(--muted);
@@ -472,8 +463,6 @@
       <label>Min geo fit: <span id="mGeoVal">1</span><br>
         <input type="range" id="mGeo" min="1" max="5" value="1" style="width:100%;"></label>
       <label><input type="checkbox" id="mPublicOnly"> Public filers only</label>
-      <label>County (multi)<div class="multi-select" id="mCounty"></div></label>
-      <label>Holding company (multi)<div class="multi-select" id="mHoldco"></div></label>
     </div>
     <div id="leaflet-map"></div>
     <div class="not-mapped" id="notMapped"></div>
@@ -1418,63 +1407,6 @@ function assetRadius(asset) {
   return 4 + t * 10;
 }
 
-function buildMultiSelect(id, values) {
-  const el = document.getElementById(id);
-  el.innerHTML = '';
-  // Header bar: search + select-all / clear-all
-  const bar = document.createElement('div');
-  bar.className = 'ms-bar';
-  bar.style.cssText = 'position:sticky;top:0;background:var(--panel2);padding:4px 6px;display:flex;gap:4px;align-items:center;border-bottom:1px solid var(--panel2);z-index:1';
-  bar.innerHTML = `
-    <input type="text" class="ms-search" placeholder="Filter..." style="flex:1;background:var(--panel);color:var(--text);border:1px solid var(--panel2);border-radius:3px;padding:3px 6px;font-size:11px;min-width:0">
-    <button type="button" class="ms-all" style="background:var(--accent);color:#fff;border:none;border-radius:3px;padding:3px 7px;font-size:10px;cursor:pointer">All</button>
-    <button type="button" class="ms-none" style="background:var(--panel);color:var(--muted);border:1px solid var(--panel2);border-radius:3px;padding:3px 7px;font-size:10px;cursor:pointer">None</button>
-    <span class="ms-count" style="font-size:10px;color:var(--muted);min-width:50px;text-align:right"></span>
-  `;
-  el.appendChild(bar);
-  const list = document.createElement('div');
-  list.className = 'ms-list';
-  el.appendChild(list);
-
-  const labels = [];
-  values.forEach(v => {
-    const lab = document.createElement('label');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.value = v;
-    cb.checked = true;
-    cb.onchange = () => { renderMapMarkers(); updateCount(); };
-    lab.appendChild(cb);
-    lab.appendChild(document.createTextNode(' ' + v));
-    list.appendChild(lab);
-    labels.push({ lab, cb, text: v.toLowerCase() });
-  });
-
-  function updateCount() {
-    const checked = labels.filter(x => x.cb.checked).length;
-    bar.querySelector('.ms-count').textContent = `${checked}/${labels.length}`;
-  }
-  updateCount();
-
-  bar.querySelector('.ms-search').addEventListener('input', e => {
-    const q = e.target.value.trim().toLowerCase();
-    labels.forEach(x => { x.lab.style.display = (!q || x.text.includes(q)) ? '' : 'none'; });
-  });
-  bar.querySelector('.ms-all').addEventListener('click', () => {
-    labels.forEach(x => { if (x.lab.style.display !== 'none') x.cb.checked = true; });
-    renderMapMarkers(); updateCount();
-  });
-  bar.querySelector('.ms-none').addEventListener('click', () => {
-    labels.forEach(x => { if (x.lab.style.display !== 'none') x.cb.checked = false; });
-    renderMapMarkers(); updateCount();
-  });
-}
-
-function getMultiSelected(id) {
-  return Array.from(document.querySelectorAll('#' + id + ' input:checked'))
-    .map(cb => cb.value);
-}
-
 // Map dual-range slider values (in $M); default 0..200
 let MAP_ASSET_LO = 0, MAP_ASSET_HI = 200;
 function getMapFiltered() {
@@ -1484,16 +1416,11 @@ function getMapFiltered() {
   const minG = +document.getElementById('mGeo').value;
   const q = document.getElementById('mSearch').value.trim().toLowerCase();
   const publicOnly = document.getElementById('mPublicOnly').checked;
-  const counties = new Set(getMultiSelected('mCounty'));
-  const holdcos  = new Set(getMultiSelected('mHoldco'));
   return DATA.rows.filter(r => {
     if ((r.composite_score || 0) < minScore) return false;
     if (r.ASSET == null || r.ASSET < minA || r.ASSET > maxA) return false;
     if (r.geo_fit_score < minG) return false;
     if (publicOnly && !r.is_public) return false;
-    if (!counties.has(r.COUNTY || 'Unknown')) return false;
-    const h = r.holdco_name || 'Standalone';
-    if (!holdcos.has(h)) return false;
     if (q) {
       const blob = (r.NAME + ' ' + (r.CITY||'') + ' ' + (r.COUNTY||'') + ' ' + (r.holdco_name||'')).toLowerCase();
       if (!blob.includes(q)) return false;
@@ -1654,12 +1581,6 @@ function initMap() {
     return div;
   };
   legend.addTo(MAP);
-
-  // Build county + holdco multi-selects
-  const counties = Array.from(new Set(DATA.rows.map(r => r.COUNTY || 'Unknown'))).sort();
-  buildMultiSelect('mCounty', counties);
-  const holdcos = Array.from(new Set(DATA.rows.map(r => r.holdco_name || 'Standalone'))).sort();
-  buildMultiSelect('mHoldco', holdcos);
 
   // Map asset dual-range slider
   if (window.DualRange) {
