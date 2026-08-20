@@ -40,21 +40,61 @@ jobs:
           python-version: '3.12'
 
       - name: Run dashboard refresh scripts
+        env:
+          ONLY: ${{ github.event.inputs.only }}
         run: |
           set +e
-          only="${{ github.event.inputs.only }}"
-          fail=0
+          total=0; failed=0; empty=0
+          {
+            echo "## Dashboard refresh"
+            echo ""
+            echo "| Dashboard | Result | Rows | Data as of |"
+            echo "|---|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
           for script in */refresh.py; do
             dir=$(dirname "$script")
-            if [ -n "$only" ] && [ "$dir" != "$only" ]; then continue; fi
+            if [ -n "$ONLY" ] && [ "$dir" != "$ONLY" ]; then continue; fi
+            total=$((total + 1))
+
             echo "::group::refresh $dir"
             python "$script"
             rc=$?
-            echo "exit=$rc for $dir"
-            [ $rc -ne 0 ] && fail=1
             echo "::endgroup::"
+
+            # Read what the dashboard actually holds now. Exit code alone can't tell
+            # "worked" from "ran but fetched nothing" — a script can exit 0 with zero
+            # rows (dental did exactly that when NPPES was unreachable).
+            state=$(python .github/scripts/dashboard_state.py "$dir")
+            rows=$(echo "$state" | cut -d'|' -f1 | tr -d ' ')
+            asof=$(echo "$state" | cut -d'|' -f2- | sed 's/^ *//')
+
+            if [ "$rc" -ne 0 ]; then
+              failed=$((failed + 1))
+              echo "::warning title=Refresh failed::$dir exited $rc — data left unchanged (see the '$dir' log group)"
+              echo "| \`$dir\` | ❌ exit $rc | $rows | $asof |" >> "$GITHUB_STEP_SUMMARY"
+            elif [ "$rows" = "0" ]; then
+              empty=$((empty + 1))
+              echo "::warning title=No data::$dir exited 0 but its dashboard holds 0 rows — the source is probably unreachable"
+              echo "| \`$dir\` | ⚠️ no rows | $rows | $asof |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| \`$dir\` | ✅ | $rows | $asof |" >> "$GITHUB_STEP_SUMMARY"
+            fi
           done
-          exit 0   # never fail the job on a single flaky source; report below
+
+          {
+            echo ""
+            echo "**$total run · $((total - failed - empty)) ok · $failed failed · $empty empty**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Gate: a single flaky public source shouldn't nuke the whole refresh, but a
+          # total outage should be loud. Partial problems stay green and surface as
+          # warnings + the summary table above.
+          if [ "$total" -gt 0 ] && [ "$((failed + empty))" -eq "$total" ]; then
+            echo "::error title=Refresh produced nothing::all $total dashboard(s) failed or returned no rows"
+            exit 1
+          fi
+          exit 0
 
       - name: Commit refreshed data
         run: |
