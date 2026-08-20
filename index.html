@@ -13,12 +13,12 @@
     --text: #101418;
     --muted: #5C6670;
     --border: #DDD8CE;
-    --blue: #012A52;
-    --green: #CB995C;
-    --teal: #1B5E8C;
-    --orange: #8C6239;
-    --purple: #7C8994;
-    --red: #DA0C1B;
+    --accent-navy: #012A52;
+    --accent-gold: #CB995C;
+    --accent-steel: #1B5E8C;
+    --accent-brown: #8C6239;
+    --accent-slate: #7C8994;
+    --accent-red: #DA0C1B;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -44,12 +44,12 @@
     display: flex; flex-direction: column; gap: 8px;
   }
   .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(1,42,82,0.12); }
-  .card.blue   { border-left-color: var(--blue); }
-  .card.green  { border-left-color: var(--green); }
-  .card.teal   { border-left-color: var(--teal); }
-  .card.orange { border-left-color: var(--orange); }
-  .card.purple { border-left-color: var(--purple); }
-  .card.red    { border-left-color: var(--red); }
+  .card.navy   { border-left-color: var(--accent-navy); }
+  .card.gold  { border-left-color: var(--accent-gold); }
+  .card.steel   { border-left-color: var(--accent-steel); }
+  .card.brown { border-left-color: var(--accent-brown); }
+  .card.slate { border-left-color: var(--accent-slate); }
+  .card.red    { border-left-color: var(--accent-red); }
   .card-tag {
     display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.8px; color: var(--muted); padding: 2px 8px; border-radius: 4px;
@@ -122,28 +122,28 @@
 
 <div class="grid">
 
-  <a href="deposit/deposit-intelligence.html" class="card blue" style="border-left-color:var(--blue);grid-column:1/-1;max-width:none">
+  <a href="deposit/deposit-intelligence.html" class="card navy" style="border-left-color:var(--accent-navy);grid-column:1/-1;max-width:none">
     <span class="card-tag" style="background:#F4E9DB;color:#6E4B24">Deposit Intelligence</span>
     <div class="card-title">Ranger Bank — Deposit Intelligence Platform</div>
     <div class="card-desc">Unified competitive analysis for Ranger Bank management. Set your rates and compare against 318 TX community banks across 18 markets. Bank-level competitiveness scoring, market opportunity analysis, rate scanner, cost of funds benchmarking, CD analysis, and interactive mapping — all in one place. Live FDIC API data + scraped advertised rates.</div>
     <div class="card-meta">FDIC BankFind API &middot; Scraped rates &middot; 318 banks &middot; 18 markets &middot; Set Ranger rates to compare</div>
   </a>
 
-  <a href="cre/cre-dashboard-tx.html" class="card orange">
+  <a href="cre/cre-dashboard-tx.html" class="card brown">
     <span class="card-tag">CRE Prospecting</span>
     <div class="card-title">CRE Prospecting Dashboard</div>
     <div class="card-desc">162,000+ commercial real estate properties across 32 Texas counties. Real CAD data with opportunity scoring, owner lookup, pipeline management, and call sheets.</div>
     <div class="card-meta">32 counties &middot; CAD 2025 data &middot; 162K properties</div>
   </a>
 
-  <a href="physician/TX_Physician_Dashboard.html" class="card purple">
+  <a href="physician/TX_Physician_Dashboard.html" class="card slate">
     <span class="card-tag">Physician BD</span>
     <div class="card-title">TX Physician Private Practice Dashboard</div>
     <div class="card-desc">24,800+ Texas physicians in private practice. Multi-source CMS data with Medicare billing, specialty filtering, compliance screening, and call list generation.</div>
     <div class="card-meta">NPPES + CMS DAC + Medicare Util + PECOS + OIG &middot; 24.8K physicians</div>
   </a>
 
-  <a href="physician-underwriting/specialty-benchmarks.html" class="card teal" style="border-left-color:#1B5E8C">
+  <a href="physician-underwriting/specialty-benchmarks.html" class="card steel" style="border-left-color:#1B5E8C">
     <span class="card-tag" style="background:#DFE8EF;color:#012A52">Underwriting</span>
     <div class="card-title">Physician Underwriting Benchmarks</div>
     <div class="card-desc">National specialty benchmarks for credit decisioning. Income, payer mix, practice economics, and risk indicators across 29 specialties. Includes a borrower comparison tool that evaluates an individual physician against national norms for their specialty.</div>
@@ -157,28 +157,28 @@
     <div class="card-meta">FDIC + FR Y-6 + SEC &middot; 50/25/25 composite &middot; TBVE valuations &middot; 95 targets ranked</div>
   </a>
 
-  <a href="loan-maturity/loan-maturity-tx.html" class="card green">
+  <a href="loan-maturity/loan-maturity-tx.html" class="card gold">
     <span class="card-tag" style="background:#DFE8EF;color:#012A52">Loan Maturity</span>
     <div class="card-title">Loan Maturity Intelligence (TX)</div>
     <div class="card-desc">Commercial loans rolling off in the next 24 months across all of Texas. Aggregated by borrower &amp; lender. Sourced from free public records (SBA 7(a) + 504 bulk data). Includes Maturity Opportunity Score, pipeline status tracking, rate vs market delta, and branch-proximity sort. Honest about what we can&apos;t see (UCC + county deeds paywalled).</div>
     <div class="card-meta">SBA 7(a) + 504 FOIA &middot; 30K active loans &middot; $24.7B tracked &middot; statewide TX</div>
   </a>
 
-  <a href="deposit-share/deposit-share-tx.html" class="card blue">
+  <a href="deposit-share/deposit-share-tx.html" class="card navy">
     <span class="card-tag" style="background:#F4E9DB;color:#6E4B24">Deposit Market Share</span>
     <div class="card-title">Deposit Market Share &amp; Branch Network (TX)</div>
     <div class="card-desc">Branch-level deposit market share across all of Texas, from the FDIC Summary of Deposits. County concentration (HHI), institution rankings, a branch map, and an M&amp;A overlap tool showing what an acquisition adds, county by county.</div>
     <div class="card-meta">FDIC Summary of Deposits &middot; 2025 &middot; 6.2K TX branches &middot; auto-refresh</div>
   </a>
 
-  <a href="economic/economic-tx.html" class="card teal" style="border-left-color:#1B5E8C">
+  <a href="economic/economic-tx.html" class="card steel" style="border-left-color:#1B5E8C">
     <span class="card-tag" style="background:#DFE8EF;color:#012A52">Market Vitality</span>
     <div class="card-title">Footprint Economic &amp; Market Vitality (TX)</div>
     <div class="card-desc">The market-fundamentals overlay the suite was missing — county employment, wages, unemployment and business density from the BLS, distilled into a tunable "market vitality" score. Shows where the economic base is strongest for acquiring, funding, and lending.</div>
     <div class="card-meta">BLS QCEW + LAUS &middot; all 254 TX counties &middot; auto-refresh</div>
   </a>
 
-  <a href="mortgage/mortgage-tx.html" class="card green">
+  <a href="mortgage/mortgage-tx.html" class="card gold">
     <span class="card-tag" style="background:#DFE8EF;color:#012A52">Mortgage / HMDA</span>
     <div class="card-title">Mortgage Lending Landscape (TX)</div>
     <div class="card-desc">Who lends what, where — residential &amp; commercial mortgage flows across the footprint from HMDA: lender volume, denial rates by county, purpose mix, and a physician/jumbo proxy for the high-value borrower behind the physician-mortgage product.</div>
@@ -192,35 +192,35 @@
     <div class="card-meta">FDIC call reports &middot; Q1 2026 &middot; 352 TX banks &middot; auto-refresh</div>
   </a>
 
-  <a href="structure/structure-tx.html" class="card purple">
+  <a href="structure/structure-tx.html" class="card slate">
     <span class="card-tag">Structure / M&amp;A</span>
     <div class="card-title">TX Bank Structure &amp; M&amp;A Activity</div>
     <div class="card-desc">Competitive situational awareness — active bank counts across four decades, de-novo formations, failures, and merger/absorption events — to time M&amp;A moves and spot other acquirers active in the footprint.</div>
     <div class="card-meta">FDIC BankFind + Failures &middot; 347 active TX banks &middot; auto-refresh</div>
   </a>
 
-  <a href="professional-services/professional-services-tx.html" class="card orange">
+  <a href="professional-services/professional-services-tx.html" class="card brown">
     <span class="card-tag">Professional Services BD</span>
     <div class="card-title">Professional Services BD (TX)</div>
     <div class="card-desc">Business development beyond physicians — law, accounting, architecture &amp; engineering, and consulting practices as targets for practice loans, deposits, and treasury. Real firms from SBA borrowers, sized against the BLS market total.</div>
     <div class="card-meta">SBA FOIA + BLS QCEW &middot; statewide &middot; law / CPA / eng / consulting &middot; auto-refresh</div>
   </a>
 
-  <a href="dental/dental-tx.html" class="card purple" style="border-left-color:#7C8994">
+  <a href="dental/dental-tx.html" class="card slate" style="border-left-color:#7C8994">
     <span class="card-tag" style="background:#EAECEE;color:#3F4952">Dental BD</span>
     <div class="card-title">Dental &amp; Allied Practice BD (TX)</div>
     <div class="card-desc">Extends the physician BD engine to dentists and optometrists — an adjacent, high-value practice-lending segment scored the same way (solo status, tenure, contactability). Populates on the first scheduled refresh.</div>
     <div class="card-meta">NPPES NPI Registry &middot; dental + allied &middot; auto-refresh</div>
   </a>
 
-  <a href="smallbiz-ag/smallbiz-ag-tx.html" class="card green" style="border-left-color:#CB995C">
+  <a href="smallbiz-ag/smallbiz-ag-tx.html" class="card gold" style="border-left-color:#CB995C">
     <span class="card-tag" style="background:#DFE8EF;color:#012A52">SMB &amp; Ag Lending</span>
     <div class="card-title">Small Business &amp; Agricultural Lending (TX)</div>
     <div class="card-desc">The small-business and agricultural lending landscape by sector, county, and lender — with a dedicated agriculture view for the rural footprint. Real SBA originations; honest about the FFIEC-CRA and USDA augmentation paths.</div>
     <div class="card-meta">SBA 7(a)/504 FOIA &middot; statewide &middot; 21 sectors &middot; ag focus &middot; auto-refresh</div>
   </a>
 
-  <a href="succession/succession-tx.html" class="card purple">
+  <a href="succession/succession-tx.html" class="card slate">
     <span class="card-tag" style="background:#EAECEE;color:#3F4952">Solo-Target Radar</span>
     <div class="card-title">Practice Transition &amp; Solo-Target Radar (TX)</div>
     <div class="card-desc">A focused acquisition/deposit target list — solo and small physician practices with long tenure and viable Medicare volume, the practices most likely to seek practice-acquisition financing or move a banking relationship. Derived from the physician BD dataset.</div>

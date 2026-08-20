@@ -1118,11 +1118,24 @@ function renderTopLendersChart(F) {
     byLender[k].count++;
   });
   const sorted = Object.entries(byLender).sort((a,b)=>b[1].sum-a[1].sum).slice(0,10);
-  if (!sorted.length) {
-    qs('#ch-top-lenders').parentElement.innerHTML = '<div class="empty-state">No lender data in current filter.</div>';
-    return;
+  // Toggle an empty-state alongside the canvas rather than replacing the parent's
+  // innerHTML: blowing the canvas away is permanent, so every later render would
+  // call new Chart(null) and fail with "can't acquire context".
+  const lenderCanvas = qs('#ch-top-lenders');
+  const lenderHolder = lenderCanvas ? lenderCanvas.parentElement : null;
+  if (lenderHolder) {
+    const msg = lenderHolder.querySelector('.empty-state');
+    if (!sorted.length) {
+      lenderCanvas.style.display = 'none';
+      if (!msg) lenderHolder.insertAdjacentHTML('beforeend',
+        '<div class="empty-state">No lender data in current filter.</div>');
+    } else {
+      lenderCanvas.style.display = '';
+      if (msg) msg.remove();
+    }
   }
-  S.charts.topLenders = new Chart(qs('#ch-top-lenders'), {
+  if (!sorted.length || !lenderCanvas) return;
+  S.charts.topLenders = new Chart(lenderCanvas, {
     type: 'bar',
     data: {
       labels: sorted.map(([k]) => k.length > 30 ? k.slice(0,28)+'…' : k),
