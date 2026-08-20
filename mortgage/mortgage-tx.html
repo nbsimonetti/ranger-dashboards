@@ -7,6 +7,7 @@
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../shared/county-choropleth.js"></script>
 <style>
   :root{
     --bg:#F2EFE9; --panel:#FFFFFF; --panel2:#FCFAF6; --panel3:#F0EBE1;
@@ -156,14 +157,19 @@
   <section class="view" id="v-map">
     <div class="panel">
       <h3>Mortgage map — footprint</h3>
-      <div class="note">Each footprint county at its geographic center, sized by origination volume and colored by denial rate (green = lower, red = higher). Click a bubble for detail.</div>
-      <div id="map"></div>
-      <div class="legend">
-        <span><span class="sw" style="background:var(--good)"></span> Denial rate low</span>
-        <span><span class="sw" style="background:var(--warn)"></span> Moderate</span>
-        <span><span class="sw" style="background:var(--bad)"></span> High</span>
-        <span class="muted" id="map-count"></span>
+      <div class="note">Every Texas county shaded by the selected mortgage metric. Hover or click a county for its full detail.</div>
+      <div class="controls" style="margin-bottom:10px">
+        <label>Shade counties by<br>
+          <select id="map-metric">
+            <option value="orig">Originations (count)</option>
+            <option value="orig_usd">Origination volume ($)</option>
+            <option value="denial_rate">Denial rate (%)</option>
+            <option value="avg_purchase">Avg purchase loan ($)</option>
+          </select></label>
       </div>
+      <div id="map"></div>
+      <div class="legend" id="map-legend"></div>
+      <div class="legend"><span class="muted" id="map-count"></span></div>
     </div>
   </section>
 
@@ -337,22 +343,43 @@ function renderCounty(){
 }
 
 // ---- map ----
-let map, mapInit=false;
-function drColor(r){ return r>=30?'#DA0C1B':(r>=20?'#B5761F':'#2F7D5D'); }
+let map, mapInit=false, choro=null;
+// Metric definitions for the choropleth. 'risk' ramps green->red because a high
+// denial rate is bad; volume metrics use the sequential navy ramp.
+const MAP_METRICS={
+  orig:        {label:'Originations',        ramp:'navy', fmt:v=>fmtN(v)},
+  orig_usd:    {label:'Origination volume',  ramp:'navy', fmt:v=>fmtUSD(v)},
+  denial_rate: {label:'Denial rate',         ramp:'risk', fmt:v=>pct(v)},
+  avg_purchase:{label:'Avg purchase loan',   ramp:'gold', fmt:v=>fmtUSD(v)},
+};
+function mapValues(key){
+  const out={};
+  D.counties.forEach(c=>{ if(c.fips) out[c.fips]=(c[key]==null?null:c[key]); });
+  return out;
+}
+function mapPopup(fips){
+  const c=D.counties.find(x=>x.fips===fips);
+  if(!c) return `<b>${fips}</b><br><span class="muted">No HMDA rows for this county</span>`;
+  return `<b>${esc(c.county)} County</b><br>${fmtN(c.orig)} originations · ${fmtUSD(c.orig_usd)}`+
+         `<br>Denial rate <b>${pct(c.denial_rate)}</b><br>Avg purchase ${fmtUSD(c.avg_purchase)}`;
+}
 function initMap(){
   if(mapInit)return; mapInit=true;
-  map=L.map('map',{scrollWheelZoom:true}).setView([31.3,-97.5],6);
+  map=L.map('map',{scrollWheelZoom:true}).setView([31.3,-99.3],6);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-  const pts=[];
-  D.counties.forEach(c=>{
-    if(c.lat==null||c.lng==null)return;
-    const r=Math.max(6,Math.min(46,Math.sqrt(c.orig)/2.6));
-    L.circleMarker([c.lat,c.lng],{radius:r,color:drColor(c.denial_rate),weight:1.5,fillColor:drColor(c.denial_rate),fillOpacity:.45}).addTo(map)
-      .bindPopup(`<b>${esc(c.county)} County</b><br>${fmtN(c.orig)} originations · ${fmtUSD(c.orig_usd)}<br>Denial rate <b>${pct(c.denial_rate)}</b><br>Avg purchase ${fmtUSD(c.avg_purchase)}`);
-    pts.push([c.lat,c.lng]);
-  });
-  if(pts.length) map.fitBounds(pts,{padding:[30,30]});
-  $('#map-count').textContent=pts.length+' footprint counties';
+  const sel=$('#map-metric');
+  const m0=MAP_METRICS[sel.value]||MAP_METRICS.orig;
+  CountyChoropleth.render({
+    map, values:mapValues(sel.value), ramp:m0.ramp, label:m0.label, format:m0.fmt,
+    popup:mapPopup, legendEl:document.getElementById('map-legend'),
+  }).then(c=>{
+    choro=c;
+    $('#map-count').textContent=D.counties.length+' counties with HMDA data · equal-count shading';
+    sel.onchange=()=>{
+      const m=MAP_METRICS[sel.value];
+      choro.update(mapValues(sel.value),{ramp:m.ramp,label:m.label,format:m.fmt});
+    };
+  }).catch(e=>{ $('#map-count').textContent='County boundaries could not be loaded: '+e.message; });
   setTimeout(()=>map.invalidateSize(),120);
 }
 

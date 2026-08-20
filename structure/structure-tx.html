@@ -7,6 +7,7 @@
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../shared/county-choropleth.js"></script>
 <style>
   :root{
     --bg:#F2EFE9; --panel:#FFFFFF; --panel2:#FCFAF6; --panel3:#F0EBE1;
@@ -173,13 +174,10 @@
   <section class="view" id="v-foot">
     <div class="panel">
       <h3>Footprint focus — the statewide target market</h3>
-      <div class="note">Bank structure inside the footprint only. Bubbles are placed at each county's centroid (mean of FDIC branch coordinates) and sized by the number of banks currently headquartered there — where the remaining independent charters actually sit. Click a county for detail.</div>
+      <div class="note">Every Texas county shaded by the number of banks currently headquartered there — where the remaining independent charters actually sit. Hover or click a county for its de-novo, exit and failure history.</div>
       <div id="map"></div>
-      <div class="legend">
-        <span><span class="sw" style="background:var(--accent)"></span> Banks HQ'd in county (bubble size)</span>
-        <span><span class="sw" style="background:var(--faint)"></span> No active HQ charter</span>
-        <span class="muted" id="map-count"></span>
-      </div>
+      <div class="legend" id="map-legend"></div>
+      <div class="legend"><span class="muted" id="map-count"></span></div>
     </div>
     <div class="panel">
       <h3>Footprint counties</h3>
@@ -372,23 +370,27 @@ function renderFoot(){
 let map, mapInit=false;
 function initMap(){
   if(mapInit)return; mapInit=true;
-  map=L.map('map',{scrollWheelZoom:true}).setView([31.2,-97.6],6);
+  map=L.map('map',{scrollWheelZoom:true}).setView([31.2,-99.3],6);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-  let n=0;
-  D.footprint.forEach(c=>{
-    if(c.lat==null||c.lng==null)return;
-    const has=c.active>0;
-    const r=has?Math.max(6,Math.min(30,6+Math.sqrt(c.active)*4.2)):4;
-    L.circleMarker([c.lat,c.lng],{radius:r,color:has?'#012A52':'#8B9199',
-      weight:1,fillOpacity:has?.5:.35}).addTo(map)
-      .bindPopup(`<b>${esc(c.county)} County</b> <span class="muted">(${c.fips})</span><br>`+
+  const byFips={}; D.footprint.forEach(c=>{ if(c.fips) byFips[c.fips]=c; });
+  const values={}; D.footprint.forEach(c=>{ if(c.fips) values[c.fips]=c.active; });
+  CountyChoropleth.render({
+    map, values, ramp:'navy', label:'Banks headquartered',
+    format:v=>v.toLocaleString(),
+    popup:(fips)=>{
+      const c=byFips[fips];
+      if(!c) return `<b>${fips}</b><br><span class="muted">No data</span>`;
+      return `<b>${esc(c.county)} County</b> <span class="muted">(${c.fips})</span><br>`+
         `<b>${c.active}</b> bank${c.active===1?'':'s'} headquartered here<br>`+
         `De-novos (5y): ${c.denovos5} &nbsp;·&nbsp; Exits (5y): ${c.exits5}<br>`+
-        `Failures (all-time): ${c.failures}`);
-    n++;
-  });
-  const totActive=D.footprint.reduce((s,c)=>s+c.active,0);
-  $('#map-count').textContent=totActive.toLocaleString()+' banks HQ’d across '+n+' footprint counties';
+        `Failures (all-time): ${c.failures}`;
+    },
+    legendEl:document.getElementById('map-legend'),
+  }).then(()=>{
+    const totActive=D.footprint.reduce((s,c)=>s+c.active,0);
+    const withHq=D.footprint.filter(c=>c.active>0).length;
+    $('#map-count').textContent=totActive.toLocaleString()+' banks HQ’d across '+withHq+' counties (of '+D.footprint.length+')';
+  }).catch(e=>{ $('#map-count').textContent='County boundaries could not be loaded: '+e.message; });
   setTimeout(()=>map.invalidateSize(),120);
 }
 

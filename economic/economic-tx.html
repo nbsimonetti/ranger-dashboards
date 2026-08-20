@@ -7,6 +7,7 @@
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../shared/county-choropleth.js"></script>
 <style>
   :root{
     --bg:#F2EFE9; --panel:#FFFFFF; --panel2:#FCFAF6; --panel3:#F0EBE1;
@@ -172,13 +173,10 @@
   <section class="view" id="v-map">
     <div class="panel">
       <h3>Footprint map — market vitality</h3>
-      <div class="note">Each footprint county plotted at its centroid. Bubble <b>size</b> = employment; bubble <b>colour</b> = market-vitality score (recolours with the sliders on the Vitality tab). Click a bubble for detail.</div>
+      <div class="note">Every Texas county shaded by its market-vitality score — the fill recolours live with the sliders on the Vitality tab. Hover or click a county for its underlying numbers.</div>
       <div id="map"></div>
-      <div class="legend">
-        <span>Vitality:&nbsp; low <span class="ramp"></span> high</span>
-        <span><span class="sw" style="background:var(--muted)"></span> bubble size = employment</span>
-        <span class="muted" id="map-count"></span>
-      </div>
+      <div class="legend" id="map-legend"></div>
+      <div class="legend"><span class="muted" id="map-count"></span></div>
     </div>
   </section>
 
@@ -234,10 +232,10 @@ function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>
 function resizeChart(id){ const el=document.getElementById(id); if(el&&window.Plotly&&el.data) Plotly.Plots.resize(el); }
 // unemployment colour: lower is better -> green low, red high
 function unempClass(v){ return v==null?'':(v>=6?'conc-hi':(v>=4.5?'conc-md':'conc-lo')); }
-// vitality colour ramp: 0 red -> 50 amber -> 100 green
+// vitality colour ramp: 0 red -> 50 amber -> 100 green (brand semantic colours)
 function scoreColor(v){
   if(v==null) return '#8B9199';
-  const stops=[[0,[217,105,79]],[50,[224,164,88]],[100,[62,166,118]]];
+  const stops=[[0,[218,12,27]],[50,[181,118,31]],[100,[47,125,93]]];
   v=Math.max(0,Math.min(100,v));
   let a=stops[0],b=stops[2];
   for(let i=0;i<stops.length-1;i++){ if(v>=stops[i][0]&&v<=stops[i+1][0]){a=stops[i];b=stops[i+1];break;} }
@@ -392,23 +390,27 @@ function refreshVitality(){
 }
 
 // ---- map ----
-let map, mapInit=false, markers=[];
+let map, mapInit=false, choro=null;
+const byFips=()=>Object.fromEntries(D.counties.map(c=>[c.fips,c]));
+function vitalityValues(){ return Object.fromEntries(scoredRows().map(c=>[c.fips,c.vit])); }
+function choroPopup(fips,val){
+  const c=byFips()[fips];
+  if(!c) return `<b>${fips}</b><br><span class="muted">Not in this dataset</span>`;
+  return popupHtml(c,val);
+}
 function initMap(){
   if(mapInit)return; mapInit=true;
-  map=L.map('map',{scrollWheelZoom:true}).setView([31.2,-97.7],6);
+  map=L.map('map',{scrollWheelZoom:true}).setView([31.2,-99.3],6);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-  const scores=Object.fromEntries(scoredRows().map(c=>[c.fips,c.vit]));
-  let n=0;
-  D.counties.forEach(c=>{
-    if(c.lat==null||c.lng==null)return;
-    const r=Math.max(6,Math.min(34,Math.sqrt(c.employment||400)/40));
-    const mk=L.circleMarker([c.lat,c.lng],{radius:r,color:'#F2EFE9',weight:1,
-      fillColor:scoreColor(scores[c.fips]),fillOpacity:.82}).addTo(map);
-    mk._fips=c.fips; mk._county=c;
-    mk.bindPopup(popupHtml(c,scores[c.fips]));
-    markers.push(mk); n++;
+  CountyChoropleth.render({
+    map, values:vitalityValues(), ramp:'vitality', label:'Market vitality',
+    format:v=>scoreTxt(v), popup:choroPopup, legendEl:document.getElementById('map-legend'),
+  }).then(c=>{
+    choro=c;
+    $('#map-count').textContent=D.counties.length+' counties scored · shading is equal-count so rural counties stay legible';
+  }).catch(e=>{
+    $('#map-count').textContent='County boundaries could not be loaded: '+e.message;
   });
-  $('#map-count').textContent=n+' counties mapped';
   setTimeout(()=>map.invalidateSize(),120);
 }
 function popupHtml(c,vit){
@@ -421,12 +423,8 @@ function popupHtml(c,vit){
     +`<br>Vitality: <b>${scoreTxt(vit)}</b>`;
 }
 function styleMap(){
-  const scores=Object.fromEntries(scoredRows().map(c=>[c.fips,c.vit]));
-  markers.forEach(mk=>{
-    const v=scores[mk._fips];
-    mk.setStyle({fillColor:scoreColor(v)});
-    mk.setPopupContent(popupHtml(mk._county,v));
-  });
+  // Re-shade the counties when the vitality weights change.
+  if(choro) choro.update(vitalityValues());
 }
 
 // ---- init ----
