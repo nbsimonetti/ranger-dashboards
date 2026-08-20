@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ranger Bank — Practice Transition &amp; Solo-Target Radar (TX)</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<link rel="stylesheet" href="../shared/bd-filters.css"/>
+<script src="../shared/bd-filters.js"></script>
 <style>
   :root{--bg:#F2EFE9;--panel:#FFFFFF;--panel2:#FCFAF6;--border:#DDD8CE;--text:#101418;--muted:#5C6670;--faint:#8B9199;--accent:#012A52;--accent2:#CB995C;--good:#2F7D5D;--warn:#B5761F;--bad:#DA0C1B;}
   *{box-sizing:border-box}
@@ -112,12 +114,7 @@
     <div class="panel">
       <h3>Target list</h3>
       <div class="note">Solo/small practices scored 0–100 as transition/relationship targets — longer NPI tenure, solo status, and Medicare scale score highest. Filter and sort to build a call list.</div>
-      <div class="controls">
-        <label>Specialty<br><select id="t-spec"><option value="">All</option></select></label>
-        <label>Metro<br><select id="t-metro"><option value="">All</option></select></label>
-        <label>Search<br><input type="text" id="t-search" placeholder="name or city…"></label>
-        <label><input type="checkbox" id="t-solo"> Solo only</label>
-      </div>
+      <div id="t-filters"></div>
       <div class="table-wrap"><table class="data" id="t-table"></table></div>
     </div>
   </section>
@@ -168,10 +165,6 @@ function drawCharts(){if(charted||!D||typeof Plotly==='undefined')return;charted
   Plotly.newPlot('chart-metro',[{type:'bar',orientation:'h',x:mt.map(s=>s.n),y:mt.map(s=>s.k),marker:{color:'#CB995C'}}],Object.assign({},lay,{margin:{l:150,r:14,t:8,b:34}}),{displayModeBar:false,responsive:true});
 }
 function renderTargets(){
-  const specs=[...new Set(D.targets.map(p=>p.specialty))].sort();
-  const metros=[...new Set(D.targets.map(p=>p.metro).filter(Boolean))].sort();
-  $('#t-spec').innerHTML='<option value="">All</option>'+specs.map(s=>`<option>${esc(s)}</option>`).join('');
-  $('#t-metro').innerHTML='<option value="">All</option>'+metros.map(s=>`<option>${esc(s)}</option>`).join('');
   const cols=[
     {key:'name',label:'Practice / Provider',l:1,fmt:(v,r)=>esc(v)+(r.score>=80?' <span class="pill hot">hot</span>':'')},
     {key:'specialty',label:'Specialty',l:1,fmt:v=>esc(v)},
@@ -184,16 +177,24 @@ function renderTargets(){
     {key:'score',label:'Score'},
   ];
   const el=$('#t-table');
-  function apply(){
-    let rows=D.targets;
-    const sp=$('#t-spec').value,mt=$('#t-metro').value,q=$('#t-search').value.trim().toLowerCase(),solo=$('#t-solo').checked;
-    if(sp)rows=rows.filter(p=>p.specialty===sp);
-    if(mt)rows=rows.filter(p=>p.metro===mt);
-    if(solo)rows=rows.filter(p=>p.solo);
-    if(q)rows=rows.filter(p=>((p.name||'')+' '+(p.city||'')).toLowerCase().includes(q));
-    sortableTable(el,cols,rows,{sortKey:'score'});
-  }
-  ['t-spec','t-metro'].forEach(id=>$('#'+id).onchange=apply);$('#t-search').oninput=apply;$('#t-solo').onchange=apply;apply();
+  // Shared BD filter panel — same capability set as the Physician BD dashboard.
+  BDFilters.create({
+    mount:'#t-filters', storageKey:'successionBD', noun:'targets', startOpen:true,
+    rows:()=>D.targets,
+    onChange:rows=>sortableTable(el,cols,rows,{sortKey:'score'}),
+    fields:[
+      {key:'specialty', label:'Specialty', type:'multi', get:r=>r.specialty},
+      {key:'metro',     label:'Metro',     type:'multi', get:r=>r.metro},
+      {key:'city',      label:'City',      type:'multi', get:r=>r.city},
+      {key:'solo',      label:'Solo practices only', type:'bool', test:r=>r.solo},
+      {key:'hasPhone',  label:'Has phone', type:'bool', test:r=>!!r.phone},
+      {key:'minScore',  label:'Min score', type:'min',  get:r=>r.score,  placeholder:'e.g. 80'},
+      {key:'minTenure', label:'Min NPI tenure (yrs)', type:'min', get:r=>r.tenure, placeholder:'e.g. 15'},
+      {key:'minPay',    label:'Min Medicare $', type:'min', get:r=>r.med_pay, placeholder:'e.g. 50000'},
+      {key:'minBenes',  label:'Min beneficiaries', type:'min', get:r=>r.benes, placeholder:'e.g. 100'},
+      {key:'q',         label:'Name / city', type:'text', get:r=>(r.name||'')+' '+(r.city||''), placeholder:'search…'},
+    ],
+  });
 }
 function renderSpecialty(){
   const total=D.targets.length||1;

@@ -1,0 +1,111 @@
+/* ============================================================
+   Ranger Dashboards — Shared BD filter panel
+   Generalised from the TX Physician BD dashboard's filter drawer so every
+   business-development dashboard filters the same way. Colours read the host
+   dashboard's brand tokens, with the Ranger palette as fallback.
+   ============================================================ */
+
+.bdf { margin-bottom: 14px; }
+
+/* header: toggle + active count + saved presets */
+.bdf-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  background: var(--panel, #fff); border: 1px solid var(--border, #DDD8CE);
+  border-radius: 10px; padding: 10px 12px;
+}
+.bdf-toggle {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  background: none; border: none; font: inherit; font-weight: 600;
+  color: var(--text, #101418); padding: 0;
+}
+.bdf-toggle .bdf-arrow { transition: transform .15s; font-size: 10px; color: var(--muted, #5C6670); }
+.bdf.open .bdf-toggle .bdf-arrow { transform: rotate(180deg); }
+.bdf-pill {
+  font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px;
+  background: var(--border, #DDD8CE); color: var(--text, #101418);
+}
+.bdf-pill.on { background: var(--accent, #012A52); color: #fff; }
+.bdf-spacer { flex: 1; }
+.bdf-bar select, .bdf-bar input {
+  background: var(--panel2, #FCFAF6); color: var(--text, #101418);
+  border: 1px solid var(--border, #DDD8CE); border-radius: 6px;
+  padding: 6px 9px; font-size: 12px; font-family: inherit;
+}
+.bdf-btn {
+  background: var(--panel2, #FCFAF6); color: var(--text, #101418);
+  border: 1px solid var(--border, #DDD8CE); border-radius: 6px;
+  padding: 6px 11px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.bdf-btn:hover { border-color: var(--accent, #012A52); }
+.bdf-btn.primary { background: var(--accent, #012A52); color: #fff; border-color: var(--accent, #012A52); }
+.bdf-btn.danger { color: #DA0C1B; }
+
+/* body */
+.bdf-body { display: none; margin-top: 10px; }
+.bdf.open .bdf-body { display: block; }
+.bdf-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 14px;
+  background: var(--panel, #fff); border: 1px solid var(--border, #DDD8CE);
+  border-radius: 10px; padding: 14px 16px;
+}
+.bdf-f label {
+  display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted, #5C6670); margin-bottom: 4px; font-weight: 600;
+}
+.bdf-f input[type=text], .bdf-f input[type=number], .bdf-f select {
+  width: 100%; background: var(--panel2, #FCFAF6); color: var(--text, #101418);
+  border: 1px solid var(--border, #DDD8CE); border-radius: 6px;
+  padding: 7px 9px; font-size: 13px; font-family: inherit;
+}
+.bdf-f.check { display: flex; align-items: center; gap: 7px; padding-top: 18px; }
+.bdf-f.check label { margin: 0; text-transform: none; letter-spacing: 0; font-size: 12.5px; color: var(--text, #101418); }
+.bdf-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+/* multi-select dropdown */
+.bdf-multi { position: relative; }
+.bdf-multi-btn {
+  width: 100%; text-align: left; display: flex; align-items: center; gap: 6px;
+  background: var(--panel2, #FCFAF6); color: var(--text, #101418);
+  border: 1px solid var(--border, #DDD8CE); border-radius: 6px;
+  padding: 7px 9px; font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.bdf-multi-btn .lab { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bdf-multi-btn .arr { font-size: 9px; color: var(--muted, #5C6670); }
+.bdf-multi-btn.on { border-color: var(--accent, #012A52); }
+.bdf-multi-list {
+  display: none; position: absolute; z-index: 900; left: 0; right: 0; top: calc(100% + 3px);
+  max-height: 280px; overflow: auto; background: var(--panel, #fff);
+  border: 1px solid var(--border, #DDD8CE); border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(1, 42, 82, .13);
+}
+.bdf-multi.open .bdf-multi-list { display: block; }
+.bdf-multi-search {
+  width: 100%; border: none; border-bottom: 1px solid var(--border, #DDD8CE);
+  padding: 8px 10px; font-size: 12px; font-family: inherit;
+  background: var(--panel, #fff); color: var(--text, #101418);
+}
+.bdf-multi-search:focus { outline: 2px solid var(--accent, #012A52); outline-offset: -2px; }
+.bdf-multi-acts {
+  display: flex; gap: 5px; padding: 6px 8px;
+  border-bottom: 1px solid var(--border, #DDD8CE); background: var(--panel2, #FCFAF6);
+  position: sticky; top: 0;
+}
+.bdf-multi-acts button {
+  flex: 1; border-radius: 4px; padding: 5px 7px; font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  border: 1px solid var(--border, #DDD8CE); background: var(--panel, #fff); color: var(--muted, #5C6670);
+}
+.bdf-multi-acts button.all { background: var(--accent, #012A52); color: #fff; border-color: var(--accent, #012A52); }
+.bdf-opt {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  font-size: 12.5px; cursor: pointer;
+}
+.bdf-opt:hover { background: rgba(1, 42, 82, .05); }
+.bdf-opt input { cursor: pointer; }
+.bdf-opt .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bdf-opt .ct { font-size: 11px; color: var(--muted, #5C6670); font-variant-numeric: tabular-nums; }
+.bdf-empty { padding: 10px; font-size: 12px; color: var(--muted, #5C6670); }
+
+/* result summary */
+.bdf-count { font-size: 12px; color: var(--muted, #5C6670); }
+.bdf-count b { color: var(--text, #101418); }

@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ranger Bank — Dental &amp; Allied Practice BD (TX)</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<link rel="stylesheet" href="../shared/bd-filters.css"/>
+<script src="../shared/bd-filters.js"></script>
 <style>
   :root{
     --bg:#F2EFE9;--panel:#FFFFFF;--panel2:#FCFAF6;--border:#DDD8CE;--text:#101418;
@@ -121,11 +123,7 @@
     <div class="panel">
       <h3>Prospect list</h3>
       <div class="note">Every provider, scored 0–100 as a banking-BD prospect. Solo practices score highest — the target relationship. Filter and sort to build a call list.</div>
-      <div class="controls">
-        <label>Specialty<br><select id="p-spec"><option value="">All</option></select></label>
-        <label>Search<br><input type="text" id="p-search" placeholder="name or city…"></label>
-        <label><input type="checkbox" id="p-solo"> Solo only</label>
-      </div>
+      <div id="p-filters"></div>
       <div class="table-wrap"><table class="data" id="p-table"></table></div>
     </div>
   </section>
@@ -179,8 +177,6 @@ function drawCharts(){if(charted||!D||typeof Plotly==='undefined')return;charted
   Plotly.newPlot('chart-city',[{type:'bar',orientation:'h',x:ct.map(s=>s.n),y:ct.map(s=>s.k),marker:{color:'#CB995C'}}],Object.assign({},lay,{margin:{l:130,r:14,t:8,b:34}}),{displayModeBar:false,responsive:true});
 }
 function renderProspects(){
-  const specs=[...new Set(D.providers.map(p=>p.specialty))].sort();
-  $('#p-spec').innerHTML='<option value="">All</option>'+specs.map(s=>`<option>${esc(s)}</option>`).join('');
   const cols=[
     {key:'name',label:'Provider',l:1,fmt:(v,r)=>esc(v)+(r.cred?` <span class="muted">${esc(r.cred)}</span>`:'')+(r.score>=80?' <span class="pill hot">hot</span>':'')},
     {key:'specialty',label:'Specialty',l:1,fmt:v=>esc(v)},
@@ -191,15 +187,25 @@ function renderProspects(){
     {key:'score',label:'Score'},
   ];
   const el=$('#p-table');
-  function apply(){
-    let rows=D.providers;
-    const sp=$('#p-spec').value, q=$('#p-search').value.trim().toLowerCase(), solo=$('#p-solo').checked;
-    if(sp)rows=rows.filter(p=>p.specialty===sp);
-    if(solo)rows=rows.filter(p=>p.solo);
-    if(q)rows=rows.filter(p=>(p.name+' '+p.city).toLowerCase().includes(q));
-    sortableTable(el,cols,rows,{sortKey:'score'});
-  }
-  $('#p-spec').onchange=apply;$('#p-search').oninput=apply;$('#p-solo').onchange=apply;apply();
+  // Shared BD filter panel (same capability set as the Physician BD dashboard):
+  // multi-selects with counts + search, thresholds, and saved presets.
+  BDFilters.create({
+    mount:'#p-filters', storageKey:'dentalBD', noun:'providers', startOpen:true,
+    rows:()=>D.providers,
+    onChange:rows=>sortableTable(el,cols,rows,{sortKey:'score'}),
+    fields:[
+      {key:'specialty', label:'Specialty', type:'multi', get:r=>r.specialty},
+      {key:'city',      label:'City',      type:'multi', get:r=>r.city},
+      {key:'cred',      label:'Credential',type:'multi', get:r=>r.cred},
+      {key:'solo',      label:'Solo practices only', type:'bool', test:r=>r.solo},
+      {key:'hasPhone',  label:'Has phone', type:'bool', test:r=>!!r.phone},
+      {key:'minScore',  label:'Min score', type:'min',  get:r=>r.score, placeholder:'e.g. 80'},
+      {key:'minTenure', label:'Min tenure (yrs)', type:'min', get:r=>r.tenure, placeholder:'e.g. 5'},
+      {key:'maxTenure', label:'Max tenure (yrs)', type:'max', get:r=>r.tenure, placeholder:'e.g. 25'},
+      {key:'zip',       label:'ZIP',       type:'text', get:r=>r.zip, placeholder:'75201'},
+      {key:'q',         label:'Name / city',type:'text',get:r=>r.name+' '+r.city, placeholder:'search…'},
+    ],
+  });
 }
 function renderSpecialty(){
   const total=D.providers.length||1;

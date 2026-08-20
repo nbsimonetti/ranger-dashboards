@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ranger Bank — Professional Services BD (TX)</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<link rel="stylesheet" href="../shared/bd-filters.css"/>
+<script src="../shared/bd-filters.js"></script>
 <style>
   :root{
     --bg:#F2EFE9; --panel:#FFFFFF; --panel2:#FCFAF6; --panel3:#F0EBE1;
@@ -145,12 +147,7 @@
       <h3>Prospect call list</h3>
       <div class="note">Every professional-services firm with SBA financing in the footprint — a real practice with a known credit relationship. Score (0–100) weights loan size, recency, above-market rate (refinance upside) and active status. Sort, filter and work the top of the list.</div>
       <div class="filters" id="grp-filters"></div>
-      <div class="controls">
-        <label>Search firm / lender / city<br><input type="text" id="p-search" placeholder="name…"></label>
-        <label>Status<br><select id="p-status"></select></label>
-        <label>Min score<br><input type="number" id="p-minscore" value="0" min="0" max="100" step="5"></label>
-        <label><input type="checkbox" id="p-active"> Active relationships only</label>
-      </div>
+      <div id="p-filters"></div>
       <div class="small muted" id="p-count" style="margin-bottom:8px"></div>
       <div class="table-wrap"><table class="data" id="p-table"></table></div>
     </div>
@@ -304,14 +301,15 @@ function drawOverview(){
 
 // ---- prospects ----
 let grpFilter='All';
+let psFilters=null;
 function renderProspects(){
   const groups=['All',...D.group_order];
   $('#grp-filters').innerHTML=groups.map(g=>`<button data-g="${g}" class="${g===grpFilter?'active':''}">${g}</button>`).join('');
+  // The group pills stay as the top-level quick filter; the shared panel filters
+  // within the active group, so its option counts reflect the current group.
   $('#grp-filters').querySelectorAll('button').forEach(b=>b.onclick=()=>{grpFilter=b.dataset.g;
-    $('#grp-filters').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.g===grpFilter));apply();});
-
-  const statuses=['All',...Array.from(new Set(D.firms.map(f=>f.sclass)))];
-  $('#p-status').innerHTML=statuses.map(s=>`<option value="${s}">${s}</option>`).join('');
+    $('#grp-filters').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.g===grpFilter));
+    if(psFilters) psFilters.refresh();});
 
   const cols=[
     {key:'firm',label:'Firm',l:1,fmt:(v,r)=>`${esc(titleCase(v))} <span class="pill grp">${r.group}</span>`},
@@ -325,23 +323,31 @@ function renderProspects(){
     {key:'score',label:'Score',fmt:v=>scoreBadge(v)},
   ];
   const el=$('#p-table');
-  function apply(){
-    const q=$('#p-search').value.trim().toLowerCase();
-    const st=$('#p-status').value;
-    const mins=+$('#p-minscore').value||0;
-    const activeOnly=$('#p-active').checked;
-    let rows=D.firms;
-    if(grpFilter!=='All') rows=rows.filter(f=>f.group===grpFilter);
-    if(st!=='All') rows=rows.filter(f=>f.sclass===st);
-    if(mins>0) rows=rows.filter(f=>f.score>=mins);
-    if(activeOnly) rows=rows.filter(f=>['Active','Committed','Servicing'].includes(f.sclass));
-    if(q) rows=rows.filter(f=>(f.firm+' '+f.lender+' '+f.city+' '+f.county).toLowerCase().includes(q));
-    $('#p-count').textContent=rows.length.toLocaleString()+' firms · '+fmtUSD(rows.reduce((s,f)=>s+f.amt,0))+' SBA credit';
-    sortableTable(el,cols,rows,{sortKey:'score'});
-  }
-  $('#p-search').oninput=apply; $('#p-status').onchange=apply;
-  $('#p-minscore').oninput=apply; $('#p-active').onchange=apply;
-  apply();
+  // Shared BD filter panel — same capability set as the Physician BD dashboard.
+  psFilters=BDFilters.create({
+    mount:'#p-filters', storageKey:'profServicesBD', noun:'firms', startOpen:true,
+    rows:()=>grpFilter==='All'?D.firms:D.firms.filter(f=>f.group===grpFilter),
+    onChange:rows=>{
+      $('#p-count').textContent=rows.length.toLocaleString()+' firms · '+fmtUSD(rows.reduce((s,f)=>s+f.amt,0))+' SBA credit';
+      sortableTable(el,cols,rows,{sortKey:'score'});
+    },
+    fields:[
+      {key:'label',   label:'Subsector', type:'multi', get:r=>r.label},
+      {key:'county',  label:'County',    type:'multi', get:r=>r.county},
+      {key:'city',    label:'City',      type:'multi', get:r=>r.city},
+      {key:'lender',  label:'Lender',    type:'multi', get:r=>r.lender},
+      {key:'sclass',  label:'Status',    type:'multi', get:r=>r.sclass},
+      {key:'active',  label:'Active relationships only', type:'bool',
+       test:r=>['Active','Committed','Servicing'].includes(r.sclass)},
+      {key:'variable',label:'Variable rate only', type:'bool', test:r=>r.rtype==='V'},
+      {key:'minScore',label:'Min score', type:'min', get:r=>r.score, placeholder:'e.g. 70'},
+      {key:'minAmt',  label:'Min loan $',type:'min', get:r=>r.amt,   placeholder:'e.g. 500000'},
+      {key:'minRate', label:'Min rate %',type:'min', get:r=>r.rate,  placeholder:'e.g. 10'},
+      {key:'maxMtm',  label:'Max months to maturity', type:'max', get:r=>r.mtm, placeholder:'e.g. 24'},
+      {key:'q',       label:'Firm / lender / city', type:'text',
+       get:r=>r.firm+' '+r.lender+' '+r.city+' '+r.county, placeholder:'search…'},
+    ],
+  });
 }
 
 // ---- subsectors ----
