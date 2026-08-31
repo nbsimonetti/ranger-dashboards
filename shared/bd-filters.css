@@ -52,8 +52,12 @@
   display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
   color: var(--muted, #5C6670); margin-bottom: 4px; font-weight: 600;
 }
+.bdf-f { min-width: 0; }
+/* Do not depend on the host page setting a global box-sizing: a 100%-wide input
+   whose padding and border sit outside the box overflows its grid cell. */
+.bdf, .bdf *, .bdf *::before, .bdf *::after { box-sizing: border-box; }
 .bdf-f input[type=text], .bdf-f input[type=number], .bdf-f select {
-  width: 100%; background: var(--panel2, #FCFAF6); color: var(--text, #101418);
+  width: 100%; min-width: 0; background: var(--panel2, #FCFAF6); color: var(--text, #101418);
   border: 1px solid var(--border, #DDD8CE); border-radius: 6px;
   padding: 7px 9px; font-size: 13px; font-family: inherit;
 }
@@ -62,9 +66,9 @@
 .bdf-actions { display: flex; gap: 8px; margin-top: 10px; }
 
 /* multi-select dropdown */
-.bdf-multi { position: relative; }
+.bdf-multi { position: relative; min-width: 0; }
 .bdf-multi-btn {
-  width: 100%; text-align: left; display: flex; align-items: center; gap: 6px;
+  width: 100%; min-width: 0; text-align: left; display: flex; align-items: center; gap: 6px;
   background: var(--panel2, #FCFAF6); color: var(--text, #101418);
   border: 1px solid var(--border, #DDD8CE); border-radius: 6px;
   padding: 7px 9px; font-size: 13px; cursor: pointer; font-family: inherit;

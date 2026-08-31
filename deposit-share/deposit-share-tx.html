@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ranger Bank — Deposit Market Share &amp; Branch Network (TX)</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="../shared/chart-fit.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -60,6 +61,13 @@
   .leaflet-popup-content{font-size:12.5px}
   .muted{color:var(--muted)} .small{font-size:12px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  /* Grid items default to min-width:auto and refuse to shrink below their content,
+     so a nowrap table or a Plotly chart overflows the panel on narrower screens.
+     min-width:0 lets the column narrow and hands scrolling to the child's own
+     overflow container. */
+  .grid2>*{min-width:0}
+  .table-wrap{max-width:100%}
+  .js-plotly-plot{max-width:100%}
   @media(max-width:820px){.grid2{grid-template-columns:1fr}}
   .prose p{color:var(--muted);max-width:74ch;margin:0 0 10px}
   .prose h4{margin:16px 0 6px;color:var(--text);font-size:13px}

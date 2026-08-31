@@ -117,6 +117,28 @@ def med(vals):
     return pctile(s, 0.5) if s else None
 
 
+# Residential vs commercial. Multifamily (5+ units) and business-purpose lending are
+# commercial exposures even though HMDA captures them, so they belong with CRE
+# rather than sitting in a list next to owner-occupied mortgages.
+SEGMENT = {
+    "Conventional purchase": "Residential",
+    "Conventional refinance": "Residential",
+    "FHA / VA / USDA": "Residential",
+    "Jumbo": "Residential",
+    "Home equity / 2nd lien": "Residential",
+    "Home improvement": "Residential",
+    "Multifamily (5+)": "Commercial",
+    "Business-purpose (dwelling-secured)": "Commercial",
+    "SBA 7(a) business loan": "Commercial",
+    "SBA 504 (CRE/equipment)": "Commercial",
+    "Other / unclassified": "Other",
+}
+
+
+def segment_of(product):
+    return SEGMENT.get(product, "Other")
+
+
 def classify(row):
     """HMDA row -> product label. Order matters: most specific first."""
     if multifamily(row.get("total_units")):
@@ -230,7 +252,7 @@ def sba_terms(wt_names):
     out = []
     for (mkt, prod), g in groups.items():
         out.append({
-            "market": mkt, "product": prod, "n": g["n"],
+            "market": mkt, "product": prod, "segment": "Commercial", "n": g["n"],
             "rate_deciles": deciles(g["rates"]) if g["rates"] else None,
             "med_rate": med(g["rates"]), "med_term_mo": med(g["terms"]),
             "med_amt": med(g["amts"]), "var_share": round(100.0 * g["var"] / g["n"], 1),
@@ -373,7 +395,7 @@ def build(year, county_rows, lei_names, sba_bench, sba_lenders, presence, repdte
     for (mkt, prod), b in bench.items():
         sr = sorted(b["rates"])
         bench_rows.append({
-            "market": mkt, "product": prod, "n": b["n"], "vol": round(b["vol"]),
+            "market": mkt, "product": prod, "segment": segment_of(prod), "n": b["n"], "vol": round(b["vol"]),
             "rate_deciles": deciles(b["rates"]) if sr else None,
             "p10": pctile(sr, .1) if sr else None, "med_rate": med(b["rates"]),
             "p90": pctile(sr, .9) if sr else None,
@@ -386,7 +408,7 @@ def build(year, county_rows, lei_names, sba_bench, sba_lenders, presence, repdte
         })
     bench_rows.sort(key=lambda r: (-r["n"], r["market"]))
 
-    size_rows = [{"market": m, "product": p, "size": s, "n": len(v),
+    size_rows = [{"market": m, "product": p, "segment": segment_of(p), "size": s, "n": len(v),
                   "rate_deciles": deciles(v), "med_rate": med(v)}
                  for (m, p, s), v in bench_size.items() if len(v) >= 15]
     size_rows.sort(key=lambda r: -r["n"])
@@ -403,6 +425,7 @@ def build(year, county_rows, lei_names, sba_bench, sba_lenders, presence, repdte
     lenders.sort(key=lambda r: -r["n"])
 
     lm_rows = [{"lei": lei, "name": lei_names.get(lei, lei), "market": m, "product": p,
+                "segment": segment_of(p),
                 "n": v["n"], "vol": round(v["vol"]), "med_rate": med(v["rates"])}
                for (lei, m, p), v in lender_mkt.items() if v["n"] >= 5]
     lm_rows.sort(key=lambda r: -r["n"])
@@ -426,6 +449,7 @@ def build(year, county_rows, lei_names, sba_bench, sba_lenders, presence, repdte
         "markets": sorted(set(c["market"] for c in counties)),
         "products": sorted(set(b["product"] for b in bench_rows)),
         "size_buckets": [b[2] for b in SIZE_BUCKETS],
+        "segments": SEGMENT,
     }
 
 
@@ -466,6 +490,10 @@ def selftest():
     assert multifamily("5-24") and multifamily(">149") and not multifamily("4")
     assert parse_dti("<20%") == 15.0 and parse_dti("50%-60%") == 55.0
     assert parse_dti("43") == 43.0 and parse_dti("NA") is None
+    assert segment_of("Multifamily (5+)") == "Commercial"
+    assert segment_of("Business-purpose (dwelling-secured)") == "Commercial"
+    assert segment_of("SBA 504 (CRE/equipment)") == "Commercial"
+    assert segment_of("Jumbo") == "Residential"
     print("selftest OK:", got)
 
 
