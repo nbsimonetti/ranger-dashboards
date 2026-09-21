@@ -7,7 +7,10 @@ mix, and an average-purchase-size ("high-income / jumbo") proxy into the
 self-contained dashboard HTML.
 
 Public source: CFPB / FFIEC HMDA data browser (ffiec.cfpb.gov) - free, no key.
-Every request MUST send a browser User-Agent or the API returns 403.
+User-Agent rule (verified 2026-09-21, reversed from earlier behavior): the
+edge now returns 403 to browser-looking User-Agents (both a bare Mozilla/5.0
+and a full Chrome string) and serves programmatic ones, so this sends the
+shared ranger-dashboards UA. Do not put a browser UA back.
 
 Key API quirk (verified): geography must be passed as counties={5-digit FIPS}
 with NO states= parameter. If both are sent, the API silently ignores the
@@ -27,8 +30,9 @@ from footprint import (http_get_json, inject_data, stamp, FOOTPRINT, COUNTY_GEO)
 HERE = Path(__file__).resolve().parent
 HTML = HERE / "mortgage-tx.html"
 BASE = "https://ffiec.cfpb.gov/v2/data-browser-api/view/aggregations"
-# The FFIEC data browser rejects a stdlib/default UA with 403; a browser UA works.
-HDRS = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+# Browser UAs now draw an Akamai "Access Denied" 403 here; the shared
+# ranger-dashboards UA from footprint.http_get is served normally.
+HDRS = {"Accept": "application/json"}
 # HMDA (ffiec.cfpb.gov) blocks GitHub Actions runner IPs (403), so this can't run
 # in CI - it is refreshed from a non-blocked network and committed (like the SBA
 # data). Skip when the dashboard already holds fresh data so the weekly CI job
