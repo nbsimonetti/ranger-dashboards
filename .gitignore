@@ -6,3 +6,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 *-prompt.md
+
+# Team Tasks roster imports (real names and emails)
+team-tasks/*.csv
+roster*.csv
