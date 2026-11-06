@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "purpose": "Core processing platform per M&A target, keyed by FDIC CERT.",
+    "maintained": "by hand, plus optional machine-collected leads in `signals`",
+    "as_of": "2026-11-06",
+    "buckets": ["FIS", "Fiserv", "Jack Henry", "CSI", "DCI", "Other", "Unknown"],
+    "confidence_levels": {
+      "Confirmed": "named in a vendor announcement, the bank's own disclosure, or an unambiguous vendor-hosted banking host",
+      "Probable": "a credible but imprecise source, or a digital front end from a vendor that also sells the core",
+      "Unknown": "no public signal. Expected for most private community banks."
+    },
+    "why_mostly_unknown": "There is no public register of core providers. Vendor announcements exist for larger or newly converted banks; a $26-197M private bank usually generates none. Passive web fingerprinting was tested and does not close the gap: many bank sites refuse non-browser requests, Certificate Transparency returns little for small single-domain banks, and the digital-banking vendor a site does reveal is frequently NOT the core (Forte Bank runs Apiture digital over a CSI NuPoint core). S&P Capital IQ Pro carries a core-vendor field and is the authoritative paid route.",
+    "name_collision_warning": "Texas bank names repeat heavily. Match on name AND city, never name alone. Live examples hit while building this: West Texas National Bank (Midland) runs Fiserv but is a different institution from Texas National Bank (Sweetwater); Junction National Bank and First State Bank are both in Junction, and only the former is a DCI customer."
+  },
+
+  "ranger": {
+    "core": "Jack Henry",
+    "confidence": "Assumed",
+    "note": "Baseline for the same-core-vs-conversion comparison, per management direction. The Robert Lee core and IT bundle recorded a term end of 14 October 2026, which has now passed, so confirm the current contract and platform before relying on conversion-cost conclusions."
+  },
+
+  "banks": {
+    "15078": {
+      "core": "DCI",
+      "confidence": "Confirmed",
+      "evidence": "Selected DCI iCore360 to replace its Sharp BancSystems core; reported July 2017.",
+      "source": "https://www.fintechfutures.com/saas-paas/junction-national-bank-to-swap-sharp-bancsystems-core-software-provider-for-dci",
+      "as_of": "2026-11-06"
+    },
+    "3232": {
+      "core": "DCI",
+      "confidence": "Confirmed",
+      "evidence": "Selected DCI iCore360 to replace a Trinovus/Tinisys core being sunset by the provider.",
+      "source": "https://www.fintechfutures.com/core-banking-technology/granger-national-bank-to-replace-trinovus-core-banking-system-with-dci-s-icore360",
+      "as_of": "2026-11-06"
+    },
+    "59239": {
+      "core": "DCI",
+      "confidence": "Confirmed",
+      "evidence": "Partnered with DCI at launch and runs the iCore360 cloud core; announced April 2021.",
+      "source": "https://datacenterinc.com/news/houston-community-businesses-to-benefit-from-women-led-banking-partnership",
+      "as_of": "2026-11-06"
+    },
+    "14095": {
+      "core": "DCI",
+      "confidence": "Probable",
+      "evidence": "Named among DCI new-core wins in a quarterly sales roundup; the release does not state the year, so treat the timing as unverified.",
+      "source": "https://fintechfutures.com/?p=780802",
+      "as_of": "2026-11-06"
+    },
+    "34014": {
+      "core": "Unknown",
+      "confidence": "Unknown",
+      "evidence": "Runs DCI iCore360 as a SEPARATE core for its Bankers Lender direct digital bank (announced 2022) while keeping its incumbent provider for main bank processing. The press release states the incumbent could not support the digital build but does not name it, so the main core is unknown and must not be recorded as DCI.",
+      "source": "https://prnewswire.com/news-releases/dci-partners-with-texas-national-bank-to-launch-direct-digital-bank-301503328.html",
+      "as_of": "2026-11-06"
+    },
+    "14399": {
+      "core": "Unknown",
+      "confidence": "Unknown",
+      "evidence": "Its public site references Apiture for digital banking. Apiture is an independent digital platform that runs over several different cores, so this establishes nothing about the core itself.",
+      "source": "bank website, observed 2026-11-06",
+      "as_of": "2026-11-06"
+    }
+  },
+
+  "signals": {}
+}
