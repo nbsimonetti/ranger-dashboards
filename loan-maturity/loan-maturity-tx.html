@@ -1630,7 +1630,13 @@ async function updateData() {
       r._lenderType = classifyLender(r);
       r._branchMi = nearestBranchMiles(r);
       // Cross-link: how many CRE properties does this borrower own?
-      const matches = (S.joinIndex.forward && S.joinIndex.forward[r.loan_id]) || [];
+      // loan_id is the lender's SBA location id, shared by many loans, so keep only
+      // the matches made for this loan's own borrower (one entry per parcel).
+      const _bk = (r.borrower || '').trim().toUpperCase();
+      const _seen = {};
+      const matches = ((S.joinIndex.forward && S.joinIndex.forward[r.loan_id]) || [])
+        .filter(m => (m.borrower || '').trim().toUpperCase() === _bk)
+        .filter(m => { if (_seen[m.parcel_id]) return false; _seen[m.parcel_id] = 1; return true; });
       r._propertyMatches = matches;
       r._propertyCount = matches.length;
       // Origination age in months (relative to today)

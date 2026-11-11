@@ -116,8 +116,8 @@ tbody td{padding:6px;white-space:nowrap;max-width:200px;overflow:hidden;text-ove
 .phys-card-products{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 
 /* === Score Badge === */
-.score-badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700;min-width:36px;text-align:center;color:#fff}
-.score-red{background:#DA0C1B}.score-yellow{background:#B5761F;color:#101418}.score-green{background:#2F7D5D}
+.score-badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700;min-width:36px;text-align:center;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+/* fills follow the Methodology score legend: Top navy, Strong green, Moderate warn, Low red */ .score-hot{background:#012A52}.score-warm{background:#2F7D5D}.score-med{background:#B5761F;color:#101418}.score-cool{background:#DA0C1B}
 .score-badge-lg{font-size:16px;padding:4px 12px;border-radius:12px}
 
 /* === Product Pills === */
@@ -506,11 +506,12 @@ a.wl{color:var(--acc);text-decoration:none;font-size:11px}a.wl:hover{text-decora
     <div style="background:var(--card);border-radius:8px;padding:16px 20px;margin-bottom:24px;border:1px solid var(--bdr)">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-bottom:10px">Score Interpretation</div>
       <div style="display:flex;border-radius:6px;overflow:hidden;height:28px;font-size:11px;font-weight:700;color:#fff">
-        <div style="flex:3;background:#DA0C1B;display:flex;align-items:center;justify-content:center">0-29 Low</div>
-        <div style="flex:3;background:#B5761F;display:flex;align-items:center;justify-content:center">30-59 Moderate</div>
-        <div style="flex:2;background:#2F7D5D;display:flex;align-items:center;justify-content:center">60-79 Strong</div>
-        <div style="flex:2;background:#012A52;display:flex;align-items:center;justify-content:center">80+ Top</div>
+        <div style="flex:3;background:#DA0C1B;display:flex;align-items:center;justify-content:center">Low</div>
+        <div style="flex:3;background:#B5761F;color:#101418;display:flex;align-items:center;justify-content:center">Moderate</div>
+        <div style="flex:2;background:#2F7D5D;display:flex;align-items:center;justify-content:center">Strong</div>
+        <div style="flex:2;background:#012A52;display:flex;align-items:center;justify-content:center">Top</div>
       </div>
+      <p id="bandLegendNote" style="font-size:12px;color:var(--mut);margin-top:10px;line-height:1.5">Bands are relative to the physicians currently shown. Top is the highest-scoring <span id="bandTopShare">7%</span>, Strong the next <span id="bandStrongShare">18%</span>, Moderate the next <span id="bandModShare">40%</span> and Low the remaining <span id="bandLowShare">35%</span>. <span id="bandCutText"></span> The cut-offs move with your filters and weights.</p>
     </div>
 
     <!-- Components -->
@@ -536,7 +537,7 @@ a.wl{color:var(--acc);text-decoration:none;font-size:11px}a.wl:hover{text-decora
         </div>
         <div style="font-size:12.5px;color:var(--mut);line-height:1.5">
           <strong>What it measures:</strong> Whether the physician owns their practice and its size.<br>
-          <strong>How it works:</strong> Solo practitioner = 20pts, small group (&lt;10) = 12pts, large group/other = 5pts.<br>
+          <strong>How it works:</strong> At default weights, a solo practitioner billing Medicare = 20pts, other solo = 16pts, group of 2 to 5 clinicians = 12pts, larger group = 5pts, other = 2pts. Physicians listed as sole proprietors in NPPES are treated as group practices when CMS shows them billing within a group of two or more clinicians or, where CMS lists no group, when another physician shares their practice address.<br>
           <strong>Why it matters:</strong> Solo and small-group owners make their own banking decisions. They need business checking, lines of credit, and practice loans — decisions that aren't made by a corporate treasury team.
         </div>
       </div>
@@ -813,6 +814,20 @@ function recomputePhysBandCuts(arr){
   if(!n){ _physBandCuts={hot:75,warm:55,mod:35}; return; }
   const pct=p=>sorted[Math.min(n-1,Math.floor(p*n))];
   _physBandCuts={hot:pct(PHYS_BANDS.hot_pct),warm:pct(PHYS_BANDS.warm_pct),mod:pct(PHYS_BANDS.mod_pct)};
+  updateBandLegend();
+}
+// Methodology legend sentence: band shares and the score cut-offs in the current view
+function updateBandLegend(){
+  const set=(id,t)=>{const el=document.getElementById(id); if(el) el.textContent=t;};
+  const h=PHYS_BANDS.hot_pct, w=PHYS_BANDS.warm_pct, m=PHYS_BANDS.mod_pct;
+  const pc=x=>Math.round(Math.max(0,x)*100)+'%';
+  set('bandTopShare',pc(1-h)); set('bandStrongShare',pc(h-w)); set('bandModShare',pc(w-m)); set('bandLowShare',pc(m));
+  const c=_physBandCuts;
+  const rng=(lo,hi)=>hi-1>lo?lo+' to '+(hi-1):(hi-1===lo?String(lo):null);
+  const parts=[c.hot+' and above is Top'];
+  const st=rng(c.warm,c.hot), md=rng(c.mod,c.warm);
+  if(st)parts.push(st+' Strong'); if(md)parts.push(md+' Moderate');
+  set('bandCutText','In the current view that means '+parts.join(', ')+' and below '+c.mod+' Low.');
 }
 // Click-tooltip removed; hover-tooltip handled by shared ScoreHover module
 if(window.ScoreHover)ScoreHover.init();
@@ -945,6 +960,12 @@ function init(){
     ['estPracticeSize','groupSize','gradYear','totalBeneficiaries','totalServices',
      'totalSubmittedCharges','totalMedicarePayment','totalMedicareAllowed','distinctProcedures',
      'avgBeneficiaryAge'].forEach(k=>{r[k]=r[k]||0;});
+    // NPPES sole proprietors who bill within a CMS group of two or more clinicians (or, where CMS lists no
+    // group, share their practice address with another physician) are treated as group practices. Group size
+    // uses the same expression as ownershipFrac. The source label is kept in practiceTypeSource.
+    r.practiceTypeSource=r.practiceType;
+    r.soloReclassified=r.practiceType==='Solo Practice'&&(r.groupSize||r.estPracticeSize||0)>=2;
+    if(r.soloReclassified)r.practiceType='Group Practice';
     r.isSolo=r.practiceType==='Solo Practice';
     r.isHR=HRS.some(s=>(r.specialty).toLowerCase().includes(s));
     r.prospectScore=computeScore(r);
@@ -1742,20 +1763,28 @@ if(window.ScoreWeights){
       },
       {
         id:'bands',
-        label:'Score-Band Thresholds (0-100)',
+        label:'Score Bands (percentile of physicians shown)',
         tabLabel:'Score Bands',
         components:[
-          {key:'green',  label:'Green threshold',  desc:'Score >= this = green badge (top prospect)', default:60, min:30, max:100},
-          {key:'yellow', label:'Yellow threshold', desc:'Score >= this = yellow badge',               default:30, min:5,  max:80},
+          {key:'top_pct',    label:'Top band starts at percentile',      desc:'At or above this percentile of the physicians shown = navy Top badge',     default:93, min:50, max:99},
+          {key:'strong_pct', label:'Strong band starts at percentile',   desc:'At or above this percentile (below Top) = green Strong badge',          default:75, min:20, max:98},
+          {key:'mod_pct',    label:'Moderate band starts at percentile', desc:'At or above this percentile (below Strong) = Moderate badge; below = Low', default:35, min:1,  max:90},
         ],
       },
     ],
     onChange:function(allWeights){
       if(allWeights.prospect)Object.assign(PHYS_WEIGHTS, allWeights.prospect);
-      if(allWeights.bands)Object.assign(PHYS_BANDS, allWeights.bands);
+      if(allWeights.bands){
+        const b=allWeights.bands, f=(v,d)=>(typeof v==='number'&&isFinite(v))?Math.min(0.99,Math.max(0.01,v/100)):d;
+        PHYS_BANDS.hot_pct=f(b.top_pct,PHYS_BAND_DEFAULTS.hot_pct);
+        PHYS_BANDS.warm_pct=Math.min(PHYS_BANDS.hot_pct,f(b.strong_pct,PHYS_BAND_DEFAULTS.warm_pct));
+        PHYS_BANDS.mod_pct=Math.min(PHYS_BANDS.warm_pct,f(b.mod_pct,PHYS_BAND_DEFAULTS.mod_pct));
+      }
       // Recompute scores for everyone if M is loaded
       if(typeof M !== 'undefined' && M && M.length){
         M.forEach(r=>{r.prospectScore=computeScore(r);});
+        // Band cuts are percentiles of the live scores, so refresh them before the badges redraw
+        if(typeof recomputePhysBandCuts==='function') recomputePhysBandCuts(F);
         try{ renderAll(); }catch(e){}
       }
     },

@@ -15,6 +15,9 @@ Output: ../loans.json
 import json, datetime as dt
 from pathlib import Path
 
+# Same dead-status rule the SBA pullers apply (both the 7(a) and 504 vocabularies).
+from pull_sba import is_inactive
+
 HERE = Path(__file__).parent
 OUT  = HERE.parent / 'loans.json'
 
@@ -43,6 +46,12 @@ def main():
             print(f'  ERR {fn}: expected list, got {type(arr).__name__}')
             continue
         print(f'  Loaded {len(arr):,} from {fn}')
+        # Never let a paid-off, cancelled, never-funded or charged-off loan back in
+        before = len(arr)
+        arr = [r for r in arr if not (isinstance(r, dict) and 'loan_status' in r
+                                      and is_inactive(r.get('loan_status')))]
+        if len(arr) != before:
+            print(f'  Dropped {before - len(arr):,} inactive loans from {fn}')
         all_loans.extend(arr)
         # Source tally for the freshness ribbon + methodology
         for r in arr:

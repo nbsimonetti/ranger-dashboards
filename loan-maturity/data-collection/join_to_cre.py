@@ -242,8 +242,11 @@ def main():
         for sc, c, method in scored[:5]:
             # Embed minimal parcel info so the Loan Maturity dashboard doesn't have
             # to load the 47MB CRE properties JSON just to display a popover.
+            # loan_id is the lender's SBA location id and is shared by many loans,
+            # so each forward match also names the borrower it was made for.
             forward[loan['loan_id']].append({
                 'parcel_id': c['parcel_id'],
+                'borrower': loan.get('borrower'),
                 'confidence': sc,
                 'match_method': method,
                 'visible_default': sc >= DEFAULT_VISIBLE,

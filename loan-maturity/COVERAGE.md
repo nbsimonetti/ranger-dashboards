@@ -18,7 +18,7 @@ Each loan record carries: `borrower`, `borrower_address`, `lender`, `lender_stat
 Records are filtered to:
 - `project_state = 'TX'`
 - `project_county ∈ 32-county footprint` (mirrors `cre/cre-dashboard-tx.html` sidebar)
-- `loan_status NOT IN ('PIF', 'CHGOFF', 'CANCLD')`
+- `loan_status` still active: paid-in-full, prepaid, cancelled, not-funded and charged-off loans are dropped, in both the 7(a) codes (`P I F`, `CHGOFF`, `CANCLD`) and the 504 file's wording (`PREPAID IN FULL`, `PAID IN FULL`, `PAID IN FULL (LIQ)`, `CANCELED`, `NOT FUNDED`, `CHARGED-OFF`), as are loans with a blank status. Past-due, deferred, in-liquidation and SBA-purchased loans stay in.
 - `maturity_date >= today` (still in active maturity window)
 
 ---
