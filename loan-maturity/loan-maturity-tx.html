@@ -1571,7 +1571,7 @@ function renderMethodology() {
   qs('#meth-limitations').innerHTML = `
     <div style="margin-bottom:6px">&bull; SBA data covers <strong>SBA-flagged loans only</strong>. Non-SBA commercial loans (the bulk of bank CRE) are not surfaced until deed-of-trust or UCC sources are added.</div>
     <div style="margin-bottom:6px">&bull; Maturity date = approval date + term months. Early-payoff and balloon resets are not detected in this data — the actual remaining balance may differ.</div>
-    <div style="margin-bottom:6px">&bull; Loan status field tracks 'Paid In Full' and 'Charged Off' status — we exclude both. But 'EXEMPT' status (some PPP cases) is treated as active; treat with caution.</div>
+    <div style="margin-bottom:6px">&bull; Loan status field tracks paid-off, cancelled and charged-off loans, and loans in liquidation or purchased by SBA. We exclude all of them; past-due and deferred loans stay in. 'EXEMPT' status (some PPP cases) is treated as active; treat with caution.</div>
     <div>&bull; Borrower addresses are as-of approval date; the borrower may have moved.</div>
   `;
 }

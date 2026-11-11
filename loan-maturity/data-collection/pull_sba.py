@@ -12,8 +12,9 @@ Filters:
   - loan status active: drops the 7(a) codes P I F, PIF, CHGOFF, CANCLD and
     CANCELLED, the 504 file's PREPAID IN FULL, PAID IN FULL, PAID IN FULL (LIQ),
     CANCELED, NOT FUNDED and CHARGED-OFF, spelling variants of those, and a blank
-    status. Everything else stays in, including EXEMPT, past due, deferred,
-    LIQUID, PURCH(NOT C/O) and CLSLN (see INACTIVE below).
+    status, plus the troubled statuses LIQUID, PURCH(NOT C/O) and CLSLN.
+    Everything else stays in, including EXEMPT, past due and deferred (see
+    INACTIVE below).
   - maturity_date >= today, or the --asof date (active maturity window)
 
 Output: tx_sba_loans.json — list of loan records with full provenance.
@@ -45,14 +46,16 @@ COUNTIES = {
 # codes (P I F, CHGOFF, CANCLD); the 504 file spells the same outcomes out
 # (PREPAID IN FULL, PAID IN FULL, PAID IN FULL (LIQ), CANCELED, NOT FUNDED,
 # CHARGED-OFF). Both vocabularies are listed, a pattern catches spelling
-# variants, and a blank status is treated as inactive. Everything else stays in:
-# current, committed, past due, deferred, in liquidation (LIQUID), purchased by
-# SBA (PURCH(NOT C/O)) and CLSLN. pull_sba.py and pull_sba_statewide.py carry
-# the same block; keep them in step.
+# variants, and a blank status is treated as inactive. Troubled loans are dropped
+# as well: in liquidation (LIQUID), purchased by SBA and not yet charged off
+# (PURCH(NOT C/O)) and CLSLN. Everything else stays in: current, committed, past
+# due and deferred. pull_sba.py and pull_sba_statewide.py carry the same block;
+# keep them in step.
 INACTIVE = {
     "P I F", "PIF", "CHGOFF", "CANCLD", "CANCELLED",
     "PREPAID IN FULL", "PAID IN FULL", "PAID IN FULL (LIQ)",
     "CANCELED", "NOT FUNDED", "CHARGED-OFF",
+    "LIQUID", "PURCH(NOT C/O)", "CLSLN",                  # troubled
 }
 INACTIVE_PATTERN = re.compile(
     r"PAID\s*IN\s*FULL|PRE[\s-]*PAID|CANCEL|CANCLD|NOT\s*FUNDED"
@@ -61,8 +64,8 @@ INACTIVE_PATTERN = re.compile(
 # outside INACTIVE is still kept, but the run reports it so a new SBA status
 # word gets a decision.
 KNOWN_ACTIVE = {
-    "CURR", "CURRENT", "COMMIT", "PURCH(NOT C/O)", "LIQUID", "DELINQ", "PSTDUE",
-    "DEFERD", "CLSLN", "IN CATCH-UP", "IN DEFERMENT", "EXEMPT",
+    "CURR", "CURRENT", "COMMIT", "DELINQ", "PSTDUE",
+    "DEFERD", "IN CATCH-UP", "IN DEFERMENT", "EXEMPT",
 }
 PAST_DUE = re.compile(r"^>?\d+ MONTHS? PAST DUE$")
 
@@ -73,6 +76,7 @@ def _norm_status(status):
 
 def is_inactive(status):
     """True when a loan status means paid off, prepaid, cancelled, never funded,
+    in liquidation, purchased by SBA, CLSLN,
     charged off, or is blank."""
     s = _norm_status(status)
     return not s or s in INACTIVE or bool(INACTIVE_PATTERN.search(s))
@@ -90,10 +94,10 @@ SELFTEST_DROP = [
     "CANCELED", "NOT FUNDED", "CHARGED-OFF", "", "   ", None,
     "paid in full", "Prepaid In Full", "PRE-PAID", "CHARGED OFF",     # variants
     "CHARGE-OFF", "CHG OFF", " cancelled ", "P.I.F.", "NOT  FUNDED",
+    "LIQUID", "PURCH(NOT C/O)", "CLSLN", "liquid", " purch(not c/o) ",  # troubled
 ]
 SELFTEST_KEEP = [
-    "CURR", "COMMIT", "PURCH(NOT C/O)", "LIQUID", "DELINQ", "PSTDUE",  # 7(a)
-    "DEFERD", "CLSLN",
+    "CURR", "COMMIT", "DELINQ", "PSTDUE", "DEFERD",                    # 7(a)
     "CURRENT", "IN CATCH-UP", "IN DEFERMENT", "1 MONTH PAST DUE",      # 504
 ] + ["%d MONTHS PAST DUE" % n for n in range(2, 10)] + [">9 MONTHS PAST DUE", "EXEMPT"]
 RECORD_KEYS = [

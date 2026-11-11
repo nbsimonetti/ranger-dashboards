@@ -66,16 +66,14 @@ SUB_ORDER = ["5411", "5412", "5413", "5414", "5415", "5416", "5417", "5418", "54
 
 # --- SBA loan_status -> (display class, status points 0-20) -----------------
 # Warm = firm carries an active financing relationship we could win / refi /
-# cross-sell.  Closed/prepaid firms are proven borrowers worth re-engaging.
+# cross-sell.  The SBA extract carries active loans only: paid-off, cancelled,
+# charged-off and troubled loans (liquidation, SBA-purchased, CLSLN) are dropped
+# upstream by the SBA pullers, so they have no class here.
 STATUS_MAP = {
     "CURR": ("Active", 20), "CURRENT": ("Active", 20),
     "COMMIT": ("Committed", 18),
-    "PURCH(NOT C/O)": ("Servicing", 13), "IN CATCH-UP": ("Servicing", 12),
-    "DEFERD": ("Servicing", 12), "LIQUID": ("Servicing", 11),
+    "IN CATCH-UP": ("Servicing", 12), "DEFERD": ("Servicing", 12),
     "PSTDUE": ("Distressed", 8), "DELINQ": ("Distressed", 8),
-    "CLSLN": ("Distressed", 8),
-    "PREPAID IN FULL": ("Closed", 7), "PAID IN FULL (LIQ)": ("Closed", 7),
-    "CANCELED": ("Closed", 5), "NOT FUNDED": ("Closed", 5),
 }
 
 

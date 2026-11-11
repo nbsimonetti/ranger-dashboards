@@ -537,7 +537,7 @@ a.wl{color:var(--acc);text-decoration:none;font-size:11px}a.wl:hover{text-decora
         </div>
         <div style="font-size:12.5px;color:var(--mut);line-height:1.5">
           <strong>What it measures:</strong> Whether the physician owns their practice and its size.<br>
-          <strong>How it works:</strong> At default weights, a solo practitioner billing Medicare = 20pts, other solo = 16pts, group of 2 to 5 clinicians = 12pts, larger group = 5pts, other = 2pts. Physicians listed as sole proprietors in NPPES are treated as group practices when CMS shows them billing within a group of two or more clinicians or, where CMS lists no group, when another physician shares their practice address.<br>
+          <strong>How it works:</strong> At default weights, a solo practitioner billing Medicare = 20pts, other solo = 16pts, group of 2 to 5 clinicians = 12pts, larger group = 5pts, other = 2pts. Physicians listed as sole proprietors in NPPES are treated as group practices when CMS shows them billing within a group of two or more clinicians.<br>
           <strong>Why it matters:</strong> Solo and small-group owners make their own banking decisions. They need business checking, lines of credit, and practice loans — decisions that aren't made by a corporate treasury team.
         </div>
       </div>
@@ -960,11 +960,11 @@ function init(){
     ['estPracticeSize','groupSize','gradYear','totalBeneficiaries','totalServices',
      'totalSubmittedCharges','totalMedicarePayment','totalMedicareAllowed','distinctProcedures',
      'avgBeneficiaryAge'].forEach(k=>{r[k]=r[k]||0;});
-    // NPPES sole proprietors who bill within a CMS group of two or more clinicians (or, where CMS lists no
-    // group, share their practice address with another physician) are treated as group practices. Group size
-    // uses the same expression as ownershipFrac. The source label is kept in practiceTypeSource.
+    // NPPES sole proprietors who bill within a CMS group of two or more clinicians are treated as group
+    // practices. Only the CMS group size counts here: a shared street address (estPracticeSize) is often a
+    // hospital campus rather than a practice. The source label is kept in practiceTypeSource.
     r.practiceTypeSource=r.practiceType;
-    r.soloReclassified=r.practiceType==='Solo Practice'&&(r.groupSize||r.estPracticeSize||0)>=2;
+    r.soloReclassified=r.practiceType==='Solo Practice'&&(r.groupSize||0)>=2;
     if(r.soloReclassified)r.practiceType='Group Practice';
     r.isSolo=r.practiceType==='Solo Practice';
     r.isHR=HRS.some(s=>(r.specialty).toLowerCase().includes(s));
