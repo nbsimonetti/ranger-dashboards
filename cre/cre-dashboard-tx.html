@@ -1355,6 +1355,7 @@ function showDetail(idx){
     '<div class="abtn">'+
     '<a class="bp pn2" href="'+cadUrl+'" target="_blank">Search '+esc(p.county)+' CAD Portal</a>'+
     (p.owner?'<a class="bp ps" href="'+tf+'" target="_blank">Search Deed Records (TexasFile)</a>':'')+
+    '<a class="bp ps" href="../environmental/environmental-screen-tx.html?parcel='+encodeURIComponent(p.id)+'&amp;county='+encodeURIComponent(p.county)+'" target="_blank">Environmental screen</a>'+
     '</div>';
   document.getElementById('dpanel').classList.add('open');
 }

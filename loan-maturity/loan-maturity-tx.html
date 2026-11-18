@@ -1695,7 +1695,7 @@ function openCreLinkModal(loanId) {
     const cls = m.confidence >= 75 ? '#1E5A41' : m.confidence >= 60 ? '#7A4A12' : '#8C1218';
     return `<tr${m.visible_default ? '' : ' style="opacity:.6"'}>
       <td><strong>${esc(m.owner || '—')}</strong></td>
-      <td>${esc(m.addr || '—')}</td>
+      <td>${esc(m.addr || '—')}${m.parcel_id ? ` <a href="../environmental/environmental-screen-tx.html?parcel=${encodeURIComponent(m.parcel_id)}&county=${encodeURIComponent(loan.county || '')}" target="_blank" rel="noopener" title="Run an environmental records screen on this parcel" style="font-size:11px;white-space:nowrap">Environmental screen</a>` : ''}</td>
       <td class="num">${fmt$(m.val)}</td>
       <td class="num"><strong style="color:${cls}">${m.confidence}</strong></td>
       <td><span class="src-badge">${esc(m.match_method)}</span></td>

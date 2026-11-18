@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranger Bank | CRE Environmental Screening</title>
+<link rel="stylesheet" href="../shared/brand.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../shared/county-choropleth.js"></script>
+<link rel="stylesheet" href="../shared/sortable-table.css"/>
+<script src="../shared/sortable-table.js"></script>
+<link rel="stylesheet" href="../shared/score-hover.css"/>
+<script src="../shared/score-hover.js"></script>
+<link rel="stylesheet" href="../shared/score-weights.css"/>
+<script src="../shared/score-weights.js"></script>
+<style>
+  :root{
+    --bg:var(--rb-bg); --panel:var(--rb-surface); --panel2:var(--rb-surface-2); --panel3:var(--rb-surface-3);
+    --border:var(--rb-border); --border2:var(--rb-border-strong); --text:var(--rb-text); --muted:var(--rb-muted);
+    --faint:var(--rb-faint); --accent:var(--rb-navy); --gold:var(--rb-gold); --steel:var(--rb-steel);
+    --good:var(--rb-good); --warn:var(--rb-warn); --bad:var(--rb-bad);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;
+       font-family:Calibri,"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif}
+  h1,h2,h3,h4{font-family:Rockwell,"Rockwell Nova","Roboto Slab",Georgia,"Times New Roman",serif;letter-spacing:.002em}
+  input,select,textarea,button{font-family:inherit}
+  a{color:var(--steel)}
+  .wrap{max-width:1320px;margin:0 auto;padding:22px 22px 70px}
+  header.top h1{font-size:23px;margin:0 0 4px;font-weight:700}
+  header.top .sub{color:var(--muted);font-size:13px;max-width:92ch}
+  .ribbon{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .ribbon .pill{font-size:10.5px}
+  nav{display:flex;flex-wrap:wrap;gap:4px;margin:18px 0 20px;border-bottom:1px solid var(--border)}
+  nav button{background:none;border:none;color:var(--muted);padding:9px 14px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent}
+  nav button:hover{color:var(--text)}
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+  .view{display:none} .view.active{display:block}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:18px;box-shadow:0 1px 3px rgba(1,42,82,.05)}
+  .panel h3{margin:0 0 4px;font-size:15px}
+  .panel .note{color:var(--muted);font-size:12px;margin-bottom:12px;max-width:92ch}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid2>*{min-width:0}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .grid3>*{min-width:0}
+  @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+  .table-wrap{max-width:100%;max-height:70vh;overflow:auto;border:1px solid var(--border);border-radius:10px}
+  table.data{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--panel)}
+  table.data th,table.data td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+  table.data td.n,table.data th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.data td.nw{white-space:nowrap}
+  table.data thead th{position:sticky;top:0;background:var(--panel2);z-index:2;font-weight:700;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+  table.data tbody tr:hover{background:rgba(1,42,82,.045)}
+  table.data tr.clickable{cursor:pointer}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid transparent;white-space:nowrap}
+  .pill.navy{background:#DFE8EF;color:#012A52} .pill.gold{background:#F4E9DB;color:#6E4B24}
+  .pill.green{background:#E2EDE8;color:#1E5A41} .pill.red{background:#F7DEDF;color:#8C1218}
+  .pill.slate{background:#EAECEE;color:#3F4952} .pill.amber{background:#F6E3C6;color:#6B4510}
+  .muted{color:var(--muted)} .small{font-size:12px} .thin{font-size:11px;color:var(--faint)}
+  .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  label.f{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;margin-bottom:4px}
+  .field input,.field select,.field textarea{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:13px}
+  .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .chk{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+  #map,#xmap{height:520px;border-radius:10px;border:1px solid var(--border)}
+  @media(max-width:600px){#map,#xmap{height:360px}}
+  .verdict{border-radius:10px;padding:14px 16px;margin-bottom:14px;border:1px solid var(--border)}
+  .verdict .big{font-family:Rockwell,"Rockwell Nova",Georgia,serif;font-size:19px;font-weight:700;margin-bottom:4px}
+  .verdict.req{background:#F7DEDF;border-color:#E6B9BC} .verdict.heighten{background:#F6E3C6;border-color:#E4C89A}
+  .verdict.clear{background:#E2EDE8;border-color:#B9D6C8} .verdict.na{background:var(--panel2)}
+  .verdict ul{margin:6px 0 0;padding-left:18px} .verdict li{margin-bottom:3px}
+  .flags{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .flag{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--panel2)}
+  .flag .k{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+  .flag .v{font-size:15px;font-weight:700;margin-top:2px}
+  .flag .d{font-size:12px;color:var(--muted)}
+  .flag.bad{border-left:4px solid var(--bad)} .flag.warn{border-left:4px solid var(--warn)} .flag.good{border-left:4px solid var(--good)}
+  .score{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:4px 9px;border-radius:14px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+  .score.b-high{background:#DA0C1B} .score.b-elev{background:#B5761F;color:#101418} .score.b-mod{background:#1B5E8C} .score.b-low{background:#2F7D5D}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:3px 12px;font-size:13px}
+  .kv .k{color:var(--muted)}
+  @media(max-width:600px){.kv{grid-template-columns:1fr}.kv .k{margin-top:6px}}
+  .results{max-height:280px;overflow:auto;border:1px solid var(--border);border-radius:8px;margin-top:8px;background:var(--panel)}
+  .results div{padding:6px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px}
+  .results div:hover{background:rgba(1,42,82,.05)}
+  .empty{background:var(--panel);border:1px dashed var(--border2);border-radius:10px;padding:18px 20px;color:var(--muted)}
+  .trig td:first-child{width:38%}
+  .res-fired{color:var(--bad);font-weight:700} .res-clear{color:var(--good);font-weight:700} .res-na{color:var(--warn);font-weight:700}
+  .prose p{color:var(--muted);max-width:92ch;margin:0 0 10px}
+  .prose h4{margin:16px 0 6px;color:var(--text);font-size:14px}
+  .prose ul{color:var(--muted);max-width:92ch;padding-left:18px} .prose li{margin-bottom:5px}
+  .progress{height:8px;background:var(--panel3);border-radius:6px;overflow:hidden;margin:8px 0}
+  .progress>div{height:100%;background:var(--accent);width:0}
+  .num-marker{background:#012A52;color:#fff;border:2px solid #fff;border-radius:50%;width:22px;height:22px;line-height:18px;text-align:center;font-size:10.5px;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  .num-marker.open{background:#DA0C1B} .num-marker.closed{background:#7C8994} .num-marker.oil{background:#8C6239}
+  .leaflet-popup-content{font-size:12.5px}
+  dialog{border:1px solid var(--border);border-radius:10px;padding:18px;max-width:560px;width:94vw}
+  dialog::backdrop{background:rgba(16,20,24,.35)}
+  #report{display:none}
+  @media(max-width:600px){.wrap{padding:16px 12px 60px} nav button{padding:8px 9px;font-size:12.5px}}
+
+  /* ---------- printed Environmental Screening Summary ---------- */
+  @media print{
+    @page{size:letter;margin:.55in .6in .6in}
+    body.print-report{background:#fff}
+    body.print-report .wrap,body.print-report #sw-drawer,body.print-report .sw-banner,body.print-report .shv-tip{display:none!important}
+    body.print-report #report{display:block}
+    .wrap nav,.btnrow{display:none}
+  }
+  #report{font-size:10.5pt;color:#101418;background:#fff}
+  #report h1{font-size:17pt;color:#012A52;margin:0}
+  #report h2{font-size:12pt;color:#012A52;margin:14pt 0 5pt;border-bottom:1.5pt solid #012A52;padding-bottom:2pt}
+  #report .band{background:#F2EFE9;border-left:5pt solid #012A52;padding:8pt 10pt;margin:8pt 0}
+  #report .band.req{border-left-color:#DA0C1B} #report .band.heighten{border-left-color:#B5761F} #report .band.clear{border-left-color:#2F7D5D}
+  #report table{width:100%;border-collapse:collapse;font-size:9pt;margin:4pt 0}
+  #report th,#report td{border:.5pt solid #C7BFB1;padding:3pt 5pt;text-align:left;vertical-align:top}
+  #report th{background:#F0EBE1;color:#101418}
+  #report .kv{grid-template-columns:130pt 1fr;font-size:10pt}
+  #report .two{display:grid;grid-template-columns:1fr 250pt;gap:12pt;align-items:start}
+  #report .foot{font-size:8.5pt;color:#5C6670;margin-top:10pt}
+  #report .pb{break-before:page}
+  #report tr{break-inside:avoid}
+  #report table.compact{font-size:8pt} #report table.compact td,#report table.compact th{padding:1.5pt 5pt}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>CRE Environmental Screening</h1>
+    <div class="sub">Environmental records screen for Texas commercial real estate collateral. Pick a CRE parcel, enter coordinates or click the map, and the page checks every listed federal and Texas site within the standard search distance, applies the Phase I triggers in Section 8.3 of the Ranger Bank Credit Policy and SBA's environmental rules, and prints a summary for the credit file.</div>
+    <div class="ribbon" id="ribbon"></div>
+  </header>
+
+  <nav id="nav">
+    <button data-view="screen" class="active">Screen a Property</button>
+    <button data-view="batch">Batch Screen</button>
+    <button data-view="tracker">Diligence Tracker</button>
+    <button data-view="explore">Sites Explorer</button>
+    <button data-view="method">Method &amp; Sources</button>
+    <span style="flex:1"></span><span id="sw-trigger-mount"></span>
+  </nav>
+  <div id="sw-banner-mount"></div>
+
+  <!-- ================= SCREEN ================= -->
+  <section class="view active" id="v-screen">
+    <div class="grid2">
+      <div class="panel">
+        <h3>Subject property</h3>
+        <div class="note">Search the CRE parcel list by county, or enter latitude and longitude, or click the map below. Typed street addresses cannot be geocoded from the browser (the Census geocoder does not allow it), so use a parcel or coordinates for properties outside the CRE data.</div>
+        <div class="fields">
+          <div class="field"><label class="f" for="in-county">County</label><select id="in-county"></select></div>
+          <div class="field" style="grid-column:span 2"><label class="f" for="in-q">Parcel search (address, owner or parcel id)</label><input id="in-q" placeholder="e.g. 4302 OLDHAM or SHELL or 10130" autocomplete="off"></div>
+        </div>
+        <div id="in-results" class="results" style="display:none"></div>
+        <div class="fields" style="margin-top:12px">
+          <div class="field" style="grid-column:span 2"><label class="f" for="in-ll">Latitude, longitude</label><input id="in-ll" placeholder="32.4487, -99.7331"></div>
+          <div class="field"><label class="f">&nbsp;</label><button class="btn primary" id="btn-ll" style="width:100%">Screen these coordinates</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Loan context</h3>
+        <div class="note">Used only to pick the rule set. Nothing here is saved unless you add the property to the tracker.</div>
+        <div class="fields">
+          <div class="field"><label class="f" for="in-prog">Loan program</label><select id="in-prog"><option value="conv">Conventional</option><option value="7a">SBA 7(a)</option><option value="504">SBA 504</option></select></div>
+          <div class="field"><label class="f" for="in-amt">Loan amount ($)</label><input id="in-amt" inputmode="numeric" placeholder="optional"></div>
+          <div class="field"><label class="f" for="in-naics">Business NAICS at the property</label><input id="in-naics" placeholder="optional, e.g. 811111"></div>
+          <div class="field"><label class="f" for="in-by">Prepared by</label><input id="in-by" placeholder="name for the printed summary"></div>
+        </div>
+        <div style="margin-top:10px" class="chk"><input type="checkbox" id="in-cld"><label for="in-cld">Construction or land-development loan (heightened diligence under Section 8.3)</label></div>
+        <div style="margin-top:6px" class="chk"><input type="checkbox" id="in-fuel"><label for="in-fuel">The business sells, supplies or dispenses fuel (SBA always requires a Phase I)</label></div>
+      </div>
+    </div>
+
+    <div id="screen-empty" class="empty">No property screened yet. Choose a parcel, enter coordinates, or click the map.</div>
+    <div id="screen-out" style="display:none">
+      <div class="grid2">
+        <div class="panel" id="p-subject"></div>
+        <div class="panel" id="p-verdict"></div>
+      </div>
+      <div class="panel"><h3>Phase I triggers (Credit Policy Section 8.3)</h3>
+        <div class="note">Each trigger the policy names, with what the records screen found. Two triggers cannot be tested from records and are marked Not assessed; the borrower questionnaire and site visit cover them.</div>
+        <div class="table-wrap" style="max-height:none"><table class="data trig" id="t-trig" data-no-sort><thead><tr><th>Trigger</th><th>Result</th><th>Evidence</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="panel"><h3>Physical setting and oil and gas</h3>
+        <div class="note">Queried live from FEMA, the US Fish and Wildlife Service and the Railroad Commission when you screen. These are underwriting flags and do not count toward the contamination score.</div>
+        <div class="flags" id="flags"></div>
+      </div>
+      <div class="panel">
+        <div class="btnrow" style="justify-content:space-between;margin-bottom:8px">
+          <div><h3 style="display:inline">Map</h3> <span class="thin">Rings at the adjoining distance, 1/4, 1/2 and 1 mile. Red markers are open cases, grey are closed, navy are other listings, brown are oil and gas.</span></div>
+        </div>
+        <div id="map"></div>
+      </div>
+      <div class="panel">
+        <div class="btnrow" style="justify-content:space-between">
+          <h3 style="margin:0">Findings</h3>
+          <div class="btnrow">
+            <select id="f-group" class="btn"><option value="">All lists</option><option value="contam">Cleanup and contamination lists</option><option value="tank">Storage tanks</option><option value="haz">Hazardous waste and permits</option><option value="oil">Oil and gas</option></select>
+            <button class="btn" id="btn-print">Print summary</button>
+            <button class="btn" id="btn-copy">Copy for credit memo</button>
+            <button class="btn" id="btn-csv">Findings CSV</button>
+            <button class="btn" id="btn-json">Screen JSON</button>
+            <button class="btn primary" id="btn-track">Add to tracker</button>
+          </div>
+        </div>
+        <div class="note" id="f-note" style="margin-top:6px"></div>
+        <div class="table-wrap"><table class="data" id="t-find"><thead><tr><th class="n">#</th><th>List</th><th>Site</th><th>Address</th><th>Status</th><th class="n">Distance</th><th>Dir.</th><th>Record</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="grid2">
+        <div class="panel"><h3>Lists searched with no results</h3><div class="note">Proof of what was searched. Search distance and data vintage for every list that returned nothing.</div>
+          <div class="table-wrap" style="max-height:420px"><table class="data" id="t-none"><thead><tr><th>List</th><th>Search distance</th><th>Data as of</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="panel"><h3>Historical sources for the Phase I</h3><div class="note">A records screen does not show past uses that were never permitted. These sources are where an environmental professional looks; they open at the subject location where the site allows it.</div><div id="hist"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BATCH ================= -->
+  <section class="view" id="v-batch">
+    <div class="panel">
+      <h3>Screen many properties</h3>
+      <div class="note">Records lists are checked for every property. Live layers (flood zone, oil and gas wells) add two requests per property and are throttled, so a long list takes a few minutes with them on.</div>
+      <div class="fields">
+        <div class="field"><label class="f" for="b-src">Properties from</label><select id="b-src"><option value="pipe">My CRE pipeline (this browser)</option><option value="filter">A county and sub-type filter</option><option value="csv">An uploaded CSV</option></select></div>
+        <div class="field b-filter"><label class="f" for="b-county">County</label><select id="b-county"></select></div>
+        <div class="field b-filter"><label class="f" for="b-sub">CRE sub-type or use</label><select id="b-sub"></select></div>
+        <div class="field b-csv" style="display:none"><label class="f" for="b-file">CSV with parcel_id and county, or lat and lng</label><input type="file" id="b-file" accept=".csv,text/csv"></div>
+        <div class="field"><label class="f" for="b-max">Most properties</label><input id="b-max" value="200" inputmode="numeric"></div>
+      </div>
+      <div class="btnrow" style="margin-top:10px">
+        <label class="chk"><input type="checkbox" id="b-live" checked> Include live flood and oil and gas layers</label>
+        <button class="btn primary" id="b-run">Run batch screen</button>
+        <button class="btn" id="b-stop" disabled>Stop</button>
+        <button class="btn" id="b-csvout" disabled>Results CSV</button>
+        <span class="thin" id="b-status"></span>
+      </div>
+      <div class="progress"><div id="b-bar"></div></div>
+    </div>
+    <div class="panel"><h3>Batch results</h3><div class="note">Click a row to open the full screen for that property.</div>
+      <div class="table-wrap"><table class="data" id="t-batch"><thead><tr><th>Property</th><th>County</th><th>Sub-type</th><th class="n">Score</th><th>Recommendation</th><th>Top finding</th><th>Flood zone</th><th class="n">Wells 1/4 mi</th></tr></thead><tbody><tr><td colspan="8" class="muted">No batch run yet.</td></tr></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ================= TRACKER ================= -->
+  <section class="view" id="v-tracker">
+    <div class="panel">
+      <div class="btnrow" style="justify-content:space-between"><h3 style="margin:0">Environmental diligence tracker</h3>
+        <div class="btnrow"><button class="btn" id="tr-export">Export JSON</button><label class="btn" for="tr-import" style="margin:0">Import JSON</label><input type="file" id="tr-import" accept="application/json,.json" style="display:none"></div></div>
+      <div class="note" style="margin-top:6px">Status of the questionnaire, Phase I and Phase II for each screened property. The tracker is stored in this browser only, so export it to the credit file and import it on another machine. Under Section 8.3, proceeding despite an identified issue needs the CEO's advance written approval, reported to the Board.</div>
+      <div class="table-wrap"><table class="data" id="t-track"><thead><tr><th>Property</th><th>Status</th><th>Screen</th><th>Consultant</th><th>Report date</th><th>RECs found</th><th>Notes</th><th>Updated</th><th data-no-sort></th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ================= EXPLORER ================= -->
+  <section class="view" id="v-explore">
+    <div class="panel">
+      <div class="btnrow" style="justify-content:space-between"><h3 style="margin:0">Listed sites by county</h3>
+        <div class="field" style="min-width:260px"><select id="x-metric"></select></div></div>
+      <div class="note" id="x-note" style="margin-top:6px">Click a county to list its sites below.</div>
+      <div id="xmap"></div>
+      <div id="x-legend" class="small muted" style="margin-top:8px"></div>
+    </div>
+    <div class="panel">
+      <div class="btnrow" style="justify-content:space-between"><h3 style="margin:0" id="x-title">County sites</h3>
+        <div class="btnrow"><select id="x-group" class="btn"><option value="">All lists</option><option value="contam">Cleanup and contamination lists</option><option value="tank">Storage tanks</option><option value="haz">Hazardous waste and permits</option><option value="oil">Oil and gas</option></select>
+          <select id="x-status" class="btn"><option value="">Any status</option><option value="open">Open cases</option><option value="closed">Closed</option></select>
+          <button class="btn" id="x-csv" disabled>CSV</button></div></div>
+      <div class="table-wrap" style="margin-top:10px"><table class="data" id="t-x"><thead><tr><th>List</th><th>Site</th><th>Address</th><th>City</th><th>Status</th><th>Detail</th><th>Record</th></tr></thead><tbody><tr><td colspan="7" class="muted">Pick a county on the map.</td></tr></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ================= METHOD ================= -->
+  <section class="view" id="v-method"><div class="panel prose" id="method"></div></section>
+</div>
+
+<dialog id="dlg-track">
+  <h3 style="margin-top:0" id="dt-title">Tracker entry</h3>
+  <div class="fields">
+    <div class="field"><label class="f" for="dt-status">Status</label><select id="dt-status"></select></div>
+    <div class="field"><label class="f" for="dt-cons">Consultant</label><input id="dt-cons"></div>
+    <div class="field"><label class="f" for="dt-date">Report date</label><input id="dt-date" type="date"></div>
+    <div class="field"><label class="f" for="dt-recs">RECs found</label><select id="dt-recs"><option value="">Not yet known</option><option>None</option><option>Yes</option></select></div>
+  </div>
+  <div class="field" style="margin-top:10px"><label class="f" for="dt-notes">Notes</label><textarea id="dt-notes" rows="4"></textarea></div>
+  <div class="btnrow" style="margin-top:12px;justify-content:flex-end"><button class="btn" id="dt-del">Remove</button><button class="btn" id="dt-cancel">Cancel</button><button class="btn primary" id="dt-save">Save</button></div>
+</dialog>
+
+<div id="report"></div>
+
+<script>
+// Index of sources, list counts and county bounding boxes, written by refresh.py.
+const EMBED = /*__DATA_START__*/{"_meta":{"generated_at":"2026-11-18T23:38:10Z","source":"environmental/refresh.py","sites":179286,"dropped_outside_texas":188},"fields":["list","lat","lng","name","addr","city","rid","status","lk","lid","detail"],"lists":{"sf_state":168,"lpst":29756,"pst":18736,"vcp":3257,"brown_tceq":213,"ihwca":5736,"iop":1333,"dcrp":389,"landfill":193,"msd":550,"dc_reg":3329,"tri":5637,"npdes_ind":23747,"rcra_gen":12072,"enf":7053,"sems":417,"rcra_tsd":179,"sems_arch":924,"npl":56,"brown_epa":1167,"npl_del":14,"rrc_orphan":11991,"rrc_inj":46917,"rrc_disp":1896,"rrc_ocp":3428,"rrc_vcp":186,"rrc_brown":42,"rrc_cwds":88},"sources":{"tceq_lpst_status":{"title":"TCEQ Leaking Petroleum Storage Tank case list (Texas Open Data Portal)","url":"https://data.texas.gov/resource/hedz-nn4q","status":"ok","fetched":"2026-11-18","seconds":5.0,"counts":{"lpst_cases":29874,"lpst_open":1071}},"tceq_gis":{"title":"TCEQ Remediation and Petroleum Storage Tank GIS layers","url":"https://gisweb.tceq.texas.gov/arcgis/rest/services/Public","status":"ok","fetched":"2026-11-18","seconds":69.5,"counts":{"sf_state":168,"lpst":29866,"vcp":3265,"brown_tceq":213,"ihwca":5748,"iop":1335,"dcrp":389,"msd":550,"pst":18774,"landfill":193}},"tceq_drycleaners":{"title":"TCEQ Operating and Historical Dry Cleaner Registrations (Texas Open Data Portal)","url":"https://data.texas.gov/resource/qfph-9bnd","status":"ok","fetched":"2026-11-18","seconds":38.3,"counts":{"dc_reg":3331,"dc_reg_total":3711}},"epa_frs":{"title":"EPA Facility Registry Service, Texas combined state file","url":"https://ordsext.epa.gov/FLA/www3/state_files/state_combined_tx.zip","status":"ok","fetched":"2026-11-18","seconds":8.0,"counts":{"tri":5637,"npdes_ind":23747,"rcra_gen":12072,"enf":7053,"sems":417,"rcra_tsd":179,"sems_arch":924,"npl":56,"brown_epa":1167,"npl_del":14},"no_coordinates":3312},"rrc":{"title":"Railroad Commission of Texas Public GIS Viewer services","url":"https://gis.rrc.texas.gov/server/rest/services/rrc_public/RRC_Public_Viewer_Srvs/MapServer","status":"ok","fetched":"2026-11-18","seconds":60.8,"counts":{"rrc_orphan":12234,"rrc_inj":46935,"rrc_disp":1897,"rrc_ocp":3432,"rrc_vcp":186,"rrc_brown":42,"rrc_cwds":88}}},"parcels":{"counts":{"located":100304,"coord_outside_county":8419,"no_coord":53136,"use_sub":11359,"use_f2":13719,"use_fuel":961,"use_industrial":546,"use_subh":5353,"sba_match":1671,"use_auto":988,"use_dryclean":88,"use_agchem":4},"cre_hash":"5d2107deb60b6903","built":"2026-11-18","parcels_by_county":{"48005":1071,"48027":5461,"48029":24191,"48039":5486,"48041":3643,"48055":755,"48061":4290,"48071":936,"48099":461,"48113":25221,"48135":2722,"48157":6628,"48167":5431,"48181":3560,"48183":2300,"48199":600,"48245":3801,"48251":2185,"48257":2011,"48265":977,"48291":1152,"48355":5916,"48365":223,"48401":294,"48439":26528,"48441":2126,"48449":797,"48453":14226,"48469":1736,"48485":166,"48491":5290,"48497":1675}},"counties":{"48357":{"name":"Ochiltree","bbox":[36.0565,-101.0857,36.4997,-100.5461],"sites":249,"by_list":{"dc_reg":2,"enf":52,"ihwca":6,"landfill":1,"lpst":18,"npdes_ind":8,"npl":1,"pst":14,"rcra_gen":7,"rrc_disp":15,"rrc_inj":94,"rrc_ocp":3,"rrc_orphan":24,"sf_state":1,"tri":3},"open":4},"48359":{"name":"Oldham","bbox":[35.1832,-103.0425,35.6275,-102.1628],"sites":49,"by_list":{"enf":1,"ihwca":2,"lpst":5,"npdes_ind":11,"pst":3,"rrc_disp":2,"rrc_inj":19,"rrc_ocp":1,"rrc_orphan":5},"open":0},"48367":{"name":"Parker","bbox":[32.5554,-98.0668,33.0033,-97.5442],"sites":695,"by_list":{"brown_epa":1,"dc_reg":12,"enf":28,"ihwca":21,"iop":6,"landfill":1,"lpst":108,"npdes_ind":88,"npl":1,"pst":74,"rcra_gen":42,"rrc_disp":8,"rrc_inj":21,"rrc_ocp":5,"rrc_orphan":224,"rrc_vcp":2,"sems":3,"sems_arch":1,"sf_state":1,"tri":42,"vcp":6},"open":6},"48379":{"name":"Rains","bbox":[32.7204,-95.9873,32.9799,-95.635],"sites":52,"by_list":{"brown_epa":1,"dc_reg":1,"enf":1,"lpst":10,"npdes_ind":5,"pst":16,"rcra_gen":3,"rrc_inj":1,"rrc_ocp":1,"rrc_orphan":7,"sems":2,"tri":4},"open":3},"48381":{"name":"Randall","bbox":[34.7474,-102.1688,35.1832,-101.6229],"sites":273,"by_list":{"brown_epa":1,"dc_reg":17,"dcrp":1,"enf":17,"ihwca":9,"landfill":2,"lpst":69,"npdes_ind":49,"pst":68,"rcra_gen":26,"rrc_ocp":1,"sems_arch":2,"tri":10,"vcp":1},"open":3},"48393":{"name":"Roberts","bbox":[35.6191,-101.0861,36.0576,-100.5402],"sites":88,"by_list":{"ihwca":2,"lpst":6,"npdes_ind":1,"pst":2,"rrc_disp":7,"rrc_inj":32,"rrc_ocp":9,"rrc_orphan":29},"open":2},"48397":{"name":"Rockwall","bbox":[32.8136,-96.519,32.9823,-96.2972],"sites":208,"by_list":{"dc_reg":14,"dcrp":2,"enf":15,"ihwca":3,"iop":3,"lpst":48,"npdes_ind":28,"pst":47,"rcra_gen":26,"sems":1,"sems_arch":2,"tri":14,"vcp":5},"open":1},"48411":{"name":"San Saba","bbox":[30.9214,-99.0924,31.4841,-98.4397],"sites":48,"by_list":{"dc_reg":1,"enf":1,"ihwca":2,"lpst":9,"npdes_ind":24,"pst":10,"rrc_ocp":1},"open":0},"48425":{"name":"Somervell","bbox":[32.0873,-97.9456,32.3186,-97.6151],"sites":60,"by_list":{"dc_reg":2,"enf":4,"ihwca":2,"lpst":7,"npdes_ind":18,"pst":14,"rcra_gen":3,"rcra_tsd":1,"rrc_disp":2,"rrc_inj":3,"rrc_orphan":3,"vcp":1},"open":0},"48429":{"name":"Stephens","bbox":[32.5148,-99.0961,32.957,-98.5756],"sites":941,"by_list":{"dc_reg":1,"enf":8,"ihwca":3,"lpst":25,"npdes_ind":23,"pst":12,"rcra_gen":10,"rrc_disp":4,"rrc_inj":749,"rrc_ocp":12,"rrc_orphan":91,"sems_arch":1,"tri":2},"open":2},"48433":{"name":"Stonewall","bbox":[32.96,-100.5192,33.3979,-99.9888],"sites":433,"by_list":{"brown_epa":1,"lpst":7,"npdes_ind":2,"pst":2,"rrc_disp":4,"rrc_inj":381,"rrc_ocp":11,"rrc_orphan":25},"open":1},"48445":{"name":"Terry","bbox":[32.9588,-102.595,33.3896,-102.0759],"sites":747,"by_list":{"dc_reg":4,"enf":10,"ihwca":8,"landfill":2,"lpst":41,"npdes_ind":12,"pst":18,"rcra_gen":8,"rrc_disp":4,"rrc_inj":620,"rrc_ocp":1,"rrc_orphan":11,"sems":2,"sems_arch":1,"tri":4,"vcp":1},"open":2},"48449":{"name":"Titus","bbox":[32.9829,-95.1261,33.3895,-94.8088],"sites":263,"by_list":{"dc_reg":3,"enf":8,"ihwca":12,"iop":1,"landfill":1,"lpst":55,"npdes_ind":46,"pst":40,"rcra_gen":16,"rrc_disp":3,"rrc_inj":42,"rrc_ocp":9,"sems":1,"sf_state":1,"tri":21,"vcp":4},"open":2,"parcels":797},"48459":{"name":"Upshur","bbox":[32.5372,-95.1534,32.9045,-94.7018],"sites":194,"by_list":{"dc_reg":3,"enf":7,"ihwca":5,"lpst":50,"npdes_ind":18,"pst":32,"rcra_gen":11,"rrc_disp":3,"rrc_inj":30,"rrc_ocp":14,"rrc_orphan":7,"rrc_vcp":1,"sems":2,"sems_arch":2,"tri":7,"vcp":2},"open":5},"48463":{"name":"Uvalde","bbox":[29.0863,-100.1121,29.6275,-99.4118],"sites":164,"by_list":{"dc_reg":2,"enf":4,"ihwca":7,"landfill":1,"lpst":59,"npdes_ind":39,"pst":38,"rcra_gen":10,"rrc_ocp":1,"sems":1,"tri":2},"open":0},"48475":{"name":"Ward","bbox":[31.2679,-103.6109,31.6518,-102.7672],"sites":1717,"by_list":{"dc_reg":2,"enf":2,"ihwca":7,"landfill":1,"lpst":38,"npdes_ind":31,"pst":26,"rcra_gen":13,"rcra_tsd":1,"rrc_cwds":2,"rrc_disp":40,"rrc_inj":1153,"rrc_ocp":32,"rrc_orphan":355,"tri":13,"vcp":1},"open":9},"48491":{"name":"Williamson","bbox":[30.4028,-98.0499,30.9062,-97.1552],"sites":1075,"by_list":{"brown_epa":4,"dc_reg":58,"dcrp":1,"enf":39,"ihwca":41,"iop":3,"landfill":1,"lpst":198,"npdes_ind":284,"pst":214,"rcra_gen":130,"rrc_inj":4,"rrc_ocp":2,"rrc_orphan":7,"sems":1,"sems_arch":2,"tri":64,"vcp":22},"open":2,"parcels":5290},"48497":{"name":"Wise","bbox":[32.9908,-97.9216,33.4341,-97.383],"sites":482,"by_list":{"dc_reg":7,"enf":21,"ihwca":13,"lpst":82,"npdes_ind":94,"pst":55,"rcra_gen":25,"rrc_disp":23,"rrc_inj":54,"rrc_ocp":13,"rrc_orphan":70,"sems":1,"sems_arch":1,"tri":21,"vcp":2},"open":7,"parcels":1675},"48507":{"name":"Zavala","bbox":[28.6406,-100.1143,29.0913,-99.409],"sites":156,"by_list":{"enf":3,"ihwca":5,"landfill":2,"lpst":22,"npdes_ind":10,"npl_del":1,"pst":16,"rcra_gen":4,"rrc_disp":2,"rrc_inj":36,"rrc_ocp":18,"rrc_orphan":34,"sf_state":1,"tri":2},"open":2},"48009":{"name":"Archer","bbox":[33.3962,-98.9539,33.836,-98.4207],"sites":669,"by_list":{"dc_reg":1,"enf":8,"ihwca":1,"lpst":19,"npdes_ind":5,"pst":7,"rcra_gen":3,"rrc_disp":2,"rrc_inj":564,"rrc_ocp":4,"rrc_orphan":55},"open":1},"48011":{"name":"Armstrong","bbox":[34.7475,-101.6294,35.1831,-101.0863],"sites":10,"by_list":{"enf":2,"ihwca":1,"landfill":1,"lpst":2,"npdes_ind":1,"pst":2,"rcra_gen":1},"open":0},"48021":{"name":"Bastrop","bbox":[29.7865,-97.6494,30.4196,-97.0245],"sites":344,"by_list":{"brown_epa":5,"brown_tceq":1,"dc_reg":6,"enf":3,"ihwca":18,"iop":1,"lpst":62,"npdes_ind":69,"pst":70,"rcra_gen":19,"rrc_disp":1,"rrc_inj":17,"rrc_ocp":6,"rrc_orphan":52,"sems":1,"sems_arch":1,"tri":10,"vcp":2},"open":2},"48031":{"name":"Blanco","bbox":[29.9376,-98.5917,30.5021,-98.1256],"sites":70,"by_list":{"dc_reg":1,"enf":3,"ihwca":1,"lpst":17,"npdes_ind":25,"pst":17,"rcra_gen":3,"rrc_ocp":1,"rrc_orphan":1,"vcp":1},"open":0},"48047":{"name":"Brooks","bbox":[26.7809,-98.5237,27.2651,-97.9855],"sites":156,"by_list":{"dc_reg":1,"enf":1,"ihwca":2,"iop":1,"landfill":1,"lpst":30,"npdes_ind":5,"pst":16,"rcra_gen":5,"rrc_disp":1,"rrc_inj":41,"rrc_ocp":39,"rrc_orphan":12,"tri":1},"open":15},"48053":{"name":"Burnet","bbox":[30.4262,-98.4458,31.0349,-97.8285],"sites":219,"by_list":{"dc_reg":9,"enf":8,"ihwca":8,"lpst":47,"npdes_ind":64,"npl":1,"pst":48,"rcra_gen":14,"sems":1,"sems_arch":1,"sf_state":1,"tri":14,"vcp":3},"open":0},"48063":{"name":"Camp","bbox":[32.9026,-95.1522,33.0693,-94.7199],"sites":121,"by_list":{"dc_reg":2,"enf":5,"ihwca":5,"lpst":21,"npdes_ind":16,"pst":12,"rcra_gen":6,"rrc_inj":49,"rrc_ocp":2,"tri":3},"open":2},"48069":{"name":"Castro","bbox":[34.313,-102.5256,34.7482,-101.998],"sites":52,"by_list":{"dc_reg":2,"enf":9,"ihwca":3,"landfill":1,"lpst":18,"npdes_ind":3,"pst":7,"rcra_gen":3,"sems_arch":1,"tri":3,"vcp":2},"open":1},"48079":{"name":"Cochran","bbox":[33.3884,-103.0567,33.8251,-102.5948],"sites":1181,"by_list":{"enf":4,"ihwca":1,"landfill":1,"lpst":12,"npdes_ind":1,"pst":9,"rcra_gen":2,"rrc_disp":1,"rrc_inj":1113,"rrc_ocp":2,"rrc_orphan":34,"vcp":1},"open":4},"48095":{"name":"Concho","bbox":[31.0873,-100.1152,31.5803,-99.6018],"sites":103,"by_list":{"brown_epa":1,"brown_tceq":2,"enf":5,"ihwca":1,"iop":1,"lpst":11,"npdes_ind":8,"pst":5,"rcra_gen":1,"rrc_disp":1,"rrc_inj":67},"open":2},"48099":{"name":"Coryell","bbox":[31.0694,-98.18,31.711,-97.4186],"sites":158,"by_list":{"brown_epa":2,"brown_tceq":1,"dc_reg":5,"enf":8,"ihwca":3,"landfill":1,"lpst":48,"npdes_ind":31,"pst":36,"rcra_gen":12,"rrc_orphan":1,"sems":1,"sems_arch":2,"tri":6,"vcp":1},"open":1,"parcels":461},"48103":{"name":"Crane","bbox":[31.0862,-102.7677,31.6517,-102.3012],"sites":1545,"by_list":{"dc_reg":1,"ihwca":1,"landfill":1,"lpst":11,"npdes_ind":6,"pst":9,"rcra_gen":4,"rrc_cwds":2,"rrc_disp":11,"rrc_inj":1343,"rrc_ocp":18,"rrc_orphan":132,"sems_arch":1,"tri":5},"open":7},"48115":{"name":"Dawson","bbox":[32.5233,-102.2085,32.9618,-101.6887],"sites":849,"by_list":{"dc_reg":3,"enf":6,"ihwca":4,"iop":1,"landfill":1,"lpst":36,"npdes_ind":11,"pst":22,"rcra_gen":6,"rrc_disp":24,"rrc_inj":708,"rrc_ocp":2,"rrc_orphan":21,"sems_arch":2,"tri":1,"vcp":1},"open":6},"48123":{"name":"DeWitt","bbox":[28.8133,-97.7551,29.3845,-96.9764],"sites":298,"by_list":{"brown_tceq":1,"dc_reg":2,"enf":25,"ihwca":6,"lpst":52,"npdes_ind":18,"pst":27,"rcra_gen":10,"rrc_cwds":2,"rrc_disp":14,"rrc_inj":31,"rrc_ocp":47,"rrc_orphan":59,"sems_arch":1,"tri":3},"open":8},"48127":{"name":"Dimmit","bbox":[28.1978,-100.1143,28.6481,-99.3942],"sites":432,"by_list":{"brown_epa":1,"brown_tceq":1,"dc_reg":1,"enf":5,"ihwca":4,"landfill":1,"lpst":22,"msd":1,"npdes_ind":17,"pst":16,"rcra_gen":5,"rrc_brown":1,"rrc_cwds":1,"rrc_disp":39,"rrc_inj":213,"rrc_ocp":69,"rrc_orphan":33,"tri":2},"open":3},"48137":{"name":"Edwards","bbox":[29.6233,-100.7004,30.2907,-99.7541],"sites":127,"by_list":{"ihwca":1,"lpst":6,"npdes_ind":1,"pst":2,"rcra_gen":1,"rrc_inj":17,"rrc_ocp":7,"rrc_orphan":92},"open":0},"48149":{"name":"Fayette","bbox":[29.6281,-97.3179,30.1605,-96.5698],"sites":283,"by_list":{"dc_reg":4,"enf":6,"ihwca":12,"iop":1,"lpst":81,"npdes_ind":48,"pst":38,"rcra_gen":8,"rrc_disp":14,"rrc_inj":20,"rrc_ocp":11,"rrc_orphan":28,"rrc_vcp":1,"sems":1,"tri":7,"vcp":3},"open":1},"48159":{"name":"Franklin","bbox":[32.9618,-95.309,33.3895,-95.1255],"sites":81,"by_list":{"enf":2,"ihwca":1,"lpst":18,"npdes_ind":1,"pst":10,"rcra_gen":1,"rrc_inj":39,"rrc_ocp":3,"rrc_orphan":1,"sems_arch":1,"tri":2,"vcp":2},"open":0},"48169":{"name":"Garza","bbox":[32.961,-101.5574,33.3972,-101.0387],"sites":955,"by_list":{"dc_reg":1,"enf":2,"ihwca":2,"landfill":1,"lpst":19,"npdes_ind":6,"pst":5,"rcra_gen":4,"rcra_tsd":1,"rrc_disp":5,"rrc_inj":894,"rrc_ocp":3,"rrc_orphan":12},"open":2},"48177":{"name":"Gonzales","bbox":[29.1098,-97.8588,29.7847,-97.1305],"sites":244,"by_list":{"dc_reg":2,"enf":12,"ihwca":4,"lpst":44,"npdes_ind":41,"pst":27,"rcra_gen":7,"rrc_brown":1,"rrc_cwds":1,"rrc_disp":20,"rrc_inj":28,"rrc_ocp":4,"rrc_orphan":46,"tri":5,"vcp":2},"open":1},"48179":{"name":"Gray","bbox":[35.1821,-101.0863,35.6193,-100.539],"sites":593,"by_list":{"dc_reg":5,"enf":10,"ihwca":15,"landfill":3,"lpst":33,"npdes_ind":18,"pst":29,"rcra_gen":19,"rcra_tsd":1,"rrc_disp":2,"rrc_inj":216,"rrc_ocp":15,"rrc_orphan":215,"sems_arch":1,"tri":11},"open":3},"48185":{"name":"Grimes","bbox":[30.2252,-96.1878,30.8641,-95.8043],"sites":204,"by_list":{"dc_reg":3,"enf":10,"ihwca":14,"iop":1,"landfill":1,"lpst":38,"npdes_ind":42,"pst":30,"rcra_gen":18,"rcra_tsd":1,"rrc_cwds":2,"rrc_disp":4,"rrc_inj":10,"rrc_ocp":3,"rrc_orphan":9,"sems":1,"tri":14,"vcp":3},"open":2},"48191":{"name":"Hall","bbox":[34.3128,-100.9461,34.7483,-100.4159],"sites":26,"by_list":{"dc_reg":1,"enf":3,"ihwca":1,"landfill":1,"lpst":12,"pst":6,"sems_arch":2},"open":2},"48195":{"name":"Hansford","bbox":[36.0553,-101.6239,36.4995,-101.0852],"sites":100,"by_list":{"enf":6,"ihwca":3,"landfill":1,"lpst":11,"pst":12,"rcra_gen":5,"rrc_disp":2,"rrc_inj":11,"rrc_ocp":3,"rrc_orphan":43,"sems_arch":1,"tri":2},"open":0},"48217":{"name":"Hill","bbox":[31.7089,-97.486,32.2655,-96.7191],"sites":229,"by_list":{"brown_epa":1,"dc_reg":4,"enf":13,"ihwca":13,"landfill":1,"lpst":47,"npdes_ind":41,"pst":61,"rcra_gen":16,"rrc_disp":2,"rrc_inj":2,"rrc_orphan":3,"sems_arch":1,"tri":18,"vcp":6},"open":0},"48227":{"name":"Howard","bbox":[32.0871,-101.695,32.5252,-101.1746],"sites":2116,"by_list":{"dc_reg":1,"enf":14,"ihwca":16,"iop":3,"landfill":1,"lpst":68,"npdes_ind":44,"pst":51,"rcra_gen":18,"rcra_tsd":1,"rrc_cwds":3,"rrc_disp":70,"rrc_inj":1272,"rrc_ocp":10,"rrc_orphan":517,"sems":2,"sems_arch":4,"sf_state":1,"tri":19,"vcp":1},"open":11},"48233":{"name":"Hutchinson","bbox":[35.6241,-101.6235,36.0554,-101.0857],"sites":824,"by_list":{"dc_reg":1,"enf":15,"ihwca":17,"lpst":52,"npdes_ind":27,"pst":26,"rcra_gen":25,"rcra_tsd":2,"rrc_disp":2,"rrc_inj":262,"rrc_ocp":31,"rrc_orphan":340,"rrc_vcp":1,"sems":1,"sems_arch":3,"tri":18,"vcp":1},"open":9},"48247":{"name":"Jim Hogg","bbox":[26.7835,-98.9547,27.354,-98.4179],"sites":102,"by_list":{"ihwca":5,"lpst":10,"pst":11,"rcra_gen":3,"rrc_inj":10,"rrc_ocp":29,"rrc_orphan":30,"tri":4},"open":1},"48251":{"name":"Johnson","bbox":[32.1336,-97.6171,32.5555,-97.0862],"sites":714,"by_list":{"brown_epa":4,"brown_tceq":1,"dc_reg":14,"dcrp":2,"enf":35,"ihwca":24,"iop":4,"landfill":1,"lpst":150,"msd":1,"npdes_ind":173,"pst":120,"rcra_gen":62,"rrc_disp":18,"rrc_inj":21,"rrc_ocp":4,"rrc_orphan":2,"sems":3,"sems_arch":2,"tri":55,"vcp":18},"open":12,"parcels":2185},"48263":{"name":"Kent","bbox":[32.9629,-101.0388,33.3979,-100.5174],"sites":305,"by_list":{"enf":2,"lpst":2,"rrc_disp":1,"rrc_inj":297,"rrc_orphan":1,"tri":2},"open":0},"48265":{"name":"Kerr","bbox":[29.7814,-99.7576,30.2907,-98.9177],"sites":202,"by_list":{"dc_reg":7,"enf":7,"ihwca":10,"iop":3,"landfill":1,"lpst":71,"npdes_ind":42,"pst":40,"rcra_gen":11,"rrc_orphan":2,"sems":2,"tri":4,"vcp":2},"open":3,"parcels":977},"48275":{"name":"Knox","bbox":[33.3974,-99.9964,33.836,-99.4724],"sites":91,"by_list":{"dc_reg":1,"enf":3,"ihwca":4,"lpst":21,"npdes_ind":2,"pst":3,"rcra_gen":2,"rrc_inj":53,"sf_state":1,"vcp":1},"open":4},"48283":{"name":"La Salle","bbox":[28.0304,-99.3957,28.6475,-98.8008],"sites":215,"by_list":{"enf":33,"ihwca":3,"lpst":17,"npdes_ind":6,"pst":12,"rcra_gen":4,"rrc_cwds":2,"rrc_disp":28,"rrc_inj":46,"rrc_ocp":11,"rrc_orphan":50,"tri":3},"open":2},"48297":{"name":"Live Oak","bbox":[28.0569,-98.335,28.7869,-97.8088],"sites":297,"by_list":{"dc_reg":1,"enf":9,"ihwca":3,"iop":1,"lpst":23,"npdes_ind":33,"pst":31,"rcra_gen":10,"rcra_tsd":1,"rrc_cwds":3,"rrc_disp":8,"rrc_inj":59,"rrc_ocp":36,"rrc_orphan":71,"sems":1,"tri":7},"open":3},"48303":{"name":"Lubbock","bbox":[33.3896,-102.0857,33.8305,-101.5569],"sites":1530,"by_list":{"brown_epa":2,"brown_tceq":1,"dc_reg":46,"dcrp":3,"enf":84,"ihwca":43,"iop":6,"landfill":3,"lpst":436,"msd":5,"npdes_ind":276,"pst":198,"rcra_gen":117,"rcra_tsd":1,"rrc_brown":1,"rrc_disp":1,"rrc_inj":223,"rrc_ocp":1,"rrc_orphan":8,"sems":4,"sems_arch":15,"sf_state":1,"tri":45,"vcp":10},"open":12},"48309":{"name":"McLennan","bbox":[31.2442,-97.6052,31.8631,-96.8011],"sites":1219,"by_list":{"brown_epa":15,"dc_reg":24,"dcrp":1,"enf":70,"ihwca":57,"iop":12,"landfill":2,"lpst":269,"msd":3,"npdes_ind":272,"pst":221,"rcra_gen":134,"rcra_tsd":2,"rrc_ocp":1,"rrc_orphan":8,"sems":2,"sems_arch":9,"tri":72,"vcp":45},"open":6},"48319":{"name":"Mason","bbox":[30.4985,-99.4848,30.941,-98.9641],"sites":39,"by_list":{"dc_reg":2,"ihwca":1,"landfill":1,"lpst":10,"npdes_ind":14,"pst":8,"rcra_gen":3},"open":0},"48329":{"name":"Midland","bbox":[31.6513,-102.2873,32.087,-101.7758],"sites":1431,"by_list":{"dc_reg":23,"dcrp":2,"enf":54,"ihwca":58,"iop":5,"landfill":1,"lpst":205,"msd":1,"npdes_ind":222,"npl":2,"pst":128,"rcra_gen":119,"rcra_tsd":2,"rrc_cwds":3,"rrc_disp":74,"rrc_inj":394,"rrc_ocp":41,"sems":2,"sems_arch":5,"sf_state":3,"tri":70,"vcp":17},"open":37},"48339":{"name":"Montgomery","bbox":[30.0322,-95.8302,30.6303,-95.0967],"sites":1581,"by_list":{"brown_epa":2,"dc_reg":57,"dcrp":3,"enf":80,"ihwca":51,"iop":21,"landfill":2,"lpst":277,"npdes_ind":352,"npl":2,"pst":332,"rcra_gen":181,"rcra_tsd":1,"rrc_brown":1,"rrc_disp":1,"rrc_inj":87,"rrc_ocp":24,"rrc_orphan":8,"rrc_vcp":6,"sems":1,"sems_arch":4,"sf_state":3,"tri":69,"vcp":16},"open":21},"48349":{"name":"Navarro","bbox":[31.7962,-96.8962,32.3289,-96.0548],"sites":501,"by_list":{"brown_epa":3,"dc_reg":4,"enf":51,"ihwca":13,"iop":3,"landfill":1,"lpst":100,"npdes_ind":44,"pst":69,"rcra_gen":26,"rrc_disp":4,"rrc_inj":89,"rrc_ocp":1,"rrc_orphan":64,"sems_arch":2,"sf_state":1,"tri":24,"vcp":2},"open":6},"48353":{"name":"Nolan","bbox":[32.0824,-100.6654,32.5253,-100.1465],"sites":425,"by_list":{"dc_reg":2,"enf":9,"ihwca":7,"iop":2,"landfill":1,"lpst":48,"npdes_ind":23,"pst":27,"rcra_gen":16,"rrc_disp":9,"rrc_inj":254,"rrc_ocp":6,"rrc_orphan":11,"sems_arch":2,"tri":8},"open":4},"48045":{"name":"Briscoe","bbox":[34.3123,-101.4716,34.7483,-100.9449],"sites":17,"by_list":{"enf":7,"lpst":4,"npdes_ind":2,"pst":3,"rrc_orphan":1},"open":0},"48049":{"name":"Brown","bbox":[31.4609,-99.2028,32.0796,-98.6684],"sites":502,"by_list":{"brown_epa":1,"dc_reg":6,"enf":5,"ihwca":12,"iop":3,"landfill":1,"lpst":88,"npdes_ind":47,"pst":47,"rcra_gen":15,"rrc_disp":3,"rrc_inj":96,"rrc_orphan":162,"sems_arch":1,"tri":14,"vcp":1},"open":6},"48055":{"name":"Caldwell","bbox":[29.6307,-97.8939,30.0729,-97.3158],"sites":435,"by_list":{"brown_epa":1,"dc_reg":5,"enf":13,"ihwca":17,"lpst":49,"npdes_ind":28,"pst":37,"rcra_gen":17,"rrc_cwds":1,"rrc_inj":116,"rrc_ocp":3,"rrc_orphan":140,"sems_arch":1,"tri":6,"vcp":1},"open":5,"parcels":755},"48061":{"name":"Cameron","bbox":[25.8565,-97.8631,26.4113,-97.1456],"sites":1348,"by_list":{"brown_epa":8,"brown_tceq":3,"dc_reg":20,"dcrp":1,"enf":105,"ihwca":72,"iop":9,"landfill":1,"lpst":385,"msd":3,"npdes_ind":241,"pst":254,"rcra_gen":141,"rrc_ocp":1,"rrc_orphan":2,"sems":4,"sems_arch":12,"sf_state":1,"tri":59,"vcp":26},"open":17,"parcels":4290},"48065":{"name":"Carson","bbox":[35.1821,-101.623,35.6253,-101.0859],"sites":295,"by_list":{"dc_reg":1,"enf":3,"ihwca":5,"landfill":1,"lpst":29,"npdes_ind":6,"npl":1,"pst":9,"rcra_gen":11,"rcra_tsd":1,"rrc_disp":2,"rrc_inj":64,"rrc_ocp":24,"rrc_orphan":134,"sems_arch":1,"sf_state":1,"tri":2},"open":2},"48067":{"name":"Cass","bbox":[32.8795,-94.654,33.298,-94.0427],"sites":256,"by_list":{"dc_reg":2,"enf":7,"ihwca":5,"lpst":63,"npdes_ind":29,"pst":36,"rcra_gen":9,"rrc_disp":3,"rrc_inj":33,"rrc_ocp":2,"rrc_orphan":53,"sems_arch":2,"sf_state":3,"tri":7,"vcp":2},"open":2},"48073":{"name":"Cherokee","bbox":[31.4257,-95.4599,32.138,-94.8659],"sites":371,"by_list":{"brown_epa":2,"brown_tceq":1,"dc_reg":4,"enf":25,"ihwca":10,"iop":3,"landfill":1,"lpst":80,"npdes_ind":60,"pst":49,"rcra_gen":23,"rrc_disp":3,"rrc_inj":23,"rrc_ocp":42,"rrc_orphan":17,"sems_arch":2,"sf_state":2,"tri":19,"vcp":5},"open":5},"48077":{"name":"Clay","bbox":[33.4668,-98.4338,34.1571,-97.9457],"sites":282,"by_list":{"enf":3,"ihwca":2,"lpst":21,"npdes_ind":6,"pst":12,"rcra_gen":1,"rrc_inj":220,"rrc_ocp":1,"rrc_orphan":13,"sems":1,"tri":1,"vcp":1},"open":2},"48081":{"name":"Coke","bbox":[31.693,-100.8254,32.0866,-100.2351],"sites":183,"by_list":{"ihwca":2,"lpst":13,"npdes_ind":15,"pst":3,"rcra_gen":1,"rrc_inj":141,"rrc_ocp":4,"rrc_orphan":2,"tri":2},"open":4},"48085":{"name":"Collin","bbox":[32.9818,-96.844,33.4055,-96.2954],"sites":1828,"by_list":{"brown_epa":24,"brown_tceq":1,"dc_reg":141,"dcrp":12,"enf":128,"ihwca":80,"iop":27,"landfill":1,"lpst":350,"msd":15,"npdes_ind":237,"pst":351,"rcra_gen":267,"rcra_tsd":1,"sems":11,"sems_arch":10,"sf_state":1,"tri":88,"vcp":83},"open":7},"48087":{"name":"Collingsworth","bbox":[34.7464,-100.541,35.1831,-100.0004],"sites":36,"by_list":{"enf":3,"ihwca":1,"landfill":1,"lpst":9,"npdes_ind":6,"pst":7,"rrc_inj":3,"rrc_orphan":6},"open":3},"48091":{"name":"Comal","bbox":[29.5945,-98.6461,30.038,-97.9993],"sites":518,"by_list":{"dc_reg":13,"enf":31,"ihwca":37,"iop":1,"landfill":1,"lpst":118,"npdes_ind":143,"pst":76,"rcra_gen":46,"rrc_ocp":4,"sems":1,"sems_arch":2,"tri":33,"vcp":12},"open":4},"48361":{"name":"Orange","bbox":[29.9144,-94.1176,30.2443,-93.6953],"sites":729,"by_list":{"dc_reg":10,"enf":46,"ihwca":33,"lpst":183,"npdes_ind":93,"npl_del":3,"pst":97,"rcra_gen":148,"rcra_tsd":3,"rrc_inj":30,"rrc_ocp":8,"rrc_orphan":19,"sems":3,"sems_arch":9,"sf_state":3,"tri":36,"vcp":5},"open":7},"48369":{"name":"Parmer","bbox":[34.3127,-103.044,34.7474,-102.5252],"sites":44,"by_list":{"dc_reg":1,"enf":6,"ihwca":1,"lpst":10,"npdes_ind":7,"pst":8,"rcra_gen":5,"sems_arch":2,"tri":4},"open":0},"48383":{"name":"Reagan","bbox":[31.0794,-101.7762,31.6513,-101.2671],"sites":404,"by_list":{"enf":1,"ihwca":7,"landfill":1,"lpst":24,"npdes_ind":24,"pst":4,"rcra_gen":17,"rrc_cwds":3,"rrc_disp":40,"rrc_inj":221,"rrc_ocp":11,"rrc_orphan":45,"sems_arch":1,"tri":5},"open":4},"48385":{"name":"Real","bbox":[29.6235,-100.0309,30.0824,-99.6009],"sites":15,"by_list":{"ihwca":2,"lpst":8,"npdes_ind":1,"pst":1,"rcra_gen":1,"rrc_ocp":1,"rrc_orphan":1},"open":0},"48387":{"name":"Red River","bbox":[33.3289,-95.3105,33.962,-94.7461],"sites":105,"by_list":{"brown_epa":1,"dc_reg":1,"enf":2,"ihwca":3,"lpst":26,"npdes_ind":7,"pst":19,"rcra_gen":9,"rrc_disp":1,"rrc_inj":22,"rrc_orphan":7,"sems":1,"sems_arch":1,"tri":2,"vcp":3},"open":1},"48395":{"name":"Robertson","bbox":[30.6957,-96.8291,31.3571,-96.241],"sites":177,"by_list":{"brown_epa":1,"dc_reg":1,"enf":6,"ihwca":16,"lpst":29,"npdes_ind":33,"pst":32,"rcra_gen":13,"rrc_disp":4,"rrc_inj":16,"rrc_ocp":9,"rrc_orphan":7,"tri":8,"vcp":2},"open":2},"48399":{"name":"Runnels","bbox":[31.5768,-100.2358,32.0826,-99.714],"sites":180,"by_list":{"dc_reg":1,"enf":4,"ihwca":4,"iop":2,"lpst":42,"npdes_ind":14,"pst":12,"rcra_gen":9,"rrc_disp":7,"rrc_inj":56,"rrc_ocp":1,"rrc_orphan":21,"sems_arch":2,"tri":3,"vcp":2},"open":0},"48403":{"name":"Sabine","bbox":[31.1343,-94.0442,31.5862,-93.5997],"sites":72,"by_list":{"dc_reg":1,"enf":1,"ihwca":1,"lpst":24,"npdes_ind":12,"pst":17,"rcra_gen":9,"rrc_disp":1,"rrc_inj":3,"rrc_ocp":1,"rrc_orphan":1,"tri":1},"open":1},"48415":{"name":"Scurry","bbox":[32.5253,-101.1746,32.9702,-100.6559],"sites":1899,"by_list":{"brown_epa":1,"dc_reg":1,"enf":10,"ihwca":11,"iop":2,"landfill":1,"lpst":39,"npdes_ind":19,"pst":23,"rcra_gen":11,"rrc_disp":14,"rrc_inj":1714,"rrc_ocp":15,"rrc_orphan":24,"sems_arch":1,"tri":12,"vcp":1},"open":12},"48417":{"name":"Shackelford","bbox":[32.5147,-99.612,32.957,-99.096],"sites":683,"by_list":{"enf":2,"ihwca":1,"lpst":11,"npdes_ind":25,"pst":5,"rcra_gen":3,"rrc_disp":5,"rrc_inj":349,"rrc_ocp":1,"rrc_orphan":280,"tri":1},"open":0},"48419":{"name":"Shelby","bbox":[31.5694,-94.5114,31.9799,-93.8125],"sites":286,"by_list":{"dc_reg":7,"enf":15,"ihwca":6,"iop":1,"lpst":63,"npdes_ind":21,"pst":31,"rcra_gen":15,"rrc_cwds":3,"rrc_disp":28,"rrc_inj":36,"rrc_ocp":32,"rrc_orphan":15,"sf_state":2,"tri":10,"vcp":1},"open":6},"48423":{"name":"Smith","bbox":[32.1356,-95.5945,32.687,-94.9853],"sites":1144,"by_list":{"dc_reg":35,"dcrp":2,"enf":67,"ihwca":39,"iop":13,"landfill":1,"lpst":333,"msd":4,"npdes_ind":166,"pst":192,"rcra_gen":90,"rcra_tsd":2,"rrc_disp":2,"rrc_inj":89,"rrc_ocp":27,"rrc_orphan":10,"sems":4,"sems_arch":6,"tri":46,"vcp":16},"open":19},"48427":{"name":"Starr","bbox":[26.2503,-99.1721,26.7857,-98.3207],"sites":391,"by_list":{"brown_epa":2,"brown_tceq":2,"dc_reg":1,"enf":9,"ihwca":3,"iop":2,"landfill":2,"lpst":28,"npdes_ind":24,"pst":71,"rcra_gen":11,"rrc_cwds":1,"rrc_disp":5,"rrc_inj":58,"rrc_ocp":108,"rrc_orphan":60,"tri":3,"vcp":1},"open":8},"48431":{"name":"Sterling","bbox":[31.5565,-101.2676,32.0872,-100.8216],"sites":228,"by_list":{"enf":1,"ihwca":1,"lpst":7,"npdes_ind":2,"pst":3,"rcra_gen":2,"rrc_disp":6,"rrc_inj":109,"rrc_ocp":1,"rrc_orphan":94,"tri":2},"open":0},"48435":{"name":"Sutton","bbox":[30.2878,-100.9606,30.7104,-100.1162],"sites":152,"by_list":{"dc_reg":3,"enf":2,"ihwca":6,"lpst":14,"npdes_ind":9,"pst":12,"rcra_gen":3,"rrc_disp":3,"rrc_inj":27,"rrc_ocp":53,"rrc_orphan":13,"tri":5,"vcp":2},"open":0},"48437":{"name":"Swisher","bbox":[34.3123,-101.9985,34.7482,-101.4716],"sites":53,"by_list":{"brown_tceq":1,"dc_reg":1,"enf":3,"ihwca":2,"landfill":1,"lpst":21,"npdes_ind":2,"npl":1,"pst":9,"rcra_gen":5,"rrc_ocp":2,"rrc_orphan":1,"sems_arch":1,"sf_state":1,"tri":1,"vcp":1},"open":3},"48441":{"name":"Taylor","bbox":[32.0813,-100.1519,32.5228,-99.6296],"sites":967,"by_list":{"brown_epa":2,"dc_reg":16,"dcrp":2,"enf":41,"ihwca":28,"iop":4,"lpst":293,"msd":3,"npdes_ind":126,"pst":147,"rcra_gen":82,"rcra_tsd":1,"rrc_cwds":2,"rrc_inj":122,"rrc_ocp":6,"rrc_orphan":38,"sems":3,"sems_arch":5,"sf_state":1,"tri":33,"vcp":12},"open":9,"parcels":2126},"48447":{"name":"Throckmorton","bbox":[32.9569,-99.4724,33.399,-98.9509],"sites":381,"by_list":{"brown_epa":1,"ihwca":2,"lpst":10,"npdes_ind":1,"pst":3,"rrc_disp":7,"rrc_inj":262,"rrc_ocp":1,"rrc_orphan":94},"open":1},"48451":{"name":"Tom Green","bbox":[31.0866,-101.2679,31.7054,-100.1112],"sites":703,"by_list":{"brown_epa":1,"dc_reg":19,"enf":23,"ihwca":38,"iop":4,"landfill":1,"lpst":199,"msd":1,"npdes_ind":107,"pst":99,"rcra_gen":52,"rrc_disp":1,"rrc_inj":118,"rrc_ocp":1,"rrc_orphan":8,"sems":2,"sems_arch":8,"sf_state":1,"tri":14,"vcp":6},"open":7},"48453":{"name":"Travis","bbox":[30.0245,-98.173,30.6282,-97.3695],"sites":3192,"by_list":{"brown_epa":143,"brown_tceq":21,"dc_reg":147,"dcrp":11,"enf":131,"ihwca":192,"iop":54,"landfill":3,"lpst":808,"npdes_ind":464,"pst":586,"rcra_gen":344,"rrc_inj":2,"rrc_ocp":11,"rrc_orphan":2,"sems":2,"sems_arch":17,"tri":109,"vcp":145},"open":8,"parcels":14226},"48457":{"name":"Tyler","bbox":[30.526,-94.658,31.059,-94.051],"sites":160,"by_list":{"dc_reg":3,"enf":3,"ihwca":3,"lpst":39,"npdes_ind":15,"pst":23,"rcra_gen":29,"rrc_disp":1,"rrc_inj":32,"rrc_ocp":7,"sems":1,"tri":3,"vcp":1},"open":7},"48467":{"name":"Van Zandt","bbox":[32.3552,-96.0768,32.8385,-95.4492],"sites":306,"by_list":{"brown_epa":1,"dc_reg":7,"dcrp":1,"enf":5,"ihwca":7,"lpst":66,"npdes_ind":28,"pst":52,"rcra_gen":13,"rrc_inj":45,"rrc_ocp":31,"rrc_orphan":37,"sems":1,"sf_state":3,"tri":6,"vcp":3},"open":15},"48469":{"name":"Victoria","bbox":[28.4996,-97.3059,29.104,-96.6459],"sites":662,"by_list":{"brown_epa":1,"dc_reg":8,"dcrp":1,"enf":29,"ihwca":31,"iop":1,"landfill":1,"lpst":142,"npdes_ind":75,"pst":87,"rcra_gen":53,"rcra_tsd":2,"rrc_brown":1,"rrc_disp":4,"rrc_inj":123,"rrc_ocp":17,"rrc_orphan":47,"rrc_vcp":2,"sems":2,"sems_arch":4,"tri":26,"vcp":5},"open":8,"parcels":1736},"48477":{"name":"Washington","bbox":[30.0443,-96.7946,30.3843,-96.0859],"sites":228,"by_list":{"dc_reg":7,"enf":11,"ihwca":16,"lpst":56,"npdes_ind":31,"pst":47,"rcra_gen":23,"rcra_tsd":1,"rrc_disp":2,"rrc_inj":5,"rrc_ocp":1,"rrc_orphan":13,"sems":2,"sems_arch":1,"tri":10,"vcp":2},"open":2},"48483":{"name":"Wheeler","bbox":[35.1827,-100.5402,35.6193,-100.0004],"sites":244,"by_list":{"dc_reg":1,"ihwca":1,"landfill":1,"lpst":15,"npdes_ind":2,"pst":11,"rcra_gen":4,"rrc_disp":26,"rrc_inj":73,"rrc_ocp":54,"rrc_orphan":55,"tri":1},"open":8},"48485":{"name":"Wichita","bbox":[33.834,-98.9531,34.1956,-98.4236],"sites":2324,"by_list":{"brown_epa":3,"dc_reg":15,"dcrp":1,"enf":50,"ihwca":28,"iop":6,"landfill":2,"lpst":287,"msd":7,"npdes_ind":85,"pst":114,"rcra_gen":65,"rrc_cwds":1,"rrc_disp":5,"rrc_inj":1406,"rrc_ocp":12,"rrc_orphan":179,"rrc_vcp":1,"sems":2,"sems_arch":5,"tri":27,"vcp":23},"open":13,"parcels":166},"48489":{"name":"Willacy","bbox":[26.2993,-98.0042,26.6118,-97.3825],"sites":130,"by_list":{"dc_reg":2,"enf":5,"ihwca":3,"lpst":35,"npdes_ind":3,"pst":28,"rcra_gen":4,"rrc_inj":38,"rrc_ocp":4,"rrc_orphan":6,"sems_arch":1,"vcp":1},"open":5},"48499":{"name":"Wood","bbox":[32.544,-95.6654,33.0134,-95.1521],"sites":443,"by_list":{"brown_epa":5,"dc_reg":3,"enf":11,"ihwca":2,"lpst":80,"npdes_ind":37,"pst":45,"rcra_gen":14,"rrc_disp":3,"rrc_inj":186,"rrc_ocp":27,"rrc_orphan":14,"sems":2,"sems_arch":2,"tri":9,"vcp":3},"open":7},"48001":{"name":"Anderson","bbox":[31.5041,-96.0622,32.0845,-95.2589],"sites":441,"by_list":{"dc_reg":5,"dcrp":1,"enf":10,"ihwca":17,"iop":1,"lpst":75,"msd":1,"npdes_ind":45,"pst":53,"rcra_gen":27,"rcra_tsd":1,"rrc_disp":4,"rrc_inj":161,"rrc_ocp":10,"rrc_orphan":5,"sems_arch":3,"sf_state":1,"tri":14,"vcp":7},"open":6},"48013":{"name":"Atascosa","bbox":[28.6127,-98.8049,29.2507,-98.0983],"sites":437,"by_list":{"dc_reg":6,"enf":9,"ihwca":15,"lpst":59,"npdes_ind":54,"pst":46,"rcra_gen":27,"rrc_cwds":1,"rrc_disp":18,"rrc_inj":93,"rrc_ocp":12,"rrc_orphan":85,"rrc_vcp":1,"tri":9,"vcp":2},"open":5},"48015":{"name":"Austin","bbox":[29.6017,-96.622,30.0962,-96.0249],"sites":204,"by_list":{"brown_epa":4,"dc_reg":6,"enf":5,"ihwca":5,"lpst":40,"npdes_ind":44,"pst":37,"rcra_gen":17,"rrc_inj":24,"rrc_ocp":7,"rrc_orphan":1,"sems":1,"sems_arch":1,"tri":8,"vcp":4},"open":3},"48017":{"name":"Bailey","bbox":[33.8247,-103.0473,34.3129,-102.6151],"sites":56,"by_list":{"brown_epa":1,"brown_tceq":1,"dc_reg":3,"enf":8,"ihwca":2,"landfill":2,"lpst":15,"npdes_ind":6,"pst":10,"rcra_gen":8},"open":0},"48023":{"name":"Baylor","bbox":[33.3975,-99.4757,33.834,-98.9531],"sites":98,"by_list":{"enf":3,"ihwca":1,"lpst":19,"npdes_ind":4,"pst":7,"rcra_gen":2,"rrc_inj":60,"rrc_orphan":1,"tri":1},"open":0},"48025":{"name":"Bee","bbox":[28.1297,-98.0898,28.7196,-97.3756],"sites":327,"by_list":{"dc_reg":1,"enf":18,"ihwca":8,"lpst":55,"npdes_ind":29,"pst":37,"rcra_gen":10,"rrc_disp":2,"rrc_inj":46,"rrc_ocp":45,"rrc_orphan":66,"sems":1,"sems_arch":3,"tri":5,"vcp":1},"open":7},"48029":{"name":"Bexar","bbox":[29.1144,-98.8066,29.7607,-98.1268],"sites":6124,"by_list":{"brown_epa":44,"brown_tceq":13,"dc_reg":177,"dcrp":7,"enf":251,"ihwca":386,"iop":35,"landfill":2,"lpst":1835,"msd":3,"npdes_ind":1243,"npl":3,"npl_del":1,"pst":1057,"rcra_gen":551,"rcra_tsd":8,"rrc_cwds":1,"rrc_inj":7,"rrc_ocp":23,"rrc_orphan":57,"rrc_vcp":5,"sems":24,"sems_arch":45,"sf_state":10,"tri":191,"vcp":145},"open":33,"parcels":24191},"48033":{"name":"Borden","bbox":[32.5241,-101.6913,32.9636,-101.1734],"sites":403,"by_list":{"enf":4,"ihwca":3,"lpst":3,"npdes_ind":5,"pst":2,"rrc_disp":4,"rrc_inj":373,"rrc_ocp":7,"rrc_orphan":2},"open":3},"48035":{"name":"Bosque","bbox":[31.5878,-98.0055,32.2036,-97.2773],"sites":72,"by_list":{"dc_reg":2,"enf":2,"ihwca":1,"lpst":16,"npdes_ind":16,"pst":25,"rcra_gen":3,"rrc_orphan":3,"sems":1,"tri":3},"open":1},"48039":{"name":"Brazoria","bbox":[28.8248,-95.874,29.5965,-95.0565],"sites":1817,"by_list":{"brown_epa":2,"brown_tceq":1,"dc_reg":52,"dcrp":1,"enf":121,"ihwca":97,"iop":12,"landfill":2,"lpst":330,"msd":1,"npdes_ind":246,"npl":1,"pst":243,"rcra_gen":194,"rcra_tsd":6,"rrc_brown":1,"rrc_disp":1,"rrc_inj":251,"rrc_ocp":40,"rrc_orphan":41,"rrc_vcp":3,"sems":10,"sems_arch":23,"sf_state":8,"tri":102,"vcp":28},"open":20,"parcels":5486},"48267":{"name":"Kimble","bbox":[30.2867,-100.1165,30.7108,-99.3017],"sites":54,"by_list":{"ihwca":7,"landfill":1,"lpst":12,"npdes_ind":12,"pst":15,"rcra_gen":3,"rrc_ocp":3,"sf_state":1},"open":1},"48271":{"name":"Kinney","bbox":[29.084,-100.7937,29.6239,-100.1114],"sites":24,"by_list":{"enf":1,"ihwca":3,"landfill":1,"lpst":9,"npdes_ind":3,"pst":5,"rrc_orphan":1,"sems":1},"open":0},"48277":{"name":"Lamar","bbox":[33.3807,-95.8577,33.9342,-95.3086],"sites":264,"by_list":{"brown_epa":1,"dc_reg":6,"enf":13,"ihwca":9,"iop":2,"landfill":1,"lpst":71,"msd":1,"npdes_ind":45,"pst":61,"rcra_gen":27,"rrc_ocp":1,"sems_arch":2,"tri":21,"vcp":3},"open":2},"48281":{"name":"Lampasas","bbox":[31.0295,-98.5627,31.4637,-97.9071],"sites":97,"by_list":{"dc_reg":1,"enf":6,"ihwca":4,"lpst":23,"npdes_ind":26,"pst":23,"rcra_gen":5,"tri":7,"vcp":2},"open":0},"48285":{"name":"Lavaca","bbox":[29.0632,-97.2401,29.6327,-96.5606],"sites":261,"by_list":{"dc_reg":3,"enf":4,"ihwca":7,"lpst":53,"npdes_ind":20,"pst":22,"rcra_gen":10,"rrc_disp":7,"rrc_inj":30,"rrc_ocp":54,"rrc_orphan":38,"tri":12,"vcp":1},"open":4},"48287":{"name":"Lee","bbox":[30.032,-97.3345,30.5572,-96.6409],"sites":152,"by_list":{"brown_epa":1,"dc_reg":3,"enf":3,"ihwca":9,"lpst":29,"npdes_ind":25,"pst":23,"rcra_gen":5,"rrc_cwds":1,"rrc_disp":3,"rrc_inj":7,"rrc_ocp":4,"rrc_orphan":29,"tri":10},"open":2},"48291":{"name":"Liberty","bbox":[29.8843,-95.1659,30.4936,-94.4422],"sites":698,"by_list":{"dc_reg":10,"dcrp":1,"enf":28,"ihwca":24,"iop":3,"lpst":111,"npdes_ind":122,"npl":1,"pst":86,"rcra_gen":47,"rrc_disp":6,"rrc_inj":100,"rrc_ocp":8,"rrc_orphan":112,"sems":1,"sems_arch":9,"sf_state":3,"tri":21,"vcp":5},"open":7,"parcels":1152},"48293":{"name":"Limestone","bbox":[31.2209,-96.9322,31.8149,-96.2366],"sites":201,"by_list":{"brown_epa":2,"brown_tceq":2,"dc_reg":4,"enf":6,"ihwca":9,"landfill":1,"lpst":48,"npdes_ind":31,"pst":35,"rcra_gen":12,"rrc_inj":25,"rrc_ocp":3,"rrc_orphan":11,"tri":9,"vcp":3},"open":2},"48295":{"name":"Lipscomb","bbox":[36.0557,-100.5467,36.4997,-100.0004],"sites":70,"by_list":{"enf":6,"ihwca":1,"landfill":1,"lpst":5,"npdes_ind":3,"pst":3,"rcra_gen":2,"rrc_disp":13,"rrc_inj":27,"rrc_ocp":1,"rrc_orphan":8},"open":0},"48301":{"name":"Loving","bbox":[31.6514,-103.9802,32.0004,-103.3265],"sites":697,"by_list":{"enf":1,"lpst":1,"npdes_ind":8,"rrc_cwds":1,"rrc_disp":142,"rrc_inj":414,"rrc_ocp":21,"rrc_orphan":100,"tri":9},"open":5},"48305":{"name":"Lynn","bbox":[32.9597,-102.0762,33.3948,-101.5569],"sites":87,"by_list":{"dc_reg":1,"enf":3,"ihwca":3,"iop":1,"landfill":1,"lpst":18,"npdes_ind":14,"pst":7,"rcra_gen":2,"rrc_inj":35,"rrc_ocp":1,"tri":1},"open":2},"48307":{"name":"McCulloch","bbox":[30.9406,-99.6036,31.4919,-99.0906],"sites":116,"by_list":{"brown_epa":1,"brown_tceq":1,"dc_reg":1,"enf":7,"ihwca":8,"landfill":1,"lpst":27,"npdes_ind":30,"pst":8,"rcra_gen":7,"rrc_inj":22,"sf_state":1,"tri":2},"open":0},"48317":{"name":"Martin","bbox":[32.0868,-102.2112,32.5252,-101.6887],"sites":518,"by_list":{"dc_reg":1,"enf":6,"ihwca":5,"landfill":1,"lpst":9,"npdes_ind":30,"pst":10,"rcra_gen":2,"rrc_cwds":5,"rrc_disp":97,"rrc_inj":327,"rrc_ocp":13,"rrc_vcp":1,"tri":11},"open":7},"48323":{"name":"Maverick","bbox":[28.1969,-100.6684,29.0863,-100.1114],"sites":557,"by_list":{"dc_reg":3,"ihwca":9,"iop":1,"landfill":2,"lpst":37,"npdes_ind":41,"pst":34,"rcra_gen":13,"rrc_disp":2,"rrc_inj":335,"rrc_orphan":73,"sems":1,"sems_arch":2,"tri":2,"vcp":2},"open":1},"48327":{"name":"Menard","bbox":[30.7104,-100.1162,31.088,-99.4839],"sites":43,"by_list":{"ihwca":4,"landfill":1,"lpst":2,"npdes_ind":2,"pst":5,"rrc_inj":29},"open":0},"48331":{"name":"Milam","bbox":[30.4573,-97.3155,31.1059,-96.6213],"sites":741,"by_list":{"dc_reg":2,"enf":1,"ihwca":7,"lpst":38,"npdes_ind":16,"pst":33,"rcra_gen":8,"rrc_cwds":2,"rrc_disp":6,"rrc_inj":158,"rrc_orphan":465,"tri":3,"vcp":2},"open":2},"48333":{"name":"Mills","bbox":[31.2306,-98.9916,31.7236,-98.2668],"sites":23,"by_list":{"dc_reg":1,"enf":1,"ihwca":1,"lpst":7,"npdes_ind":2,"pst":7,"rcra_gen":1,"rrc_ocp":1,"rrc_orphan":1,"vcp":1},"open":0},"48341":{"name":"Moore","bbox":[35.62,-102.163,36.0554,-101.6228],"sites":280,"by_list":{"dc_reg":2,"enf":12,"ihwca":10,"landfill":2,"lpst":23,"npdes_ind":23,"pst":21,"rcra_gen":14,"rcra_tsd":1,"rrc_disp":5,"rrc_inj":42,"rrc_ocp":81,"rrc_orphan":19,"rrc_vcp":11,"sems":1,"sems_arch":1,"sf_state":1,"tri":8,"vcp":3},"open":4},"48355":{"name":"Nueces","bbox":[27.5584,-97.9421,27.9957,-97.254],"sites":2248,"by_list":{"brown_epa":17,"brown_tceq":2,"dc_reg":35,"dcrp":7,"enf":106,"ihwca":142,"iop":10,"landfill":3,"lpst":720,"npdes_ind":398,"npl":1,"pst":282,"rcra_gen":174,"rcra_tsd":14,"rrc_brown":3,"rrc_cwds":1,"rrc_disp":4,"rrc_inj":49,"rrc_ocp":86,"rrc_orphan":40,"rrc_vcp":12,"sems":8,"sems_arch":23,"sf_state":5,"tri":80,"vcp":26},"open":31,"parcels":5916},"48363":{"name":"Palo Pinto","bbox":[32.5116,-98.5763,33.0079,-98.0561],"sites":668,"by_list":{"brown_epa":1,"brown_tceq":1,"dc_reg":3,"dcrp":2,"enf":6,"ihwca":6,"lpst":86,"npdes_ind":28,"pst":44,"rcra_gen":10,"rrc_disp":4,"rrc_inj":120,"rrc_ocp":6,"rrc_orphan":334,"rrc_vcp":1,"sems":2,"sems_arch":2,"tri":10,"vcp":2},"open":5},"48373":{"name":"Polk","bbox":[30.489,-95.2002,31.1466,-94.5379],"sites":326,"by_list":{"brown_epa":2,"dc_reg":4,"enf":10,"ihwca":8,"iop":1,"landfill":1,"lpst":74,"npdes_ind":36,"pst":49,"rcra_gen":20,"rcra_tsd":1,"rrc_disp":2,"rrc_inj":48,"rrc_ocp":47,"rrc_orphan":13,"tri":10},"open":8},"48389":{"name":"Reeves","bbox":[30.7665,-104.1024,32.0001,-103.011],"sites":1069,"by_list":{"dc_reg":2,"enf":8,"ihwca":5,"landfill":2,"lpst":62,"npdes_ind":28,"pst":33,"rcra_gen":8,"rcra_tsd":1,"rrc_cwds":11,"rrc_disp":187,"rrc_inj":508,"rrc_ocp":19,"rrc_orphan":170,"sems":2,"sems_arch":2,"tri":21},"open":9},"48405":{"name":"San Augustine","bbox":[31.0993,-94.3991,31.6536,-93.9832],"sites":58,"by_list":{"dc_reg":1,"ihwca":1,"lpst":17,"npdes_ind":4,"pst":7,"rcra_gen":1,"rrc_disp":10,"rrc_inj":10,"rrc_ocp":5,"rrc_orphan":1,"tri":1},"open":1},"48413":{"name":"Schleicher","bbox":[30.7061,-100.9622,31.088,-100.1152],"sites":112,"by_list":{"dc_reg":1,"ihwca":3,"landfill":2,"lpst":9,"npdes_ind":5,"pst":5,"rcra_gen":6,"rrc_disp":2,"rrc_inj":58,"rrc_ocp":2,"rrc_orphan":18,"tri":1},"open":0},"48421":{"name":"Sherman","bbox":[36.0552,-102.163,36.5003,-101.6235],"sites":53,"by_list":{"dc_reg":1,"enf":1,"ihwca":3,"lpst":6,"npdes_ind":5,"pst":3,"rcra_gen":1,"rrc_inj":16,"rrc_orphan":17},"open":0},"48439":{"name":"Tarrant","bbox":[32.5487,-97.5506,32.9942,-97.0323],"sites":8163,"by_list":{"brown_epa":199,"brown_tceq":9,"dc_reg":266,"dcrp":44,"enf":412,"ihwca":349,"iop":155,"landfill":3,"lpst":1988,"msd":75,"npdes_ind":1879,"npl":2,"npl_del":1,"pst":1111,"rcra_gen":795,"rcra_tsd":4,"rrc_disp":5,"rrc_inj":10,"rrc_ocp":1,"rrc_vcp":2,"sems":26,"sems_arch":61,"sf_state":5,"tri":439,"vcp":322},"open":52,"parcels":26528},"48455":{"name":"Trinity","bbox":[30.8246,-95.4348,31.3869,-94.8429],"sites":82,"by_list":{"enf":3,"lpst":24,"npdes_ind":7,"pst":21,"rcra_gen":7,"rrc_inj":3,"rrc_ocp":9,"rrc_orphan":5,"tri":1,"vcp":2},"open":0},"48471":{"name":"Walker","bbox":[30.5044,-95.8631,31.0581,-95.3275],"sites":286,"by_list":{"dc_reg":9,"dcrp":1,"enf":16,"ihwca":12,"iop":3,"lpst":66,"msd":1,"npdes_ind":49,"pst":71,"rcra_gen":23,"rcra_tsd":1,"rrc_disp":1,"rrc_inj":10,"rrc_ocp":1,"rrc_orphan":8,"sems_arch":1,"tri":10,"vcp":3},"open":1},"48481":{"name":"Wharton","bbox":[28.9633,-96.6403,29.6338,-95.8419],"sites":435,"by_list":{"brown_epa":2,"brown_tceq":3,"dc_reg":5,"enf":9,"ihwca":11,"iop":1,"lpst":81,"npdes_ind":35,"pst":71,"rcra_gen":17,"rrc_disp":14,"rrc_inj":120,"rrc_ocp":10,"rrc_orphan":42,"sems_arch":4,"tri":7,"vcp":3},"open":6},"48493":{"name":"Wilson","bbox":[28.8823,-98.4073,29.4418,-97.7284],"sites":289,"by_list":{"dc_reg":4,"enf":8,"ihwca":1,"iop":1,"lpst":27,"npdes_ind":25,"pst":30,"rcra_gen":11,"rrc_disp":3,"rrc_inj":64,"rrc_ocp":13,"rrc_orphan":89,"sems_arch":1,"tri":11,"vcp":1},"open":1},"48503":{"name":"Young","bbox":[32.9523,-98.9539,33.3975,-98.4207],"sites":735,"by_list":{"brown_epa":1,"dc_reg":5,"enf":6,"ihwca":10,"lpst":46,"npdes_ind":22,"pst":20,"rcra_gen":14,"rrc_disp":5,"rrc_inj":521,"rrc_ocp":3,"rrc_orphan":74,"tri":7,"vcp":1},"open":2},"48003":{"name":"Andrews","bbox":[32.0858,-103.0647,32.5232,-102.211],"sites":3210,"by_list":{"brown_epa":1,"dc_reg":3,"enf":5,"ihwca":9,"landfill":1,"lpst":44,"npdes_ind":17,"pst":21,"rcra_gen":33,"rcra_tsd":2,"rrc_brown":2,"rrc_cwds":1,"rrc_disp":38,"rrc_inj":2890,"rrc_ocp":13,"rrc_orphan":120,"tri":8,"vcp":2},"open":8},"48019":{"name":"Bandera","bbox":[29.5622,-99.6031,29.9077,-98.7788],"sites":40,"by_list":{"dc_reg":2,"enf":8,"ihwca":4,"lpst":7,"npdes_ind":3,"pst":11,"rcra_gen":2,"rrc_ocp":1,"sems_arch":1,"vcp":1},"open":0},"48027":{"name":"Bell","bbox":[30.7524,-97.9138,31.3202,-97.0702],"sites":1011,"by_list":{"brown_epa":6,"brown_tceq":2,"dc_reg":61,"dcrp":1,"enf":42,"ihwca":27,"iop":4,"landfill":2,"lpst":273,"npdes_ind":177,"npl":1,"pst":206,"rcra_gen":135,"rcra_tsd":1,"rrc_ocp":2,"sems":2,"sems_arch":2,"sf_state":2,"tri":54,"vcp":11},"open":3,"parcels":5461},"48041":{"name":"Brazos","bbox":[30.3303,-96.6017,30.9737,-96.08],"sites":743,"by_list":{"brown_epa":8,"brown_tceq":5,"dc_reg":24,"dcrp":5,"enf":34,"ihwca":36,"iop":7,"lpst":186,"msd":1,"npdes_ind":136,"pst":140,"rcra_gen":71,"rrc_disp":4,"rrc_inj":34,"rrc_ocp":3,"rrc_orphan":7,"rrc_vcp":1,"sems_arch":2,"tri":27,"vcp":12},"open":9,"parcels":3643},"48059":{"name":"Callahan","bbox":[32.0792,-99.6314,32.5148,-99.1143],"sites":274,"by_list":{"brown_epa":1,"dc_reg":1,"enf":2,"ihwca":5,"lpst":33,"npdes_ind":11,"pst":13,"rcra_gen":3,"rrc_cwds":1,"rrc_disp":1,"rrc_inj":132,"rrc_ocp":3,"rrc_orphan":67,"tri":1},"open":0},"48075":{"name":"Childress","bbox":[34.3118,-100.4178,34.7475,-99.9975],"sites":51,"by_list":{"dc_reg":1,"enf":1,"ihwca":2,"landfill":1,"lpst":20,"npdes_ind":4,"pst":12,"rcra_gen":5,"rrc_inj":2,"sems_arch":1,"tri":1,"vcp":1},"open":4},"48083":{"name":"Coleman","bbox":[31.4099,-99.7217,32.0821,-99.1959],"sites":432,"by_list":{"brown_epa":1,"brown_tceq":1,"dc_reg":2,"enf":3,"ihwca":2,"landfill":1,"lpst":29,"npdes_ind":7,"pst":12,"rcra_gen":3,"rrc_disp":2,"rrc_inj":145,"rrc_orphan":221,"sems_arch":1,"tri":2},"open":1},"48089":{"name":"Colorado","bbox":[29.2478,-96.8742,29.9615,-96.1754],"sites":262,"by_list":{"dc_reg":6,"dcrp":1,"enf":5,"ihwca":12,"landfill":1,"lpst":43,"npdes_ind":68,"pst":32,"rcra_gen":15,"rrc_disp":2,"rrc_inj":26,"rrc_ocp":14,"rrc_orphan":21,"sems":1,"sems_arch":1,"tri":11,"vcp":3},"open":2},"48107":{"name":"Crosby","bbox":[33.3948,-101.5636,33.8336,-101.0388],"sites":436,"by_list":{"enf":1,"ihwca":1,"iop":1,"lpst":23,"npdes_ind":7,"pst":9,"rcra_gen":2,"rrc_inj":390,"rrc_orphan":1,"sems_arch":1},"open":0},"48119":{"name":"Delta","bbox":[33.2193,-95.8618,33.4951,-95.3066],"sites":16,"by_list":{"enf":1,"lpst":8,"pst":7},"open":1},"48131":{"name":"Duval","bbox":[27.2625,-98.8033,28.058,-98.2325],"sites":397,"by_list":{"brown_epa":1,"enf":3,"ihwca":2,"landfill":1,"lpst":22,"npdes_ind":11,"pst":13,"rcra_gen":6,"rrc_disp":8,"rrc_inj":210,"rrc_ocp":48,"rrc_orphan":71,"sems_arch":1},"open":0},"48143":{"name":"Erath","bbox":[31.9175,-98.5512,32.513,-97.8649],"sites":271,"by_list":{"dc_reg":5,"enf":18,"ihwca":7,"iop":3,"landfill":1,"lpst":55,"npdes_ind":65,"pst":36,"rcra_gen":15,"rrc_disp":1,"rrc_inj":9,"rrc_ocp":1,"rrc_orphan":44,"tri":10,"vcp":1},"open":5},"48153":{"name":"Floyd","bbox":[33.8305,-101.5649,34.3125,-101.0412],"sites":68,"by_list":{"enf":8,"ihwca":1,"landfill":1,"lpst":26,"npdes_ind":4,"pst":15,"rcra_gen":2,"rrc_orphan":5,"sems_arch":4,"tri":1,"vcp":1},"open":0},"48163":{"name":"Frio","bbox":[28.6406,-99.4139,29.0913,-98.8008],"sites":745,"by_list":{"brown_epa":9,"dc_reg":1,"enf":13,"ihwca":4,"iop":1,"lpst":20,"npdes_ind":17,"pst":26,"rcra_gen":11,"rrc_disp":15,"rrc_inj":168,"rrc_ocp":7,"rrc_orphan":446,"tri":4,"vcp":3},"open":0},"48171":{"name":"Gillespie","bbox":[30.1343,-99.304,30.4999,-98.5879],"sites":156,"by_list":{"dc_reg":2,"enf":13,"ihwca":6,"iop":1,"landfill":1,"lpst":49,"npdes_ind":46,"pst":25,"rcra_gen":7,"rrc_ocp":3,"sems_arch":1,"tri":2},"open":1},"48173":{"name":"Glasscock","bbox":[31.6509,-101.7761,32.0875,-101.2642],"sites":461,"by_list":{"enf":1,"ihwca":2,"landfill":1,"lpst":3,"npdes_ind":20,"pst":1,"rcra_gen":3,"rrc_cwds":5,"rrc_disp":44,"rrc_inj":292,"rrc_ocp":9,"rrc_orphan":70,"tri":10},"open":2},"48175":{"name":"Goliad","bbox":[28.3887,-97.7785,28.9252,-97.1589],"sites":147,"by_list":{"dc_reg":1,"enf":1,"ihwca":6,"lpst":13,"npdes_ind":2,"pst":10,"rcra_gen":2,"rrc_disp":3,"rrc_inj":26,"rrc_ocp":13,"rrc_orphan":67,"tri":3},"open":0},"48183":{"name":"Gregg","bbox":[32.36,-94.9869,32.6522,-94.5792],"sites":1380,"by_list":{"brown_epa":16,"dc_reg":21,"dcrp":1,"enf":63,"ihwca":53,"iop":10,"landfill":1,"lpst":367,"msd":8,"npdes_ind":169,"npl":1,"pst":167,"rcra_gen":112,"rcra_tsd":4,"rrc_brown":9,"rrc_disp":10,"rrc_inj":83,"rrc_ocp":87,"rrc_orphan":69,"rrc_vcp":1,"sems":2,"sems_arch":14,"sf_state":2,"tri":79,"vcp":31},"open":26,"parcels":2300},"48187":{"name":"Guadalupe","bbox":[29.3768,-98.3109,29.8582,-97.6332],"sites":585,"by_list":{"dc_reg":9,"enf":27,"ihwca":20,"iop":1,"landfill":1,"lpst":102,"msd":1,"npdes_ind":111,"pst":85,"rcra_gen":32,"rcra_tsd":2,"rrc_inj":64,"rrc_ocp":4,"rrc_orphan":91,"sems_arch":3,"sf_state":1,"tri":28,"vcp":3},"open":1},"48205":{"name":"Hartley","bbox":[35.6225,-103.0416,36.0552,-102.1628],"sites":46,"by_list":{"dc_reg":1,"enf":2,"ihwca":2,"lpst":3,"npdes_ind":2,"pst":2,"rcra_gen":1,"rrc_inj":12,"rrc_ocp":10,"rrc_orphan":8,"rrc_vcp":1,"sems_arch":1,"tri":1},"open":0},"48209":{"name":"Hays","bbox":[29.7524,-98.2976,30.3563,-97.7102],"sites":454,"by_list":{"brown_epa":1,"brown_tceq":2,"dc_reg":12,"dcrp":2,"enf":22,"ihwca":18,"iop":2,"lpst":129,"msd":1,"npdes_ind":97,"pst":83,"rcra_gen":42,"rrc_ocp":6,"sf_state":1,"tri":23,"vcp":13},"open":2},"48219":{"name":"Hockley","bbox":[33.3885,-102.6154,33.8251,-102.0759],"sites":2723,"by_list":{"dc_reg":2,"enf":12,"ihwca":8,"landfill":2,"lpst":59,"npdes_ind":17,"npl":1,"pst":31,"rcra_gen":26,"rrc_disp":9,"rrc_inj":2510,"rrc_ocp":11,"rrc_orphan":12,"sems":2,"sems_arch":2,"sf_state":1,"tri":16,"vcp":2},"open":9},"48231":{"name":"Hunt","bbox":[32.8372,-96.2973,33.4095,-95.8587],"sites":481,"by_list":{"brown_epa":45,"brown_tceq":7,"dc_reg":7,"dcrp":1,"enf":21,"ihwca":28,"landfill":1,"lpst":103,"msd":2,"npdes_ind":95,"npl_del":1,"pst":93,"rcra_gen":26,"rcra_tsd":1,"rrc_inj":2,"sems":2,"sems_arch":5,"sf_state":2,"tri":29,"vcp":10},"open":7},"48241":{"name":"Jasper","bbox":[30.2417,-94.4578,31.1581,-93.8657],"sites":301,"by_list":{"brown_epa":1,"brown_tceq":1,"dc_reg":5,"enf":5,"ihwca":6,"lpst":80,"npdes_ind":24,"npl":2,"pst":43,"rcra_gen":65,"rcra_tsd":1,"rrc_disp":5,"rrc_inj":26,"rrc_ocp":15,"rrc_orphan":10,"sf_state":2,"tri":10},"open":16},"48255":{"name":"Karnes","bbox":[28.668,-98.191,29.2217,-97.5746],"sites":324,"by_list":{"dc_reg":2,"enf":56,"ihwca":6,"lpst":37,"npdes_ind":31,"pst":28,"rcra_gen":14,"rrc_cwds":4,"rrc_disp":29,"rrc_inj":49,"rrc_ocp":33,"rrc_orphan":24,"sems":1,"sf_state":1,"tri":9},"open":6},"48269":{"name":"King","bbox":[33.3974,-100.5187,33.836,-99.991],"sites":232,"by_list":{"ihwca":1,"lpst":7,"npdes_ind":2,"pst":4,"rcra_gen":2,"rrc_disp":2,"rrc_inj":179,"rrc_orphan":35},"open":0},"48279":{"name":"Lamb","bbox":[33.8247,-102.6154,34.3131,-102.0857],"sites":146,"by_list":{"dc_reg":1,"enf":10,"ihwca":7,"landfill":3,"lpst":31,"npdes_ind":7,"pst":21,"rcra_gen":5,"rrc_inj":49,"rrc_ocp":1,"rrc_orphan":4,"tri":6,"vcp":1},"open":1},"48289":{"name":"Leon","bbox":[30.9737,-96.3311,31.6184,-95.6572],"sites":351,"by_list":{"brown_tceq":1,"enf":4,"ihwca":6,"lpst":29,"npdes_ind":15,"pst":33,"rcra_gen":13,"rrc_cwds":1,"rrc_disp":3,"rrc_inj":82,"rrc_ocp":3,"rrc_orphan":143,"sems":2,"sems_arch":1,"tri":14,"vcp":1},"open":7},"48299":{"name":"Llano","bbox":[30.4861,-98.9646,30.9214,-98.351],"sites":82,"by_list":{"dc_reg":2,"enf":2,"ihwca":2,"lpst":31,"npdes_ind":10,"pst":25,"rcra_gen":4,"sems":1,"sems_arch":1,"sf_state":1,"vcp":3},"open":2},"48313":{"name":"Madison","bbox":[30.823,-96.241,31.0942,-95.6179],"sites":121,"by_list":{"dc_reg":2,"enf":3,"ihwca":3,"lpst":28,"npdes_ind":8,"pst":13,"rcra_gen":7,"rrc_disp":8,"rrc_inj":40,"rrc_ocp":1,"rrc_orphan":7,"sems":1},"open":1},"48325":{"name":"Medina","bbox":[29.0904,-99.4139,29.6907,-98.8048],"sites":368,"by_list":{"brown_tceq":2,"dc_reg":7,"enf":9,"ihwca":9,"lpst":53,"npdes_ind":60,"pst":49,"rcra_gen":15,"rrc_inj":43,"rrc_ocp":16,"rrc_orphan":94,"sems":1,"sems_arch":2,"tri":5,"vcp":3},"open":2},"48335":{"name":"Mitchell","bbox":[32.0854,-101.184,32.5277,-100.6606],"sites":1435,"by_list":{"dc_reg":1,"enf":3,"ihwca":6,"landfill":1,"lpst":26,"npdes_ind":12,"pst":8,"rcra_gen":4,"rrc_disp":7,"rrc_inj":1230,"rrc_ocp":16,"rrc_orphan":118,"sf_state":2,"tri":1},"open":2},"48343":{"name":"Morris","bbox":[32.8792,-94.8198,33.3636,-94.6523],"sites":107,"by_list":{"dc_reg":2,"enf":4,"ihwca":7,"lpst":23,"npdes_ind":18,"pst":16,"rcra_gen":11,"rcra_tsd":1,"rrc_inj":1,"rrc_ocp":11,"tri":12,"vcp":1},"open":3},"48101":{"name":"Cottle","bbox":[33.8357,-100.5187,34.3141,-99.9976],"sites":24,"by_list":{"brown_epa":1,"enf":2,"lpst":5,"npdes_ind":1,"pst":1,"rrc_inj":8,"rrc_orphan":4,"sems_arch":2},"open":0},"48105":{"name":"Crockett","bbox":[30.2878,-102.3888,31.0872,-100.9606],"sites":723,"by_list":{"dc_reg":2,"enf":1,"ihwca":6,"lpst":7,"npdes_ind":17,"pst":11,"rcra_gen":4,"rrc_disp":11,"rrc_inj":335,"rrc_ocp":39,"rrc_orphan":283,"sems":1,"tri":6},"open":5},"48109":{"name":"Culberson","bbox":[30.6636,-104.9186,32.0005,-104.0245],"sites":311,"by_list":{"ihwca":3,"lpst":12,"npdes_ind":9,"pst":11,"rcra_gen":4,"rrc_cwds":1,"rrc_disp":28,"rrc_inj":137,"rrc_ocp":1,"rrc_orphan":99,"tri":6},"open":1},"48111":{"name":"Dallam","bbox":[36.0552,-103.0417,36.5004,-102.1625],"sites":54,"by_list":{"enf":7,"ihwca":3,"lpst":13,"npdes_ind":9,"pst":14,"rcra_gen":2,"sems_arch":1,"tri":5},"open":5},"48113":{"name":"Dallas","bbox":[32.5452,-97.0384,32.9893,-96.5169],"sites":12961,"by_list":{"brown_epa":156,"brown_tceq":38,"dc_reg":381,"dcrp":70,"enf":769,"ihwca":540,"iop":352,"landfill":5,"lpst":2997,"msd":194,"npdes_ind":3256,"npl":3,"npl_del":1,"pst":1402,"rcra_gen":1217,"rcra_tsd":6,"sems":53,"sems_arch":117,"sf_state":6,"tri":556,"vcp":842},"open":73,"parcels":25221},"48121":{"name":"Denton","bbox":[32.9876,-97.3985,33.4305,-96.834],"sites":1777,"by_list":{"brown_epa":20,"brown_tceq":3,"dc_reg":114,"dcrp":11,"enf":108,"ihwca":58,"iop":27,"landfill":6,"lpst":378,"msd":8,"npdes_ind":322,"pst":332,"rcra_gen":208,"rcra_tsd":1,"rrc_disp":1,"rrc_inj":7,"rrc_ocp":16,"rrc_orphan":12,"rrc_vcp":1,"sems":10,"sems_arch":10,"tri":69,"vcp":55},"open":20},"48125":{"name":"Dickens","bbox":[33.3972,-101.0412,33.8357,-100.5174],"sites":95,"by_list":{"ihwca":1,"lpst":10,"pst":6,"rcra_gen":1,"rrc_disp":1,"rrc_inj":73,"rrc_orphan":3},"open":0},"48133":{"name":"Eastland","bbox":[32.078,-99.1187,32.5153,-98.4751],"sites":372,"by_list":{"brown_epa":4,"brown_tceq":3,"dc_reg":2,"enf":6,"ihwca":3,"lpst":49,"npdes_ind":19,"pst":33,"rcra_gen":12,"rcra_tsd":1,"rrc_brown":1,"rrc_disp":4,"rrc_inj":186,"rrc_ocp":9,"rrc_orphan":32,"sems":1,"sems_arch":3,"sf_state":1,"tri":3},"open":4},"48139":{"name":"Ellis","bbox":[32.0521,-97.0868,32.5494,-96.3831],"sites":775,"by_list":{"brown_epa":1,"dc_reg":18,"dcrp":1,"enf":58,"ihwca":33,"iop":2,"landfill":2,"lpst":153,"msd":1,"npdes_ind":199,"pst":114,"rcra_gen":85,"rcra_tsd":2,"rrc_inj":4,"rrc_ocp":5,"sems":9,"sems_arch":6,"sf_state":2,"tri":76,"vcp":4},"open":4},"48145":{"name":"Falls","bbox":[30.9862,-97.2781,31.5223,-96.5969],"sites":68,"by_list":{"brown_epa":1,"brown_tceq":1,"dc_reg":3,"enf":3,"ihwca":4,"lpst":17,"npdes_ind":9,"pst":23,"rcra_gen":3,"rrc_orphan":3,"tri":1},"open":0},"48147":{"name":"Fannin","bbox":[33.3411,-96.3846,33.8575,-95.8463],"sites":144,"by_list":{"dc_reg":1,"enf":13,"ihwca":12,"lpst":27,"npdes_ind":37,"pst":29,"rcra_gen":10,"sems":2,"tri":7,"vcp":6},"open":0},"48151":{"name":"Fisher","bbox":[32.5228,-100.6606,32.9635,-100.1442],"sites":235,"by_list":{"enf":3,"ihwca":1,"lpst":6,"npdes_ind":3,"pst":4,"rcra_gen":1,"rrc_disp":6,"rrc_inj":197,"rrc_ocp":5,"rrc_orphan":6,"sems_arch":1,"tri":2},"open":0},"48157":{"name":"Fort Bend","bbox":[29.2626,-96.0889,29.7883,-95.4241],"sites":1553,"by_list":{"dc_reg":101,"dcrp":10,"enf":100,"ihwca":67,"iop":17,"landfill":3,"lpst":220,"msd":8,"npdes_ind":292,"pst":270,"rcra_gen":189,"rcra_tsd":2,"rrc_inj":99,"rrc_ocp":15,"rrc_orphan":19,"rrc_vcp":26,"sems":3,"sems_arch":4,"sf_state":2,"tri":76,"vcp":30},"open":23,"parcels":6628},"48181":{"name":"Grayson","bbox":[33.3978,-96.9446,33.9596,-96.3785],"sites":780,"by_list":{"brown_epa":7,"brown_tceq":2,"dc_reg":13,"dcrp":1,"enf":40,"ihwca":26,"iop":1,"landfill":2,"lpst":175,"msd":2,"npdes_ind":121,"pst":132,"rcra_gen":59,"rcra_tsd":1,"rrc_inj":133,"rrc_orphan":5,"rrc_vcp":1,"sems":5,"sems_arch":4,"sf_state":1,"tri":41,"vcp":8},"open":5,"parcels":3560},"48189":{"name":"Hale","bbox":[33.8247,-102.0904,34.3131,-101.5636],"sites":371,"by_list":{"dc_reg":2,"enf":21,"ihwca":11,"landfill":1,"lpst":88,"npdes_ind":24,"pst":50,"rcra_gen":16,"rrc_inj":126,"rrc_ocp":2,"rrc_orphan":3,"sems":1,"sems_arch":9,"sf_state":1,"tri":8,"vcp":8},"open":2},"48193":{"name":"Hamilton","bbox":[31.4164,-98.4637,32.0179,-97.7664],"sites":49,"by_list":{"brown_epa":2,"brown_tceq":2,"enf":6,"ihwca":1,"lpst":12,"npdes_ind":8,"pst":14,"rcra_gen":3,"tri":1},"open":0},"48345":{"name":"Motley","bbox":[33.8336,-101.0415,34.3141,-100.5173],"sites":42,"by_list":{"enf":1,"ihwca":3,"landfill":1,"lpst":6,"npdes_ind":4,"pst":3,"rrc_inj":9,"rrc_orphan":15},"open":0},"48347":{"name":"Nacogdoches","bbox":[31.2248,-94.9672,31.8456,-94.311],"sites":536,"by_list":{"dc_reg":8,"enf":13,"ihwca":12,"iop":5,"landfill":1,"lpst":107,"msd":3,"npdes_ind":61,"pst":59,"rcra_gen":25,"rrc_disp":4,"rrc_inj":16,"rrc_ocp":17,"rrc_orphan":173,"sems":2,"sems_arch":6,"sf_state":1,"tri":18,"vcp":5},"open":6},"48351":{"name":"Newton","bbox":[30.2427,-93.9111,31.1866,-93.5276],"sites":150,"by_list":{"enf":6,"ihwca":3,"landfill":1,"lpst":23,"npdes_ind":8,"pst":10,"rcra_gen":14,"rrc_disp":2,"rrc_inj":40,"rrc_ocp":9,"rrc_orphan":28,"sf_state":1,"tri":3,"vcp":2},"open":1},"48197":{"name":"Hardeman","bbox":[34.056,-99.9979,34.5793,-99.4742],"sites":84,"by_list":{"enf":2,"ihwca":5,"lpst":23,"npdes_ind":4,"pst":6,"rrc_disp":4,"rrc_inj":29,"rrc_ocp":5,"rrc_orphan":1,"sems_arch":2,"tri":2,"vcp":1},"open":3},"48199":{"name":"Hardin","bbox":[30.113,-94.7327,30.527,-94.0717],"sites":511,"by_list":{"dc_reg":5,"enf":16,"ihwca":10,"iop":1,"landfill":2,"lpst":71,"npdes_ind":61,"pst":54,"rcra_gen":62,"rrc_disp":12,"rrc_inj":140,"rrc_ocp":39,"rrc_orphan":17,"sems":1,"sems_arch":2,"sf_state":3,"tri":14,"vcp":1},"open":9,"parcels":600},"48201":{"name":"Harris","bbox":[29.4981,-95.9607,30.1706,-94.9087],"sites":21132,"by_list":{"brown_epa":146,"brown_tceq":21,"dc_reg":689,"dcrp":163,"enf":1504,"ihwca":1157,"iop":383,"landfill":14,"lpst":4463,"msd":163,"npdes_ind":4726,"npl":13,"npl_del":3,"pst":2785,"rcra_gen":2329,"rcra_tsd":36,"rrc_brown":5,"rrc_cwds":1,"rrc_disp":3,"rrc_inj":121,"rrc_ocp":80,"rrc_orphan":24,"rrc_vcp":74,"sems":79,"sems_arch":222,"sf_state":25,"tri":1067,"vcp":836},"open":226},"48203":{"name":"Harrison","bbox":[32.3307,-94.7021,32.7931,-94.0428],"sites":834,"by_list":{"brown_epa":2,"brown_tceq":3,"dc_reg":5,"enf":28,"ihwca":32,"iop":3,"lpst":132,"msd":2,"npdes_ind":100,"npl":1,"npl_del":1,"pst":65,"rcra_gen":53,"rcra_tsd":4,"rrc_cwds":2,"rrc_disp":16,"rrc_inj":95,"rrc_ocp":124,"rrc_orphan":107,"sems":1,"sems_arch":8,"sf_state":3,"tri":40,"vcp":7},"open":10},"48211":{"name":"Hemphill","bbox":[35.6191,-100.5402,36.0565,-100.0004],"sites":204,"by_list":{"enf":2,"ihwca":6,"iop":1,"lpst":16,"npdes_ind":1,"pst":8,"rcra_gen":3,"rrc_disp":16,"rrc_inj":49,"rrc_ocp":89,"rrc_orphan":10,"tri":3},"open":5},"48213":{"name":"Henderson","bbox":[32.0059,-96.4521,32.3586,-95.4285],"sites":375,"by_list":{"dc_reg":5,"enf":26,"ihwca":15,"iop":1,"lpst":86,"msd":2,"npdes_ind":64,"pst":82,"rcra_gen":27,"rrc_disp":1,"rrc_inj":22,"rrc_ocp":1,"rrc_orphan":14,"sems":3,"sems_arch":3,"sf_state":2,"tri":17,"vcp":4},"open":3},"48215":{"name":"Hidalgo","bbox":[26.0437,-98.5867,26.7831,-97.8618],"sites":2105,"by_list":{"brown_epa":8,"brown_tceq":9,"dc_reg":41,"dcrp":1,"enf":123,"ihwca":57,"iop":6,"landfill":5,"lpst":585,"npdes_ind":373,"npl":1,"pst":464,"rcra_gen":183,"rcra_tsd":1,"rrc_disp":7,"rrc_inj":61,"rrc_ocp":55,"rrc_orphan":47,"rrc_vcp":3,"sems":3,"sems_arch":8,"sf_state":3,"tri":37,"vcp":24},"open":31},"48223":{"name":"Hopkins","bbox":[32.9604,-95.8633,33.3772,-95.3086],"sites":266,"by_list":{"brown_epa":2,"brown_tceq":1,"dc_reg":2,"dcrp":1,"enf":24,"ihwca":6,"lpst":79,"npdes_ind":42,"pst":42,"rcra_gen":21,"rcra_tsd":1,"rrc_inj":22,"rrc_orphan":1,"sems":1,"sems_arch":2,"tri":16,"vcp":3},"open":3},"48235":{"name":"Irion","bbox":[31.0794,-101.2748,31.53,-100.6888],"sites":207,"by_list":{"enf":1,"ihwca":5,"lpst":1,"npdes_ind":9,"pst":4,"rcra_gen":1,"rrc_disp":9,"rrc_inj":163,"rrc_ocp":3,"rrc_orphan":9,"tri":2},"open":0},"48237":{"name":"Jack","bbox":[33.0013,-98.4266,33.4671,-97.9182],"sites":523,"by_list":{"dc_reg":1,"enf":8,"ihwca":4,"lpst":18,"npdes_ind":9,"pst":6,"rcra_gen":3,"rrc_disp":5,"rrc_inj":285,"rrc_ocp":7,"rrc_orphan":175,"tri":2},"open":1},"48239":{"name":"Jackson","bbox":[28.6756,-96.9386,29.2639,-96.3092],"sites":592,"by_list":{"brown_epa":1,"dc_reg":1,"enf":4,"ihwca":1,"lpst":44,"npdes_ind":11,"pst":32,"rcra_gen":5,"rrc_disp":8,"rrc_inj":244,"rrc_ocp":21,"rrc_orphan":216,"tri":4},"open":3},"48243":{"name":"Jeff Davis","bbox":[30.4122,-104.9854,31.1052,-103.44],"sites":12,"by_list":{"lpst":7,"pst":4,"rcra_gen":1},"open":0},"48249":{"name":"Jim Wells","bbox":[27.261,-98.2355,28.058,-97.7985],"sites":304,"by_list":{"dc_reg":4,"enf":9,"ihwca":19,"iop":5,"landfill":1,"lpst":84,"npdes_ind":27,"pst":56,"rcra_gen":9,"rrc_cwds":2,"rrc_disp":4,"rrc_inj":26,"rrc_ocp":33,"rrc_orphan":19,"tri":2,"vcp":4},"open":15},"48253":{"name":"Jones","bbox":[32.5147,-100.1465,32.9601,-99.612],"sites":462,"by_list":{"brown_epa":3,"brown_tceq":4,"dc_reg":1,"enf":9,"ihwca":9,"landfill":2,"lpst":51,"npdes_ind":23,"pst":13,"rcra_gen":10,"rcra_tsd":1,"rrc_disp":7,"rrc_inj":234,"rrc_ocp":6,"rrc_orphan":85,"sems":1,"tri":3},"open":8},"48259":{"name":"Kendall","bbox":[29.7202,-98.9201,30.139,-98.414],"sites":108,"by_list":{"dc_reg":5,"enf":4,"ihwca":12,"lpst":24,"npdes_ind":19,"pst":27,"rcra_gen":10,"rrc_ocp":1,"tri":1,"vcp":5},"open":0},"48371":{"name":"Pecos","bbox":[30.0528,-103.5851,31.3713,-101.7684],"sites":1931,"by_list":{"dc_reg":3,"enf":2,"ihwca":11,"landfill":1,"lpst":42,"npdes_ind":21,"pst":28,"rcra_gen":14,"rcra_tsd":1,"rrc_cwds":2,"rrc_disp":31,"rrc_inj":871,"rrc_ocp":39,"rrc_orphan":853,"rrc_vcp":1,"sems_arch":1,"tri":9,"vcp":1},"open":5},"48377":{"name":"Presidio","bbox":[29.2629,-104.9854,30.6292,-103.7927],"sites":46,"by_list":{"enf":1,"ihwca":5,"landfill":1,"lpst":17,"npdes_ind":5,"pst":13,"rcra_gen":2,"sems":1,"tri":1},"open":1},"48391":{"name":"Refugio","bbox":[28.0758,-97.5411,28.5535,-96.767],"sites":456,"by_list":{"brown_epa":2,"dc_reg":1,"enf":4,"ihwca":9,"iop":3,"lpst":36,"npdes_ind":5,"pst":18,"rcra_gen":11,"rrc_brown":1,"rrc_disp":1,"rrc_inj":316,"rrc_ocp":14,"rrc_orphan":34,"vcp":1},"open":3},"48401":{"name":"Rusk","bbox":[31.8443,-94.9854,32.3949,-94.4524],"sites":599,"by_list":{"brown_epa":1,"dc_reg":5,"enf":21,"ihwca":5,"landfill":1,"lpst":90,"npdes_ind":49,"pst":37,"rcra_gen":22,"rrc_brown":1,"rrc_cwds":1,"rrc_disp":14,"rrc_inj":198,"rrc_ocp":99,"rrc_orphan":36,"sf_state":1,"tri":18},"open":11,"parcels":294},"48407":{"name":"San Jacinto","bbox":[30.345,-95.3592,30.9067,-94.8304],"sites":110,"by_list":{"enf":1,"ihwca":2,"lpst":23,"npdes_ind":10,"pst":22,"rcra_gen":7,"rrc_disp":2,"rrc_inj":15,"rrc_ocp":6,"rrc_orphan":20,"sems":1,"tri":1},"open":2},"48409":{"name":"San Patricio","bbox":[27.8221,-97.9041,28.1768,-97.1348],"sites":638,"by_list":{"brown_epa":2,"brown_tceq":2,"dc_reg":5,"enf":26,"ihwca":42,"lpst":134,"npdes_ind":79,"npl":1,"pst":80,"rcra_gen":44,"rcra_tsd":1,"rrc_brown":1,"rrc_disp":4,"rrc_inj":67,"rrc_ocp":56,"rrc_orphan":56,"rrc_vcp":2,"sems":3,"sems_arch":2,"sf_state":1,"tri":20,"vcp":10},"open":13},"48443":{"name":"Terrell","bbox":[29.7772,-102.567,30.656,-101.6462],"sites":28,"by_list":{"ihwca":2,"landfill":1,"lpst":12,"pst":2,"rrc_inj":2,"rrc_ocp":4,"rrc_orphan":3,"sems_arch":1,"tri":1},"open":0},"48461":{"name":"Upton","bbox":[31.0798,-102.318,31.6514,-101.7758],"sites":786,"by_list":{"brown_epa":1,"ihwca":1,"landfill":2,"lpst":13,"npdes_ind":18,"pst":7,"rcra_gen":3,"rrc_cwds":1,"rrc_disp":40,"rrc_inj":581,"rrc_ocp":13,"rrc_orphan":97,"tri":9},"open":5},"48465":{"name":"Val Verde","bbox":[29.2421,-101.7618,30.2883,-100.6991],"sites":264,"by_list":{"dc_reg":2,"enf":14,"ihwca":2,"landfill":1,"lpst":88,"npdes_ind":31,"pst":32,"rcra_gen":14,"rrc_inj":11,"rrc_ocp":10,"rrc_orphan":42,"sems":1,"sems_arch":1,"tri":11,"vcp":4},"open":3},"48473":{"name":"Waller","bbox":[29.7279,-96.1914,30.2456,-95.8033],"sites":355,"by_list":{"dc_reg":4,"enf":14,"ihwca":11,"iop":2,"lpst":56,"npdes_ind":97,"npl":1,"pst":35,"rcra_gen":27,"rrc_disp":1,"rrc_inj":51,"rrc_ocp":10,"rrc_orphan":11,"rrc_vcp":1,"sf_state":1,"tri":27,"vcp":6},"open":5},"48479":{"name":"Webb","bbox":[27.2647,-100.2095,28.2046,-98.7981],"sites":1017,"by_list":{"brown_epa":2,"brown_tceq":1,"dc_reg":14,"enf":46,"ihwca":24,"iop":2,"landfill":1,"lpst":131,"npdes_ind":208,"pst":116,"rcra_gen":92,"rrc_disp":11,"rrc_inj":75,"rrc_ocp":123,"rrc_orphan":151,"sems":1,"sems_arch":2,"tri":13,"vcp":4},"open":21},"48487":{"name":"Wilbarger","bbox":[33.834,-99.4757,34.4421,-98.9525],"sites":377,"by_list":{"brown_tceq":1,"dc_reg":2,"enf":10,"ihwca":6,"lpst":44,"npdes_ind":17,"pst":16,"rcra_gen":8,"rrc_disp":2,"rrc_inj":246,"rrc_ocp":1,"rrc_orphan":16,"sems_arch":3,"tri":4,"vcp":1},"open":1},"48495":{"name":"Winkler","bbox":[31.6513,-103.3275,32.0871,-102.7989],"sites":1119,"by_list":{"dc_reg":2,"enf":1,"ihwca":2,"lpst":13,"npdes_ind":17,"npl":1,"pst":18,"rcra_gen":11,"rrc_disp":44,"rrc_inj":751,"rrc_ocp":17,"rrc_orphan":234,"sems":1,"sf_state":1,"tri":6},"open":12},"48501":{"name":"Yoakum","bbox":[32.9588,-103.0647,33.3885,-102.5948],"sites":2814,"by_list":{"brown_epa":1,"brown_tceq":1,"enf":2,"ihwca":12,"landfill":1,"lpst":23,"npdes_ind":7,"pst":12,"rcra_gen":13,"rrc_disp":22,"rrc_inj":2680,"rrc_ocp":13,"rrc_orphan":13,"sems_arch":1,"tri":11,"vcp":2},"open":6},"48505":{"name":"Zapata","bbox":[26.5709,-99.4539,27.3192,-98.9542],"sites":168,"by_list":{"enf":1,"landfill":1,"lpst":8,"npdes_ind":11,"pst":24,"rcra_gen":2,"rrc_cwds":1,"rrc_disp":6,"rrc_inj":33,"rrc_ocp":16,"rrc_orphan":65},"open":1},"48005":{"name":"Angelina","bbox":[31.0333,-95.0056,31.5269,-94.1296],"sites":578,"by_list":{"dc_reg":9,"enf":35,"ihwca":41,"iop":4,"landfill":1,"lpst":183,"msd":2,"npdes_ind":91,"pst":70,"rcra_gen":50,"rcra_tsd":2,"rrc_disp":1,"rrc_inj":3,"rrc_ocp":23,"rrc_orphan":7,"sems":1,"sems_arch":4,"sf_state":2,"tri":36,"vcp":13},"open":8,"parcels":1071},"48007":{"name":"Aransas","bbox":[27.8375,-97.2608,28.3191,-96.7872],"sites":145,"by_list":{"brown_epa":2,"dc_reg":1,"enf":2,"ihwca":4,"lpst":48,"npdes_ind":24,"pst":23,"rcra_gen":4,"rrc_brown":2,"rrc_inj":8,"rrc_ocp":5,"rrc_orphan":15,"rrc_vcp":2,"tri":1,"vcp":4},"open":4},"48037":{"name":"Bowie","bbox":[33.2411,-94.7469,33.703,-94.0429],"sites":610,"by_list":{"brown_epa":39,"brown_tceq":14,"dc_reg":13,"enf":33,"ihwca":20,"iop":3,"landfill":1,"lpst":208,"npdes_ind":84,"npl":3,"pst":82,"rcra_gen":57,"rcra_tsd":5,"rrc_disp":1,"rrc_inj":4,"rrc_orphan":5,"sems":1,"sems_arch":6,"sf_state":3,"tri":24,"vcp":4},"open":11},"48043":{"name":"Brewster","bbox":[28.9721,-103.8007,30.6659,-102.3208],"sites":68,"by_list":{"dc_reg":1,"enf":3,"ihwca":2,"iop":1,"landfill":2,"lpst":18,"npdes_ind":16,"pst":13,"rcra_gen":8,"sems":3,"tri":1},"open":0},"48051":{"name":"Burleson","bbox":[30.2968,-96.9636,30.7308,-96.272],"sites":171,"by_list":{"dc_reg":1,"enf":8,"ihwca":10,"iop":2,"lpst":39,"npdes_ind":19,"pst":22,"rcra_gen":17,"rcra_tsd":1,"rrc_disp":7,"rrc_inj":12,"rrc_ocp":6,"rrc_orphan":19,"sems":1,"tri":5,"vcp":2},"open":2},"48057":{"name":"Calhoun","bbox":[28.0613,-96.9304,28.7042,-96.3229],"sites":242,"by_list":{"dc_reg":2,"enf":19,"ihwca":16,"lpst":63,"npdes_ind":15,"npl":1,"pst":27,"rcra_gen":19,"rcra_tsd":3,"rrc_inj":22,"rrc_ocp":7,"rrc_orphan":32,"sems":1,"sf_state":1,"tri":12,"vcp":2},"open":4},"48071":{"name":"Chambers","bbox":[29.5246,-94.9815,29.8895,-94.3542],"sites":591,"by_list":{"brown_epa":1,"dc_reg":1,"enf":35,"ihwca":25,"landfill":2,"lpst":57,"npdes_ind":105,"pst":49,"rcra_gen":76,"rcra_tsd":2,"rrc_brown":1,"rrc_disp":8,"rrc_inj":126,"rrc_ocp":9,"rrc_orphan":36,"rrc_vcp":4,"sems":4,"tri":46,"vcp":4},"open":7,"parcels":936},"48093":{"name":"Comanche","bbox":[31.684,-98.9244,32.2614,-98.1566],"sites":111,"by_list":{"dc_reg":2,"enf":5,"lpst":27,"npdes_ind":20,"pst":18,"rcra_gen":5,"rrc_inj":8,"rrc_ocp":3,"rrc_orphan":17,"sems_arch":1,"tri":4,"vcp":1},"open":1},"48097":{"name":"Cooke","bbox":[33.4164,-97.4871,33.949,-96.9439],"sites":810,"by_list":{"brown_tceq":1,"dc_reg":4,"enf":25,"ihwca":12,"iop":1,"lpst":71,"msd":1,"npdes_ind":50,"pst":48,"rcra_gen":20,"rrc_disp":4,"rrc_inj":540,"rrc_ocp":1,"rrc_orphan":6,"sems_arch":2,"tri":17,"vcp":7},"open":5},"48273":{"name":"Kleberg","bbox":[27.2093,-98.0598,27.8434,-97.0454],"sites":344,"by_list":{"brown_epa":3,"brown_tceq":1,"dc_reg":4,"enf":14,"ihwca":13,"iop":1,"landfill":1,"lpst":123,"npdes_ind":19,"pst":53,"rcra_gen":13,"rrc_brown":1,"rrc_inj":15,"rrc_ocp":61,"rrc_orphan":16,"sems":2,"tri":3,"vcp":1},"open":49},"48311":{"name":"McMullen","bbox":[28.0575,-98.8033,28.6483,-98.3343],"sites":197,"by_list":{"enf":18,"ihwca":3,"landfill":1,"lpst":1,"npdes_ind":7,"pst":4,"rcra_gen":1,"rrc_cwds":1,"rrc_disp":16,"rrc_inj":61,"rrc_ocp":12,"rrc_orphan":69,"tri":3},"open":2},"48315":{"name":"Marion","bbox":[32.693,-94.7059,32.8811,-94.0427],"sites":167,"by_list":{"enf":6,"ihwca":1,"lpst":23,"npdes_ind":22,"pst":14,"rcra_gen":4,"rrc_disp":4,"rrc_inj":30,"rrc_ocp":24,"rrc_orphan":33,"tri":3,"vcp":3},"open":1},"48321":{"name":"Matagorda","bbox":[28.3839,-96.3819,29.2297,-95.507],"sites":440,"by_list":{"brown_epa":1,"dc_reg":3,"enf":15,"ihwca":20,"lpst":111,"npdes_ind":41,"pst":47,"rcra_gen":26,"rcra_tsd":2,"rrc_brown":1,"rrc_disp":2,"rrc_inj":60,"rrc_ocp":13,"rrc_orphan":76,"sems":1,"sems_arch":3,"sf_state":1,"tri":14,"vcp":3},"open":7},"48337":{"name":"Montague","bbox":[33.4337,-97.979,33.9914,-97.4841],"sites":492,"by_list":{"dc_reg":2,"enf":11,"ihwca":1,"lpst":36,"npdes_ind":16,"pst":20,"rcra_gen":11,"rrc_disp":7,"rrc_inj":360,"rrc_ocp":3,"rrc_orphan":19,"sems":1,"tri":4,"vcp":1},"open":4},"48117":{"name":"Deaf Smith","bbox":[34.7469,-103.0428,35.1832,-102.1675],"sites":112,"by_list":{"enf":7,"ihwca":1,"landfill":2,"lpst":28,"npdes_ind":28,"pst":21,"rcra_gen":9,"sems_arch":1,"tri":13,"vcp":2},"open":4},"48261":{"name":"Kenedy","bbox":[26.0668,-97.9859,27.2817,-97.1543],"sites":64,"by_list":{"enf":6,"ihwca":2,"lpst":10,"npdes_ind":2,"pst":8,"rrc_disp":2,"rrc_inj":19,"rrc_ocp":14,"sems_arch":1},"open":10},"48135":{"name":"Ector","bbox":[31.6513,-102.7991,32.087,-102.287],"sites":4523,"by_list":{"brown_epa":1,"dc_reg":24,"enf":55,"ihwca":90,"iop":5,"landfill":1,"lpst":261,"msd":3,"npdes_ind":192,"npl":4,"npl_del":1,"pst":141,"rcra_gen":153,"rcra_tsd":3,"rrc_cwds":6,"rrc_disp":23,"rrc_inj":3378,"rrc_ocp":16,"rrc_orphan":59,"rrc_vcp":1,"sems":8,"sems_arch":14,"sf_state":9,"tri":63,"vcp":12},"open":21,"parcels":2722},"48141":{"name":"El Paso","bbox":[31.3865,-106.6278,32.0023,-105.9977],"sites":2391,"by_list":{"brown_epa":57,"brown_tceq":4,"dc_reg":51,"dcrp":1,"enf":142,"ihwca":102,"iop":9,"landfill":2,"lpst":587,"npdes_ind":557,"pst":381,"rcra_gen":328,"rcra_tsd":2,"rrc_ocp":3,"sems":5,"sems_arch":24,"sf_state":2,"tri":105,"vcp":29},"open":13},"48155":{"name":"Foard","bbox":[33.7338,-100.0485,34.2298,-99.4745],"sites":46,"by_list":{"lpst":7,"npdes_ind":3,"pst":2,"rrc_inj":34},"open":0},"48161":{"name":"Freestone","bbox":[31.4134,-96.4967,32.0125,-95.7873],"sites":229,"by_list":{"dc_reg":2,"enf":6,"ihwca":12,"iop":2,"lpst":46,"msd":2,"npdes_ind":25,"pst":30,"rcra_gen":13,"rrc_disp":11,"rrc_inj":40,"rrc_ocp":2,"rrc_orphan":27,"tri":9,"vcp":2},"open":2},"48165":{"name":"Gaines","bbox":[32.5222,-103.0649,32.9591,-102.2027],"sites":2902,"by_list":{"dc_reg":2,"enf":8,"ihwca":6,"landfill":1,"lpst":34,"npdes_ind":9,"pst":26,"rcra_gen":14,"rrc_cwds":2,"rrc_disp":23,"rrc_inj":2646,"rrc_ocp":12,"rrc_orphan":109,"tri":10},"open":8},"48129":{"name":"Donley","bbox":[34.7477,-101.0907,35.1831,-100.539],"sites":21,"by_list":{"dc_reg":2,"ihwca":2,"lpst":5,"npdes_ind":2,"pst":7,"rcra_gen":1,"sems_arch":2},"open":0},"48167":{"name":"Galveston","bbox":[29.0778,-95.2331,29.5975,-94.3709],"sites":1511,"by_list":{"brown_epa":37,"brown_tceq":3,"dc_reg":35,"dcrp":4,"enf":107,"ihwca":83,"iop":10,"landfill":3,"lpst":366,"msd":5,"npdes_ind":176,"npl":3,"pst":251,"rcra_gen":169,"rcra_tsd":8,"rrc_brown":6,"rrc_inj":36,"rrc_ocp":17,"rrc_orphan":68,"rrc_vcp":8,"sems":8,"sems_arch":12,"sf_state":4,"tri":58,"vcp":34},"open":22,"parcels":5431},"48221":{"name":"Hood","bbox":[32.2335,-98.0685,32.5588,-97.6153],"sites":208,"by_list":{"dc_reg":7,"dcrp":1,"enf":5,"ihwca":1,"lpst":40,"npdes_ind":53,"pst":50,"rcra_gen":17,"rrc_disp":3,"rrc_inj":9,"rrc_ocp":8,"rrc_orphan":7,"sems":1,"tri":5,"vcp":1},"open":3},"48225":{"name":"Houston","bbox":[30.9304,-95.7644,31.5929,-94.9581],"sites":249,"by_list":{"dc_reg":3,"enf":10,"ihwca":4,"lpst":48,"npdes_ind":17,"pst":36,"rcra_gen":16,"rrc_disp":3,"rrc_inj":57,"rrc_ocp":14,"rrc_orphan":29,"sems_arch":1,"sf_state":1,"tri":10},"open":5},"48229":{"name":"Hudspeth","bbox":[30.6238,-105.998,32.0023,-104.9076],"sites":57,"by_list":{"enf":1,"ihwca":2,"landfill":2,"lpst":13,"npdes_ind":13,"pst":6,"rcra_gen":1,"rrc_orphan":19},"open":0},"48245":{"name":"Jefferson","bbox":[29.5615,-94.4451,30.1877,-93.838],"sites":2414,"by_list":{"brown_epa":36,"brown_tceq":6,"dc_reg":33,"dcrp":4,"enf":132,"ihwca":115,"iop":9,"landfill":3,"lpst":627,"msd":14,"npdes_ind":344,"npl":1,"npl_del":1,"pst":296,"rcra_gen":411,"rcra_tsd":16,"rrc_cwds":1,"rrc_disp":24,"rrc_inj":90,"rrc_ocp":18,"rrc_orphan":26,"rrc_vcp":2,"sems":14,"sems_arch":23,"sf_state":5,"tri":144,"vcp":19},"open":28,"parcels":3801},"48257":{"name":"Kaufman","bbox":[32.3575,-96.53,32.8417,-96.0759],"sites":464,"by_list":{"dc_reg":11,"enf":20,"ihwca":24,"iop":3,"lpst":103,"msd":1,"npdes_ind":107,"npl":1,"pst":85,"rcra_gen":49,"rrc_inj":10,"rrc_orphan":3,"sems":5,"sems_arch":3,"sf_state":1,"tri":34,"vcp":4},"open":7,"parcels":2011},"48365":{"name":"Panola","bbox":[31.9732,-94.6,32.3941,-94.0156],"sites":484,"by_list":{"brown_epa":1,"brown_tceq":1,"dc_reg":3,"enf":13,"ihwca":5,"iop":1,"lpst":73,"npdes_ind":22,"pst":34,"rcra_gen":18,"rrc_brown":1,"rrc_disp":36,"rrc_inj":131,"rrc_ocp":87,"rrc_orphan":40,"tri":16,"vcp":2},"open":14,"parcels":223},"48207":{"name":"Haskell","bbox":[32.957,-99.991,33.399,-99.4713],"sites":210,"by_list":{"dc_reg":1,"enf":8,"ihwca":2,"landfill":1,"lpst":17,"npdes_ind":17,"pst":8,"rcra_gen":2,"rrc_brown":1,"rrc_disp":3,"rrc_inj":116,"rrc_ocp":4,"rrc_orphan":28,"sems_arch":1,"tri":1},"open":0},"48375":{"name":"Potter","bbox":[35.1831,-102.1675,35.6202,-101.6228],"sites":838,"by_list":{"dc_reg":12,"enf":36,"ihwca":29,"iop":4,"landfill":1,"lpst":192,"npdes_ind":154,"pst":123,"rcra_gen":77,"rcra_tsd":2,"rrc_disp":1,"rrc_inj":20,"rrc_ocp":104,"rrc_orphan":27,"rrc_vcp":7,"sems":3,"sems_arch":5,"tri":31,"vcp":10},"open":10}},"county_rows":[["48001",441,6],["48003",3210,8],["48005",578,8],["48007",145,4],["48009",669,1],["48011",10,0],["48013",437,5],["48015",204,3],["48017",56,0],["48019",40,0],["48021",344,2],["48023",98,0],["48025",327,7],["48027",1011,3],["48029",6124,33],["48031",70,0],["48033",403,3],["48035",72,1],["48037",610,11],["48039",1817,20],["48041",743,9],["48043",68,0],["48045",17,0],["48047",156,15],["48049",502,6],["48051",171,2],["48053",219,0],["48055",435,5],["48057",242,4],["48059",274,0],["48061",1348,17],["48063",121,2],["48065",295,2],["48067",256,2],["48069",52,1],["48071",591,7],["48073",371,5],["48075",51,4],["48077",282,2],["48079",1181,4],["48081",183,4],["48083",432,1],["48085",1828,7],["48087",36,3],["48089",262,2],["48091",518,4],["48093",111,1],["48095",103,2],["48097",810,5],["48099",158,1],["48101",24,0],["48103",1545,7],["48105",723,5],["48107",436,0],["48109",311,1],["48111",54,5],["48113",12961,73],["48115",849,6],["48117",112,4],["48119",16,1],["48121",1777,20],["48123",298,8],["48125",95,0],["48127",432,3],["48129",21,0],["48131",397,0],["48133",372,4],["48135",4523,21],["48137",127,0],["48139",775,4],["48141",2391,13],["48143",271,5],["48145",68,0],["48147",144,0],["48149",283,1],["48151",235,0],["48153",68,0],["48155",46,0],["48157",1553,23],["48159",81,0],["48161",229,2],["48163",745,0],["48165",2902,8],["48167",1511,22],["48169",955,2],["48171",156,1],["48173",461,2],["48175",147,0],["48177",244,1],["48179",593,3],["48181",780,5],["48183",1380,26],["48185",204,2],["48187",585,1],["48189",371,2],["48191",26,2],["48193",49,0],["48195",100,0],["48197",84,3],["48199",511,9],["48201",21132,226],["48203",834,10],["48205",46,0],["48207",210,0],["48209",454,2],["48211",204,5],["48213",375,3],["48215",2105,31],["48217",229,0],["48219",2723,9],["48221",208,3],["48223",266,3],["48225",249,5],["48227",2116,11],["48229",57,0],["48231",481,7],["48233",824,9],["48235",207,0],["48237",523,1],["48239",592,3],["48241",301,16],["48243",12,0],["48245",2414,28],["48247",102,1],["48249",304,15],["48251",714,12],["48253",462,8],["48255",324,6],["48257",464,7],["48259",108,0],["48261",64,10],["48263",305,0],["48265",202,3],["48267",54,1],["48269",232,0],["48271",24,0],["48273",344,49],["48275",91,4],["48277",264,2],["48279",146,1],["48281",97,0],["48283",215,2],["48285",261,4],["48287",152,2],["48289",351,7],["48291",698,7],["48293",201,2],["48295",70,0],["48297",297,3],["48299",82,2],["48301",697,5],["48303",1530,12],["48305",87,2],["48307",116,0],["48309",1219,6],["48311",197,2],["48313",121,1],["48315",167,1],["48317",518,7],["48319",39,0],["48321",440,7],["48323",557,1],["48325",368,2],["48327",43,0],["48329",1431,37],["48331",741,2],["48333",23,0],["48335",1435,2],["48337",492,4],["48339",1581,21],["48341",280,4],["48343",107,3],["48345",42,0],["48347",536,6],["48349",501,6],["48351",150,1],["48353",425,4],["48355",2248,31],["48357",249,4],["48359",49,0],["48361",729,7],["48363",668,5],["48365",484,14],["48367",695,6],["48369",44,0],["48371",1931,5],["48373",326,8],["48375",838,10],["48377",46,1],["48379",52,3],["48381",273,3],["48383",404,4],["48385",15,0],["48387",105,1],["48389",1069,9],["48391",456,3],["48393",88,2],["48395",177,2],["48397",208,1],["48399",180,0],["48401",599,11],["48403",72,1],["48405",58,1],["48407",110,2],["48409",638,13],["48411",48,0],["48413",112,0],["48415",1899,12],["48417",683,0],["48419",286,6],["48421",53,0],["48423",1144,19],["48425",60,0],["48427",391,8],["48429",941,2],["48431",228,0],["48433",433,1],["48435",152,0],["48437",53,3],["48439",8163,52],["48441",967,9],["48443",28,0],["48445",747,2],["48447",381,1],["48449",263,2],["48451",703,7],["48453",3192,8],["48455",82,0],["48457",160,7],["48459",194,5],["48461",786,5],["48463",164,0],["48465",264,3],["48467",306,15],["48469",662,8],["48471",286,1],["48473",355,5],["48475",1717,9],["48477",228,2],["48479",1017,21],["48481",435,6],["48483",244,8],["48485",2324,13],["48487",377,1],["48489",130,5],["48491",1075,2],["48493",289,1],["48495",1119,12],["48497",482,7],["48499",443,7],["48501",2814,6],["48503",735,2],["48505",168,1],["48507",156,2]]}/*__DATA_END__*/;
+</script>
+<script>
+'use strict';
+/* ===================================================================== config */
+const BASE = 'data/';
+const CFG = {
+  onSiteFt: 200,          // a listed point this close to the subject point counts as on the property
+  adjoiningMi: 0.125,     // proxy for "adjoining properties" (no parcel polygons in the suite)
+  wellsMi: 0.25, pipelineFt: 500, wetlandFt: 500, sfhaFt: 250,
+  maxMi: 1.0,
+};
+// Search distance: a number of miles, 'adj' (adjoining proxy) or 'prop' (property only).
+// Severity 0..1 feeds the score; contam marks lists that record contamination.
+const LISTS = {
+  npl:       {label:'Federal NPL (Superfund, final or proposed)', agency:'EPA', group:'contam', r:1.0,  sev:1.0, contam:true, src:'epa_frs'},
+  npl_del:   {label:'Federal NPL, deleted sites', agency:'EPA', group:'contam', r:0.5, sev:0.6, contam:true, src:'epa_frs'},
+  sems:      {label:'Federal SEMS active sites (former CERCLIS)', agency:'EPA', group:'contam', r:0.5, sev:0.8, contam:true, src:'epa_frs'},
+  sems_arch: {label:'Federal SEMS archived sites (former NFRAP)', agency:'EPA', group:'contam', r:'adj', sev:0.4, contam:true, src:'epa_frs'},
+  sf_state:  {label:'Texas State Superfund', agency:'TCEQ', group:'contam', r:1.0, sev:1.0, contam:true, src:'tceq_gis'},
+  ihwca:     {label:'Texas Industrial and Hazardous Waste corrective action', agency:'TCEQ', group:'contam', r:0.5, sev:0.8, contam:true, src:'tceq_gis'},
+  vcp:       {label:'Texas Voluntary Cleanup Program', agency:'TCEQ', group:'contam', r:0.5, sev:0.6, contam:true, src:'tceq_gis'},
+  iop:       {label:'Texas Innocent Owner/Operator Program', agency:'TCEQ', group:'contam', r:0.5, sev:0.5, contam:true, src:'tceq_gis'},
+  brown_tceq:{label:'Texas Brownfields Site Assessment', agency:'TCEQ', group:'contam', r:0.5, sev:0.6, contam:true, src:'tceq_gis'},
+  brown_epa: {label:'EPA Brownfields (ACRES)', agency:'EPA', group:'contam', r:0.5, sev:0.6, contam:true, src:'epa_frs'},
+  dcrp:      {label:'Texas Dry Cleaner Remediation Program', agency:'TCEQ', group:'contam', r:0.5, sev:0.8, contam:true, src:'tceq_gis'},
+  msd:       {label:'Texas Municipal Setting Designations (groundwater use restriction)', agency:'TCEQ', group:'contam', r:'adj', sev:0.5, contam:true, src:'tceq_gis'},
+  lpst:      {label:'Texas Leaking Petroleum Storage Tanks', agency:'TCEQ', group:'tank', r:0.5, sev:0.8, contam:true, src:'tceq_gis'},
+  pst:       {label:'Texas registered Petroleum Storage Tanks', agency:'TCEQ', group:'tank', r:'adj', sev:0.5, contam:false, src:'tceq_gis'},
+  dc_reg:    {label:'Texas dry cleaner registrations (operating and historical)', agency:'TCEQ', group:'haz', r:'adj', sev:0.5, contam:false, src:'tceq_drycleaners'},
+  rcra_tsd:  {label:'RCRA hazardous waste treatment, storage and disposal', agency:'EPA', group:'haz', r:0.5, sev:0.7, contam:false, src:'epa_frs'},
+  rcra_gen:  {label:'RCRA hazardous waste generators', agency:'EPA', group:'haz', r:'adj', sev:0.4, contam:false, src:'epa_frs'},
+  landfill:  {label:'Texas active municipal solid waste landfills', agency:'TCEQ', group:'haz', r:0.5, sev:0.5, contam:false, src:'tceq_gis'},
+  tri:       {label:'EPA Toxics Release Inventory reporters', agency:'EPA', group:'haz', r:'adj', sev:0.3, contam:false, src:'epa_frs', extra:true},
+  enf:       {label:'EPA formal enforcement actions', agency:'EPA', group:'haz', r:'adj', sev:0.3, contam:false, src:'epa_frs', extra:true},
+  npdes_ind: {label:'EPA industrial stormwater permits (industrial activity)', agency:'EPA', group:'haz', r:'adj', sev:0.25, contam:false, src:'epa_frs', extra:true},
+  rrc_ocp:   {label:'RRC Operator Cleanup Program', agency:'RRC', group:'oil', r:0.5, sev:0.6, contam:true, src:'rrc'},
+  rrc_vcp:   {label:'RRC Voluntary Cleanup Program', agency:'RRC', group:'oil', r:0.5, sev:0.6, contam:true, src:'rrc'},
+  rrc_brown: {label:'RRC Brownfield Response Program', agency:'RRC', group:'oil', r:0.5, sev:0.6, contam:true, src:'rrc'},
+  rrc_cwds:  {label:'RRC commercial waste disposal facilities', agency:'RRC', group:'oil', r:0.5, sev:0.5, contam:false, src:'rrc'},
+  rrc_disp:  {label:'RRC commercial disposal wells', agency:'RRC', group:'oil', r:0.5, sev:0.5, contam:false, src:'rrc'},
+  rrc_inj:   {label:'RRC injection and disposal wells', agency:'RRC', group:'oil', r:0.5, sev:0.3, contam:false, src:'rrc'},
+  rrc_orphan:{label:'RRC orphan wells (no responsible operator)', agency:'RRC', group:'oil', r:0.25, sev:0.5, contam:false, src:'rrc'},
+};
+const ASTM_NOTE = {npl:'1 mile',npl_del:'1/2 mile',sems:'1/2 mile',sems_arch:'property and adjoining',sf_state:'1 mile',ihwca:'1/2 mile',vcp:'1/2 mile',
+  iop:'1/2 mile',brown_tceq:'1/2 mile',brown_epa:'1/2 mile',dcrp:'1/2 mile',msd:'property and adjoining',lpst:'1/2 mile',pst:'property and adjoining',
+  rcra_tsd:'1/2 mile',rcra_gen:'property and adjoining',landfill:'1/2 mile'};
+const USE_LABEL = {fuel:'fuel sales or storage',auto:'automotive repair or salvage',dryclean:'dry cleaning or laundry',industrial:'industrial or manufacturing',
+  agchem:'agricultural chemical, gin, elevator or feedlot',sub:'CRE sub-type with a suspect use',f2:'appraisal class F2 (industrial)',
+  subh:'warehouse, cold storage or utility sub-type (heightened diligence)'};
+const TRIGGER_USES = ['fuel','auto','dryclean','industrial','agchem','sub','f2'];
+// SBA SOP 50 10 8.1, Appendix 6: NAICS codes of environmentally sensitive industries (prefix match).
+const SBA_APP6 = [['211','Oil and gas extraction'],['212','Mining (except oil and gas)'],['213','Support activities for mining'],['237','Heavy and civil engineering construction'],
+ ['311','Food manufacturing (if fuel tanks present)'],['312','Beverage and tobacco manufacturing (except breweries, 31212)'],['313','Textile mills'],['314','Textile product mills'],
+ ['316','Leather and allied products'],['321','Wood products (if finishing on site)'],['322','Paper manufacturing'],['323','Printing and related support'],['324','Petroleum and coal products'],
+ ['325','Chemical manufacturing'],['326','Plastics and rubber products'],['327','Nonmetallic mineral products'],['331','Primary metal manufacturing'],['332','Fabricated metal products'],
+ ['333','Machinery manufacturing'],['334','Computer and electronic products'],['335','Electrical equipment and appliances'],['336','Transportation equipment'],['337','Furniture (if finishing on site)'],
+ ['339','Miscellaneous manufacturing (if hazardous materials)'],['42311','Motor vehicle wholesalers (if service bays)'],['42314','Used motor vehicle parts wholesalers'],['4235','Metal and mineral wholesalers'],
+ ['42393','Recyclable material wholesalers'],['4246','Chemical wholesalers'],['4247','Petroleum products wholesalers'],['441','Motor vehicle and parts dealers (if service bays)'],
+ ['457','Gasoline stations and fuel vendors'],['447','Gasoline stations (pre-2022 NAICS code, now 457)'],['481','Air transportation'],['482','Rail transportation'],['484','Trucking (if service bays, washing or fuel tanks)'],
+ ['486','Pipeline transportation'],['488','Transportation support (if fuel tanks or on-site repairs)'],['53212','Truck, trailer and RV rental (if repairs or washing on site)'],
+ ['53241','Heavy equipment rental (if repairs or washing on site)'],['53249','Other industrial equipment rental (if repairs or washing on site)'],['54138','Testing laboratories'],
+ ['56171','Exterminating and pest control'],['562','Waste management and remediation'],['6221','General hospitals (if fuel tanks present)'],['713990','Shooting ranges'],['71391','Golf courses and country clubs'],
+ ['71392','Skiing facilities'],['71393','Marinas'],['7212','RV parks and camps (if fuel tanks or repairs)'],['8111','Automotive repair and maintenance'],['8112','Electronic equipment repair'],
+ ['8113','Commercial machinery repair'],['8122','Death care services (if embalming or cremation)'],['8123','Laundry and dry cleaning (if dry cleaning ever on site)'],['812921','Photofinishing laboratories']];
+function sbaSensitive(naics){ const n=String(naics||'').replace(/\D/g,''); if(!n) return null;
+  for(const [p,l] of SBA_APP6){ if(n.startsWith(p)){ if(p==='312'&&n.startsWith('31212')) continue; return {code:p,label:l}; } } return null; }
+const TRACK_STATUS = ['Not started','Screened','Questionnaire received','Phase I ordered','Phase I received','Phase II ordered','Cleared','CEO exception approved'];
+const LIVE = {
+  flood: 'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer',
+  wet:   'https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0',
+  rrc:   'https://gis.rrc.texas.gov/server/rest/services/rrc_public/RRC_Public_Viewer_Srvs/MapServer',
+};
+const SW_DEFAULTS = {onsite:40, adjoining:20, nearby:15, use:15, oilgas:10};
+const W = Object.assign({}, SW_DEFAULTS);
+const BANDS = [[60,'High','b-high'],[40,'Elevated','b-elev'],[20,'Moderate','b-mod'],[0,'Low','b-low']];
+
+/* ===================================================================== helpers */
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtN = n => n==null?'':Number(n).toLocaleString('en-US');
+const usd = n => n==null||n===''?'':'$'+Math.round(n).toLocaleString('en-US');
+const today = () => new Date().toISOString().slice(0,10);
+function lsGet(k, d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+function hav(a1,o1,a2,o2){ const R=3958.8, r=Math.PI/180, dA=(a2-a1)*r, dO=(o2-o1)*r;
+  const x=Math.sin(dA/2)**2+Math.cos(a1*r)*Math.cos(a2*r)*Math.sin(dO/2)**2; return 2*R*Math.asin(Math.min(1,Math.sqrt(x))); }
+const COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+function bearing(a1,o1,a2,o2){ const r=Math.PI/180, y=Math.sin((o2-o1)*r)*Math.cos(a2*r),
+  x=Math.cos(a1*r)*Math.sin(a2*r)-Math.sin(a1*r)*Math.cos(a2*r)*Math.cos((o2-o1)*r); return (Math.atan2(y,x)/r+360)%360; }
+const dir16 = deg => COMPASS[Math.round(deg/22.5)%16];
+function fmtDist(mi){ if(mi==null) return ''; const ft=mi*5280; return ft<1000 ? Math.round(ft/10)*10+' ft' : mi.toFixed(2)+' mi'; }
+function radiusMi(code){ const r=LISTS[code].r; return r==='adj'?CFG.adjoiningMi:(r==='prop'?CFG.onSiteFt/5280:r); }
+function radiusLabel(code){ const r=LISTS[code].r; if(r==='adj') return 'Property and adjoining ('+Math.round(CFG.adjoiningMi*5280)+' ft)';
+  if(r==='prop') return 'Property only'; return r===1?'1 mile':(r===0.5?'1/2 mile':(r===0.25?'1/4 mile':r+' mile')); }
+function normAddr(s){ s=String(s||'').toUpperCase().replace(/\b(STE|SUITE|UNIT|APT|BLDG|#)\s*\S+.*$/,'').replace(/[.,]/g,' ');
+  const M={STREET:'ST',AVENUE:'AVE',AV:'AVE',ROAD:'RD',DRIVE:'DR',BOULEVARD:'BLVD',HIGHWAY:'HWY',LANE:'LN',PARKWAY:'PKWY',FREEWAY:'FWY',PLACE:'PL',COURT:'CT',CIRCLE:'CIR',TRAIL:'TRL',NORTH:'N',SOUTH:'S',EAST:'E',WEST:'W'};
+  return s.split(/\s+/).filter(Boolean).map(w=>M[w]||w).join(' '); }
+function recordLink(lk, lid){
+  if(!lk||!lid) return '';
+  if(lk==='rn') return 'https://www15.tceq.texas.gov/crpub/index.cfm?fuseaction=regent.validateRE&re_ref_num_txt='+encodeURIComponent(lid);
+  if(lk==='echo') return 'https://echo.epa.gov/detailed-facility-report?fid='+encodeURIComponent(lid);
+  if(lk==='frs') return 'https://frs-public.epa.gov/ords/frs_public2/fii_query_detail.disp_program_facility?p_registry_id='+encodeURIComponent(lid);
+  if(lk==='rrcapi') return 'https://gis.rrc.texas.gov/GISViewer/';
+  if(lk==='url') return /^https?:\/\//i.test(lid)?lid:'';
+  return '';
+}
+const LINK_TEXT = {rn:'TCEQ Central Registry',echo:'EPA ECHO report',frs:'EPA FRS report',rrcapi:'RRC GIS Viewer (search API)',url:'Agency page'};
+async function getJSON(url, timeoutMs, cache){
+  const ctl = new AbortController(); const t = setTimeout(()=>ctl.abort(), timeoutMs||20000);
+  try{ const r = await fetch(url, {signal:ctl.signal, cache:cache||'default'}); if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }
+  finally{ clearTimeout(t); }
+}
+function arcQuery(layerUrl, lat, lng, distFt, fields, extra){
+  const p = new URLSearchParams(Object.assign({
+    geometry: JSON.stringify({x:lng, y:lat, spatialReference:{wkid:4326}}), geometryType:'esriGeometryPoint', inSR:'4326',
+    spatialRel:'esriSpatialRelIntersects', outFields:fields, returnGeometry:'false', f:'json'}, extra||{}));
+  if(distFt){ p.set('distance', String(distFt)); p.set('units','esriSRUnit_Foot'); }
+  const once = () => getJSON(layerUrl+'/query?'+p.toString(), 20000).then(d=>{ if(d.error) throw new Error(d.error.message||'query error'); return d.features||[]; });
+  return once().catch(() => new Promise(r=>setTimeout(r,1500)).then(once));   // one retry: these services drop the odd request
+}
+
+/* ===================================================================== data */
+let IDX = null, PIDS = null;
+const shard = {sites:{}, parcels:{}};
+function loadSites(fips){ if(!shard.sites[fips]) shard.sites[fips] = getJSON(BASE+'sites/'+fips+'.json', 30000).then(d=>d.r).catch(()=>[]); return shard.sites[fips]; }
+function loadParcels(fips){ if(!shard.parcels[fips]) shard.parcels[fips] = getJSON(BASE+'parcels/'+fips+'.json', 30000).then(d=>d.r).catch(()=>[]); return shard.parcels[fips]; }
+function loadPids(){ if(!PIDS) PIDS = getJSON(BASE+'parcels/ids.json', 60000).catch(()=>({})); return PIDS; }
+function parcelObj(r, fips){ return {id:r[0], lat:r[1], lng:r[2], addr:r[3], city:r[4], cd:r[5], sub:r[6], uses:r[7]?r[7].split(','):[],
+  owner:r[8], legal:r[9], val:r[10], yr:r[11], sba:(r[12]||[]).map(x=>({naics:x[0],desc:x[1],borrower:x[2],sens:x[3],src:x[4]})), fips}; }
+function countyName(fips){ return (IDX&&IDX.counties[fips]&&IDX.counties[fips].name)||fips; }
+function nearCounties(lat, lng, mi){
+  const dLat = mi/69.0, dLng = mi/(69.17*Math.cos(lat*Math.PI/180));
+  return Object.entries(IDX.counties).filter(([f,c])=>{ const b=c.bbox; return lat>=b[0]-dLat&&lat<=b[2]+dLat&&lng>=b[1]-dLng&&lng<=b[3]+dLng; }).map(([f])=>f);
+}
+function vintage(src){ const s=IDX&&IDX.sources&&IDX.sources[src]; return s?(s.fetched||'')+(s.status==='stale'?' (stale)':''):''; }
+
+/* ===================================================================== screening core */
+async function screenCore(subj, opt){
+  opt = opt || {};
+  const fipsList = nearCounties(subj.lat, subj.lng, CFG.maxMi + 0.05);
+  const shards = await Promise.all(fipsList.map(loadSites));
+  const subjAddr = subj.addr ? normAddr(subj.addr) : '';
+  const finds = [];
+  for(const recs of shards){
+    for(const s of recs){
+      const L = LISTS[s[0]]; if(!L) continue;
+      const d = hav(subj.lat, subj.lng, s[1], s[2]); const rmax = radiusMi(s[0]);
+      const sAddr = s[4] ? normAddr(s[4]) : '';
+      const addrHit = subjAddr && sAddr===subjAddr && (!subj.city || !s[5] || s[5].toUpperCase()===String(subj.city).toUpperCase());
+      if(d > rmax && !addrHit) continue;
+      // Agency points are often geocoded addresses, so a listing that plots a few feet
+      // away but carries a different street address is a neighbour, not the subject.
+      // Distance alone decides only when one side has no address.
+      const onsite = !!addrHit || (d <= CFG.onSiteFt/5280 && (!subjAddr || !sAddr));
+      finds.push({code:s[0], lat:s[1], lng:s[2], name:s[3], addr:s[4], city:s[5], rid:s[6], status:s[7], lk:s[8], lid:s[9], detail:s[10],
+        d, dir: d<0.002?'':dir16(bearing(subj.lat,subj.lng,s[1],s[2])), onsite, adjoining: !onsite && d<=CFG.adjoiningMi, addrHit:!!addrHit});
+    }
+  }
+  finds.sort((a,b)=>a.d-b.d);
+  finds.forEach((f,i)=>f.n=i+1);
+  const res = {subj, finds, live:{}, liveErr:{}, fipsList, at:new Date().toISOString()};
+  if(opt.live !== false){
+    const jobs = {
+      flood: ()=>Promise.all([
+        arcQuery(LIVE.flood+'/28', subj.lat, subj.lng, 0, 'FLD_ZONE,ZONE_SUBTY,SFHA_TF,STATIC_BFE,DFIRM_ID'),
+        arcQuery(LIVE.flood+'/28', subj.lat, subj.lng, CFG.sfhaFt, 'FLD_ZONE,SFHA_TF', {where:"SFHA_TF='T'"}),
+        arcQuery(LIVE.flood+'/3', subj.lat, subj.lng, 0, 'FIRM_PAN,EFF_DATE').catch(()=>[])]),
+      wells: ()=>arcQuery(LIVE.rrc+'/1', subj.lat, subj.lng, CFG.wellsMi*5280, 'API,GIS_SYMBOL_DESCRIPTION,GIS_LAT83,GIS_LONG83'),
+      pipe: opt.light ? null : ()=>arcQuery(LIVE.rrc+'/13', subj.lat, subj.lng, CFG.pipelineFt, 'OPERATOR,COMMODITY_DESCRIPTION,SYSTEM_TYPE,STATUS,DIAMETER'),
+      wet: opt.light ? null : ()=>Promise.all([arcQuery(LIVE.wet, subj.lat, subj.lng, 0, 'ATTRIBUTE,WETLAND_TYPE,ACRES'),
+                                  arcQuery(LIVE.wet, subj.lat, subj.lng, CFG.wetlandFt, 'ATTRIBUTE,WETLAND_TYPE,ACRES')]),
+    };
+    await Promise.all(Object.entries(jobs).filter(([k,f])=>f).map(([k,f])=>f().then(v=>{res.live[k]=v;}).catch(e=>{res.liveErr[k]=e.message||String(e);})));
+    if(res.live.wells){
+      res.live.wells = res.live.wells.map(f=>{ const a=f.attributes; const la=+a.GIS_LAT83, lo=+a.GIS_LONG83;
+        const d = isFinite(la)&&isFinite(lo)?hav(subj.lat,subj.lng,la,lo):null;
+        return {api:a.API, type:a.GIS_SYMBOL_DESCRIPTION||'', lat:la, lng:lo, d, dir:d!=null?dir16(bearing(subj.lat,subj.lng,la,lo)):''}; })
+        .filter(w=>w.d==null||w.d<=CFG.wellsMi+0.01).sort((a,b)=>(a.d??9)-(b.d??9));
+    }
+  }
+  evaluate(res);
+  return res;
+}
+
+function statusFactor(f){ if(f.status==='open') return 1; if(f.status==='closed') return 0.45; if(f.status==='inactive') return 0.6; return 0.8; }
+function sevOf(f){ let s = LISTS[f.code].sev;
+  if(f.code==='lpst') s = f.status==='closed'?0.35:0.85;
+  if(f.code==='pst') s = f.status==='active'?0.55:0.35;
+  if(f.code==='dc_reg') s = /drop station/i.test(f.detail)?0.15:0.6;
+  return s; }
+
+function evaluate(res){
+  const s = res.subj, F = res.finds, ctx = currentContext();
+  const onsite = F.filter(f=>f.onsite), adj = F.filter(f=>f.adjoining), near = F.filter(f=>!f.onsite&&!f.adjoining);
+  // ---- triggers (Credit Policy Section 8.3)
+  const useEv = [];
+  (s.uses||[]).filter(u=>TRIGGER_USES.includes(u)).forEach(u=>useEv.push(USE_LABEL[u]+(u==='sub'?' ('+s.sub+')':'')));
+  const sbaHits = (s.sba||[]).filter(x=>x.sens);
+  sbaHits.forEach(x=>useEv.push('SBA loan at this address, NAICS '+x.naics+' '+x.desc));
+  const ctxNaics = sbaSensitive(ctx.naics); if(ctxNaics) useEv.push('Business NAICS '+ctx.naics+' is on SBA Appendix 6 ('+ctxNaics.label+')');
+  if(ctx.fuel) useEv.push('Business sells, supplies or dispenses fuel (entered above)');
+  // A dry cleaner drop station takes in clothes for cleaning elsewhere, so it is noted but is not a trigger.
+  const isDrop = f => f.code==='dc_reg' && /drop station/i.test(f.detail||'');
+  onsite.filter(f=>['pst','dc_reg','rcra_gen','rcra_tsd','tri','lpst','npdes_ind'].includes(f.code) && !isDrop(f)).forEach(f=>useEv.push(LISTS[f.code].label+' record on the property: '+f.name));
+  const ustEv = [];
+  onsite.filter(f=>f.code==='pst'||f.code==='lpst').forEach(f=>ustEv.push(LISTS[f.code].label+': '+f.name+(f.detail?' ('+f.detail+')':'')));
+  if((s.uses||[]).includes('fuel')) ustEv.push('Fuel use in the appraisal description suggests tanks');
+  const listEv = onsite.filter(f=>!isDrop(f)).map(f=>LISTS[f.code].label+': '+f.name+' ('+fmtDist(f.d)+(f.addrHit?', same street address':'')+')');
+  const dropNote = onsite.filter(isDrop).map(f=>'Dry cleaner drop station on the property ('+f.name+'); no cleaning on site, so not a trigger');
+  const adjContam = adj.filter(f=>LISTS[f.code].contam && f.status!=='closed');
+  const adjEv = adjContam.map(f=>LISTS[f.code].label+': '+f.name+', '+fmtDist(f.d)+' '+f.dir+(f.status?' ('+f.status+')':''));
+  const adjClosed = adj.filter(f=>LISTS[f.code].contam && f.status==='closed').length;
+  const trig = [
+    {k:'use', label:'Current or historical industrial, manufacturing, dry-cleaning, fuel-storage, automotive or agricultural-chemical use', fired:useEv.length>0, ev:useEv, clear:'No suspect use in the appraisal record, CRE sub-type, SBA loan data or on-site listings'},
+    {k:'ust', label:'Known or suspected underground storage tanks', fired:ustEv.length>0, ev:ustEv, clear:'No registered or leaking tank on the property'},
+    {k:'list', label:'Listing on an environmental database', fired:listEv.length>0, ev:listEv.concat(dropNote), clear:'The property is not on any list searched'+(dropNote.length?'. '+dropNote.join('. '):'')},
+    {k:'adj', label:'Adjacent contaminated site', fired:adjEv.length>0, ev:adjEv.concat(adjClosed?[adjClosed+' closed case'+(adjClosed>1?'s':'')+' also within the adjoining distance (listed, not a trigger)']:[]), clear:'No open or unresolved contaminated site within '+Math.round(CFG.adjoiningMi*5280)+' ft'+(adjClosed?' ('+adjClosed+' closed case'+(adjClosed>1?'s':'')+' within that distance)':'')},
+    {k:'visible', label:'Visible evidence of a release or improper storage', na:true, ev:['Needs the site visit and borrower questionnaire']},
+    {k:'hist', label:'Undocumented historical use', na:true, ev:['Needs historical sources (see the links below) reviewed in a Phase I']},
+  ];
+  res.triggers = trig;
+  const fired = trig.filter(t=>t.fired);
+  // ---- recommendation
+  const heightened = [];
+  if(s.cd==='F2') heightened.push('Industrial appraisal class (F2)');
+  if(/Warehouse|Manufacturing|Industrial|Cold Storage|Energy/i.test(s.sub||'')) heightened.push('CRE sub-type '+s.sub);
+  if(ctx.cld) heightened.push('Construction or land-development loan');
+  const rec = {sba:null};
+  if(fired.length){ rec.cls='req'; rec.head='Phase I ESA required before funding'; rec.why='Credit Policy Section 8.3: '+fired.map(t=>t.label.toLowerCase()).join('; ')+'.'; }
+  else if(heightened.length){ rec.cls='heighten'; rec.head='Heightened diligence: no Phase I trigger found in the records'; rec.why='Section 8.3 calls for heightened diligence on '+heightened.join(', ').toLowerCase()+'. Confirm with the questionnaire and site visit, and consider a Phase I.'; }
+  else { rec.cls='clear'; rec.head='No Phase I trigger found in the records screen'; rec.why='Confirm with the borrower environmental questionnaire and site visit. Visible evidence of a release and undocumented historical use are not detectable from records.'; }
+  if(ctx.prog!=='conv'){
+    const naicsHit = ctxNaics || (sbaHits[0]&&sbaSensitive(sbaHits[0].naics));
+    const fuel = ctx.fuel || (ctxNaics&&(ctxNaics.code==='457'||ctxNaics.code==='447'));
+    if(fuel) rec.sba='SBA SOP 50 10 8.1: a business that sells or dispenses fuel always starts with a Phase I, and Appendix 7 (gas station loans) applies.';
+    else if(naicsHit) rec.sba='SBA SOP 50 10 8.1: NAICS '+(ctxNaics?ctx.naics:sbaHits[0].naics)+' matches Appendix 6 ('+naicsHit.label+'), so the investigation must begin with a Phase I regardless of loan amount.';
+    else if(ctx.amt!=null && ctx.amt<=250000) rec.sba='SBA SOP 50 10 8.1: with no Appendix 6 match and a loan of $250,000 or less, the investigation may begin with an Environmental Questionnaire.';
+    else rec.sba='SBA SOP 50 10 8.1: with no Appendix 6 match'+(ctx.amt!=null?' and a loan over $250,000':'')+', the investigation must begin with an Environmental Questionnaire and a Records Search with Risk Assessment by an environmental professional (this screen does not substitute for it).';
+    if(rec.cls!=='req' && /Phase I/.test(rec.sba)){ rec.cls='req'; rec.head='Phase I ESA required before funding'; rec.why=(rec.why?rec.why+' ':'')+'Required by SBA for this business type.'; }
+  }
+  res.rec = rec;
+  // ---- score
+  const sf = f=>sevOf(f)*statusFactor(f);
+  const cOn = onsite.length ? Math.max(...onsite.map(sf)) : 0;
+  const cAdj = Math.min(1, 1-adj.reduce((p,f)=>p*(1-sf(f)),1));
+  const cNear = Math.min(1, 1-Math.exp(-near.reduce((t,f)=>t+sf(f)*(1-f.d/Math.max(radiusMi(f.code),0.01)),0)));
+  const useW = {fuel:1,dryclean:1,industrial:1,auto:0.8,agchem:0.8,sub:0.7,f2:0.6,subh:0.3};
+  let cUse = Math.max(0, ...(s.uses||[]).map(u=>useW[u]||0.5));
+  if(sbaHits.length || ctxNaics || ctx.fuel) cUse = 1;
+  let cOil = 0; const w = res.live.wells||[];
+  if(F.some(f=>f.code==='rrc_orphan'&&f.d<=0.25)) cOil = 1;
+  else if(w.length) cOil = Math.min(1, 0.35 + 0.08*w.length + (w[0].d!=null&&w[0].d<0.05?0.25:0));
+  if(F.some(f=>(f.code==='rrc_inj'||f.code==='rrc_disp')&&f.d<=0.5)) cOil = Math.max(cOil, 0.6);
+  const comps = [['On-site listings','onsite',cOn],['Adjoining listings','adjoining',cAdj],['Nearby listings','nearby',cNear],['Suspect use','use',cUse],['Oil and gas','oilgas',cOil]];
+  const tot = Object.values(W).reduce((a,b)=>a+b,0)||100;
+  res.comps = comps.map(([label,key,frac])=>({label,key,frac,pts:frac*W[key]*100/tot,max:W[key]*100/tot}));
+  res.score = Math.round(res.comps.reduce((t,c)=>t+c.pts,0));
+  res.band = BANDS.find(b=>res.score>=b[0]);
+  res.counts = {onsite:onsite.length, adj:adj.length, near:near.length, open:F.filter(f=>f.status==='open').length};
+}
+
+function currentContext(){
+  const amt = parseFloat(String($('#in-amt').value||'').replace(/[^0-9.]/g,''));
+  return {prog:$('#in-prog').value, amt:isFinite(amt)?amt:null, naics:$('#in-naics').value.trim(), cld:$('#in-cld').checked, fuel:$('#in-fuel').checked, by:$('#in-by').value.trim()};
+}
+
+/* ===================================================================== screen view */
+let CUR = null, map = null, mapLayers = null;
+function scoreBadge(res){
+  const comps = res.comps.map((c,i)=>({label:c.label, value:+c.pts.toFixed(1), max:+c.max.toFixed(1), color:['#012A52','#CB995C','#1B5E8C','#8C6239','#7C8994'][i]}));
+  return `<span class="score ${res.band[2]} shv-trigger" data-shv-title="Environmental Screening Score" data-shv-total="${res.score}" data-shv-max="100"
+    data-shv-components='${esc(JSON.stringify(comps))}' data-shv-foot="Higher means more environmental concern. ${esc(res.band[1])} band. Weights are adjustable.">${res.score}</span>`;
+}
+function subjTitle(s){ return s.addr ? s.addr+(s.city?', '+s.city:'') : (s.lat.toFixed(5)+', '+s.lng.toFixed(5)); }
+
+async function runScreen(subj){
+  $('#screen-empty').style.display='none';
+  $('#screen-out').style.display='block';
+  $('#p-subject').innerHTML='<h3>Screening…</h3><div class="note">Loading listed sites for '+esc(countyName(subj.fips))+' County and its neighbours, and querying the live layers.</div>';
+  $('#p-verdict').innerHTML='';
+  const url = new URL(location.href); url.search='';
+  if(subj.parcelId){ url.searchParams.set('parcel', subj.parcelId); url.searchParams.set('county', subj.fips); }
+  else { url.searchParams.set('lat', subj.lat.toFixed(6)); url.searchParams.set('lng', subj.lng.toFixed(6)); }
+  history.replaceState(null,'',url);
+  CUR = await screenCore(subj, {live:true});
+  renderScreen();
+}
+
+function renderScreen(){
+  if(!CUR) return;
+  evaluate(CUR);
+  const r = CUR, s = r.subj;
+  $('#p-subject').innerHTML = `<h3>${esc(subjTitle(s))}</h3>
+    <div class="note">${esc(countyName(s.fips))} County${s.parcelId?' · CRE parcel '+esc(s.parcelId):''} · located by ${esc(s.locSource)}</div>
+    <div class="kv">
+      ${s.owner?`<div class="k">Owner of record</div><div>${esc(s.owner)}</div>`:''}
+      ${s.cd?`<div class="k">Appraisal class</div><div>${esc(s.cd)}${s.sub?' · '+esc(s.sub):''}</div>`:''}
+      ${s.legal?`<div class="k">Legal description</div><div class="small">${esc(s.legal)}</div>`:''}
+      ${s.val?`<div class="k">Appraised value</div><div>${usd(s.val)}${s.yr?' · built '+esc(s.yr):''}</div>`:''}
+      <div class="k">Coordinates</div><div>${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}</div>
+      ${(s.sba||[]).length?`<div class="k">SBA loans at address</div><div class="small">${s.sba.map(x=>esc(x.borrower)+' · NAICS '+esc(x.naics)+' '+esc(x.desc)+(x.sens?' <span class="pill red">Appendix 6</span>':'')).join('<br>')}</div>`:''}
+      <div class="k">Score</div><div>${scoreBadge(r)} <span class="muted small">${esc(r.band[1])} · ${r.counts.onsite} on site, ${r.counts.adj} adjoining, ${r.counts.near} nearby</span></div>
+    </div>`;
+  const rec = r.rec;
+  $('#p-verdict').innerHTML = `<div class="verdict ${rec.cls}"><div class="big">${esc(rec.head)}</div><div>${esc(rec.why)}</div>
+      ${rec.sba?`<div style="margin-top:8px"><b>SBA:</b> ${esc(rec.sba)}</div>`:''}</div>
+    <div class="small muted">This is a records screen. It is not a Phase I Environmental Site Assessment under ASTM E1527-21, does not meet All Appropriate Inquiries under CERCLA, and is not an official flood zone determination.</div>`;
+  $('#t-trig tbody').innerHTML = r.triggers.map(t=>`<tr><td>${esc(t.label)}</td>
+     <td class="nw">${t.na?'<span class="res-na">Not assessed</span>':(t.fired?'<span class="res-fired">Found</span>':'<span class="res-clear">Not found</span>')}</td>
+     <td class="small">${t.na||t.fired?t.ev.map(esc).join('<br>'):esc(t.clear)}</td></tr>`).join('');
+  renderFlags(); renderFindings(); renderNone(); renderHist(); drawMap();
+  if(window.ScoreHover) ScoreHover.init();
+}
+
+function floodInfo(r){
+  if(r.liveErr.flood) return {cls:'warn', v:'Not available', d:'The FEMA flood map service did not respond. Re-run the screen, or check the FEMA Flood Map Service Center.'};
+  if(!r.live.flood) return {cls:'', v:'Not queried', d:''};
+  const [at, near, pan] = r.live.flood; const a = at[0]&&at[0].attributes;
+  const p = pan[0]&&pan[0].attributes;
+  const panel = p?(' FIRM panel '+p.FIRM_PAN+(p.EFF_DATE?' effective '+new Date(p.EFF_DATE).toISOString().slice(0,10):'')):'';
+  if(!a) return {cls:'warn', v:'No digital flood map', d:'No National Flood Hazard Layer polygon at this point. Order a flood determination.'+panel, zone:'None mapped'};
+  const sfha = a.SFHA_TF==='T';
+  const zone = a.FLD_ZONE+(a.ZONE_SUBTY?' ('+a.ZONE_SUBTY.toLowerCase()+')':'');
+  return {cls:sfha?'bad':(near.length?'warn':'good'), v:'Zone '+zone, zone:a.FLD_ZONE,
+    d:(sfha?'Inside a Special Flood Hazard Area; flood insurance required on a federally related loan.':(near.length?'Outside the SFHA, but an SFHA is within '+CFG.sfhaFt+' ft.':'Outside the Special Flood Hazard Area.'))+
+      (a.STATIC_BFE>0?' Base flood elevation '+a.STATIC_BFE+' ft.':'')+panel+' Preliminary; an official flood determination is still required.'};
+}
+function wetInfo(r){
+  if(r.liveErr.wet) return {cls:'warn', v:'Not available', d:'The National Wetlands Inventory service did not respond. Re-run the screen, or check the NWI Wetlands Mapper.'};
+  if(!r.live.wet) return {cls:'', v:'Not queried', d:''};
+  const [at, near] = r.live.wet;
+  if(at.length) return {cls:'bad', v:'Wetland at the point', d:at.map(f=>f.attributes.WETLAND_TYPE).filter(Boolean).slice(0,3).join(', ')+'. A development constraint; may need a Corps of Engineers review.'};
+  if(near.length) return {cls:'warn', v:near.length+' within '+CFG.wetlandFt+' ft', d:[...new Set(near.map(f=>f.attributes.WETLAND_TYPE))].slice(0,3).join(', ')};
+  return {cls:'good', v:'None within '+CFG.wetlandFt+' ft', d:'National Wetlands Inventory'};
+}
+function wellInfo(r){
+  if(r.liveErr.wells) return {cls:'warn', v:'Not available', d:'The Railroad Commission well service did not respond. Re-run the screen, or check the RRC Public GIS Viewer.'};
+  const w = r.live.wells; if(!w) return {cls:'', v:'Not queried', d:''};
+  const orphan = r.finds.filter(f=>f.code==='rrc_orphan'), inj = r.finds.filter(f=>f.code==='rrc_inj'||f.code==='rrc_disp');
+  const types = {}; w.forEach(x=>{ types[x.type]=(types[x.type]||0)+1; });
+  const tlist = Object.entries(types).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([t,n])=>n+' '+(t||'unclassified').toLowerCase()).join(', ');
+  const d = (w.length?'Nearest '+fmtDist(w[0].d)+' '+w[0].dir+'. '+tlist+'.':'No well locations.')+
+            (orphan.length?' '+orphan.length+' orphan well'+(orphan.length>1?'s':'')+' within 1/4 mile.':'')+
+            (inj.length?' '+inj.length+' injection or disposal well'+(inj.length>1?'s':'')+' within 1/2 mile.':'');
+  return {cls: orphan.length||(w.length&&w[0].d<0.05)?'bad':(w.length||inj.length?'warn':'good'), v:w.length+' well'+(w.length===1?'':'s')+' within 1/4 mile', d};
+}
+function pipeInfo(r){
+  if(r.liveErr.pipe) return {cls:'warn', v:'Not available', d:'The Railroad Commission pipeline service did not respond. Re-run the screen.'};
+  const p = r.live.pipe; if(!p) return {cls:'', v:'Not queried', d:''};
+  if(!p.length) return {cls:'good', v:'None within '+CFG.pipelineFt+' ft', d:'Railroad Commission pipeline layer'};
+  const ops = [...new Set(p.map(f=>f.attributes.OPERATOR).filter(Boolean))].slice(0,3).join(', ');
+  const com = [...new Set(p.map(f=>f.attributes.COMMODITY_DESCRIPTION).filter(Boolean))].slice(0,3).join(', ');
+  return {cls:'warn', v:p.length+' segment'+(p.length>1?'s':'')+' within '+CFG.pipelineFt+' ft', d:(com?com+'. ':'')+(ops?'Operators: '+ops+'.':'')};
+}
+function renderFlags(){
+  const r = CUR;
+  const items = [['Flood zone (FEMA)',floodInfo(r)],['Wetlands (NWI)',wetInfo(r)],['Oil and gas wells (RRC)',wellInfo(r)],['Pipelines (RRC)',pipeInfo(r)]];
+  $('#flags').innerHTML = items.map(([k,i])=>`<div class="flag ${i.cls}"><div class="k">${esc(k)}</div><div class="v">${esc(i.v)}</div><div class="d">${esc(i.d)}</div></div>`).join('');
+}
+function statusPill(f){
+  if(f.status==='open') return '<span class="pill red">Open</span>';
+  if(f.status==='closed') return '<span class="pill slate">Closed</span>';
+  if(f.status==='active') return '<span class="pill amber">Active</span>';
+  if(f.status==='inactive') return '<span class="pill slate">Inactive</span>';
+  return '<span class="pill slate">Listed</span>';
+}
+function findRows(){ const g = $('#f-group').value; return CUR.finds.filter(f=>!g||LISTS[f.code].group===g); }
+function renderFindings(){
+  const rows = findRows();
+  const r = CUR;
+  $('#f-note').textContent = r.finds.length ? (r.finds.length+' listed record'+(r.finds.length>1?'s':'')+' within their search distances ('+r.counts.onsite+' on the property, '+r.counts.adj+' adjoining, '+r.counts.open+' open cases). Sorted by distance; numbers match the map.')
+    : 'No listed records within any search distance.';
+  $('#t-find tbody').innerHTML = rows.length ? rows.map(f=>{ const L=LISTS[f.code], u=recordLink(f.lk,f.lid);
+    return `<tr><td class="n">${f.n}</td><td class="small">${esc(L.label)}<div class="thin">${esc(L.agency)}</div></td>
+      <td>${esc(f.name||'(name not reported)')}${f.onsite?' <span class="pill red">On property</span>':(f.adjoining?' <span class="pill amber">Adjoining</span>':'')}<div class="thin">${esc(f.detail)}</div></td>
+      <td class="small">${esc(f.addr)}${f.city?'<div class="thin">'+esc(f.city)+'</div>':''}</td>
+      <td>${statusPill(f)}</td><td class="n" data-sort="${f.d.toFixed(5)}">${fmtDist(f.d)}</td><td class="nw">${esc(f.dir)}</td>
+      <td class="small">${esc(f.rid)}${u?'<div><a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(LINK_TEXT[f.lk]||'Source')+'</a></div>':''}</td></tr>`; }).join('')
+    : '<tr><td colspan="8" class="muted">No records in this group.</td></tr>';
+  if(window.SortableTable) SortableTable.refresh($('#t-find'));
+}
+function renderNone(){
+  const hit = new Set(CUR.finds.map(f=>f.code));
+  const rows = Object.keys(LISTS).filter(k=>!hit.has(k));
+  $('#t-none tbody').innerHTML = rows.map(k=>`<tr><td class="small">${esc(LISTS[k].label)}</td><td class="nw small">${esc(radiusLabel(k))}</td><td class="nw small">${esc(vintage(LISTS[k].src))}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">Every list returned at least one record.</td></tr>';
+}
+function histLinks(s){
+  return [
+    ['USGS topoView historical topographic maps','https://ngmdb.usgs.gov/topoview/viewer/#15/'+s.lat.toFixed(4)+'/'+s.lng.toFixed(4),'Opens at the subject. Maps back to the late 1800s show former tanks, pits, rail spurs and plants.'],
+    ['Library of Congress Sanborn fire insurance maps (Texas)','https://www.loc.gov/collections/sanborn-maps/?fa=location:texas','Search by city. Building-level use records for Texas towns, about 1880 to 1950s.'],
+    ['Texas Geographic Information Office historical imagery','https://geographic.texas.gov/','Statewide historical aerial photography; search by county.'],
+    ['TCEQ Central Registry search','https://www15.tceq.texas.gov/crpub/','Every TCEQ-regulated entity at an address, including closed permits.'],
+    ['Railroad Commission Public GIS Viewer','https://gis.rrc.texas.gov/GISViewer/','Well records, plugging reports and lease lines for any API number.'],
+  ];
+}
+function renderHist(){
+  $('#hist').innerHTML = '<ul style="margin:0;padding-left:18px">'+histLinks(CUR.subj).map(([t,u,d])=>`<li style="margin-bottom:8px"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a><div class="small muted">${esc(d)}</div></li>`).join('')+'</ul>';
+}
+
+function ensureMap(){
+  if(map) return;
+  map = L.map('map',{scrollWheelZoom:false}).setView([31.3,-99.3],6);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19}).addTo(map);
+  mapLayers = L.layerGroup().addTo(map);
+  map.on('click', e=>{
+    if(!IDX) return;
+    const fips = nearCounties(e.latlng.lat, e.latlng.lng, 0).find(f=>true);
+    pickPoint(e.latlng.lat, e.latlng.lng, 'map click');
+  });
+}
+function drawMap(){
+  ensureMap();
+  mapLayers.clearLayers();
+  const s = CUR.subj;
+  [[CFG.adjoiningMi,'#B5761F'],[0.25,'#7C8994'],[0.5,'#7C8994'],[1.0,'#7C8994']].forEach(([mi,c])=>L.circle([s.lat,s.lng],{radius:mi*1609.34,color:c,weight:1,fill:false,dashArray:'4 4',interactive:false}).addTo(mapLayers));
+  L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div style="width:18px;height:18px;background:#CB995C;border:3px solid #012A52;border-radius:50%"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).bindPopup('<b>Subject</b><br>'+esc(subjTitle(s))).addTo(mapLayers);
+  (CUR.live.wells||[]).forEach(w=>{ if(isFinite(w.lat)) L.circleMarker([w.lat,w.lng],{radius:3,color:'#8C6239',weight:1,fillOpacity:.8}).bindPopup('RRC well API '+esc(w.api)+'<br>'+esc(w.type)+'<br>'+fmtDist(w.d)+' '+esc(w.dir)).addTo(mapLayers); });
+  CUR.finds.forEach(f=>{
+    const cls = LISTS[f.code].group==='oil'?'oil':(f.status==='open'?'open':(f.status==='closed'?'closed':''));
+    L.marker([f.lat,f.lng],{icon:L.divIcon({className:'',html:'<div class="num-marker '+cls+'">'+f.n+'</div>',iconSize:[22,22],iconAnchor:[11,11]})})
+     .bindPopup('<b>#'+f.n+' '+esc(f.name)+'</b><br>'+esc(LISTS[f.code].label)+'<br>'+fmtDist(f.d)+' '+esc(f.dir)+(f.status?' · '+esc(f.status):'')).addTo(mapLayers);
+  });
+  const far = Math.max(CFG.adjoiningMi*1.4, ...CUR.finds.filter(f=>f.d<=0.55).map(f=>f.d), 0.25);
+  map.fitBounds(L.latLng(s.lat,s.lng).toBounds(far*2*1609.34*1.15));
+  setTimeout(()=>map.invalidateSize(),50);
+}
+
+/* ===================================================================== subject selection */
+let parcelList = [];
+async function pickParcel(fips, id){
+  let r = (await loadParcels(fips)).find(x=>x[0]===id);
+  if(!r){ // the link may carry the borrower's county; look the parcel up statewide
+    const p = (await loadPids())[id]; const alt = (Array.isArray(p)?p:(p?[p]:[])).filter(f=>f!==fips);
+    for(const f of alt){ r = (await loadParcels(f)).find(x=>x[0]===id); if(r){ fips = f; break; } }
+  }
+  if(!r){ alert('Parcel '+id+' was not found in the CRE parcel data.'); return; }
+  $('#in-county').value = fips;
+  const p = parcelObj(r, fips);
+  if(p.lat==null){
+    $('#screen-empty').style.display='block'; $('#screen-out').style.display='none';
+    $('#screen-empty').innerHTML='<b>'+esc(p.addr||p.id)+'</b> has no verified location in the CRE data, so it cannot be screened by parcel. Click the property on the map, or enter its coordinates.';
+    ensureMapVisible(); return;
+  }
+  runScreen({lat:p.lat, lng:p.lng, addr:p.addr, city:p.city, fips, parcelId:p.id, cd:p.cd, sub:p.sub, uses:p.uses, owner:p.owner, legal:p.legal, val:p.val, yr:p.yr, sba:p.sba, locSource:'CRE parcel geocode'});
+}
+function ensureMapVisible(){ $('#screen-out').style.display='block'; ensureMap(); setTimeout(()=>map.invalidateSize(),50); }
+async function pickPoint(lat, lng, how){
+  const fipsCands = nearCounties(lat, lng, 0);
+  if(!fipsCands.length){ alert('That point is outside Texas.'); return; }
+  // nearest CRE parcel within 150 ft gives use context
+  let best = null, fips = fipsCands[0];
+  for(const f of fipsCands){ const recs = await loadParcels(f);
+    for(const r of recs){ if(r[1]==null) continue; const d = hav(lat,lng,r[1],r[2]); if(d<150/5280 && (!best||d<best.d)) best={d, r, f}; } }
+  if(best){ const p = parcelObj(best.r, best.f); fips = best.f;
+    return runScreen({lat, lng, addr:p.addr, city:p.city, fips, parcelId:p.id, cd:p.cd, sub:p.sub, uses:p.uses, owner:p.owner, legal:p.legal, val:p.val, yr:p.yr, sba:p.sba,
+      locSource:how+' (nearest CRE parcel '+Math.round(best.d*5280)+' ft away)'}); }
+  // county by bounding box can be ambiguous at borders; the site search covers neighbours either way
+  runScreen({lat, lng, fips, uses:[], sba:[], locSource:how});
+}
+async function searchParcels(){
+  const fips = $('#in-county').value, q = $('#in-q').value.trim().toUpperCase(), box = $('#in-results');
+  if(!fips || q.length<2){ box.style.display='none'; return; }
+  const recs = await loadParcels(fips);
+  const hits = recs.filter(r=>(r[3]||'').toUpperCase().includes(q)||(r[8]||'').toUpperCase().includes(q)||r[0].toUpperCase()===q).slice(0,40);
+  box.style.display='block';
+  box.innerHTML = hits.length ? hits.map(r=>`<div data-id="${esc(r[0])}"><b>${esc(r[3]||'(no address)')}</b>${r[4]?', '+esc(r[4]):''} <span class="thin">· ${esc(r[8]||'')} · ${esc(r[6]||r[5])}${r[1]==null?' · no location':''}</span></div>`).join('')
+    : '<div class="muted" style="cursor:default">No parcels match.</div>';
+  box.querySelectorAll('div[data-id]').forEach(el=>el.onclick=()=>{ box.style.display='none'; pickParcel(fips, el.dataset.id); });
+}
+
+/* ===================================================================== outputs */
+function findingsCSV(res){
+  const h = ['map_id','list','agency','site','address','city','status','distance_ft','direction','on_property','adjoining','record_id','detail','source_link'];
+  const rows = res.finds.map(f=>[f.n, LISTS[f.code].label, LISTS[f.code].agency, f.name, f.addr, f.city, f.status, Math.round(f.d*5280), f.dir, f.onsite?'Y':'', f.adjoining?'Y':'', f.rid, f.detail, recordLink(f.lk,f.lid)]);
+  return [h].concat(rows).map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+}
+function download(name, text, type){ const b = new Blob([text],{type:type||'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }
+function fileStem(s){ return 'Environmental Screen - '+subjTitle(s).replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim()+' - '+today(); }
+
+function sitePlanSVG(res){
+  const s = res.subj, W0 = 330, R = 150, cx = W0/2, cy = W0/2;
+  const maxMi = Math.max(0.25, ...res.finds.map(f=>Math.min(f.d,1)));
+  const scaleMi = maxMi<=0.25?0.25:(maxMi<=0.5?0.5:1.0);
+  const k = R/scaleMi;
+  const xy = (la,lo)=>[cx+(lo-s.lng)*69.17*Math.cos(s.lat*Math.PI/180)*k, cy-(la-s.lat)*69.0*k];
+  let g = `<svg viewBox="0 0 ${W0} ${W0+26}" width="100%" xmlns="http://www.w3.org/2000/svg" style="background:#FCFAF6;border:.5pt solid #C7BFB1">`;
+  [CFG.adjoiningMi,0.25,0.5,1.0].filter(m=>m<=scaleMi).forEach(m=>{ g+=`<circle cx="${cx}" cy="${cy}" r="${m*k}" fill="none" stroke="${m===CFG.adjoiningMi?'#B5761F':'#7C8994'}" stroke-dasharray="3 3" stroke-width="1"/>`;
+    g+=`<text x="${cx+3}" y="${cy-m*k-2}" font-size="8" fill="#5C6670">${m===CFG.adjoiningMi?Math.round(m*5280)+' ft':(m===1?'1 mi':(m===0.5?'1/2 mi':'1/4 mi'))}</text>`; });
+  (res.live.wells||[]).forEach(w=>{ if(!isFinite(w.lat)) return; const [x,y]=xy(w.lat,w.lng); g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6" fill="#8C6239"/>`; });
+  res.finds.filter(f=>f.d<=scaleMi).slice(0,60).forEach(f=>{ const [x,y]=xy(f.lat,f.lng);
+    const c = LISTS[f.code].group==='oil'?'#8C6239':(f.status==='open'?'#DA0C1B':(f.status==='closed'?'#7C8994':'#012A52'));
+    g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${c}" stroke="#fff" stroke-width="1"/><text x="${x.toFixed(1)}" y="${(y+2.6).toFixed(1)}" font-size="7.5" text-anchor="middle" fill="#fff" font-weight="700">${f.n}</text>`; });
+  g+=`<circle cx="${cx}" cy="${cy}" r="6" fill="#CB995C" stroke="#012A52" stroke-width="2.5"/>`;
+  g+=`<text x="${W0-16}" y="18" font-size="11" text-anchor="middle" fill="#012A52" font-weight="700">N</text><path d="M${W0-16} 22 l-4 10 h8 z" fill="#012A52"/>`;
+  g+=`<text x="8" y="${W0+16}" font-size="8.5" fill="#5C6670">Subject (gold) · open case (red) · closed (grey) · other listing (navy) · oil and gas (brown)</text></svg>`;
+  return g;
+}
+
+function reportHTML(res){
+  const s = res.subj, ctx = currentContext(), rec = res.rec;
+  const fl = floodInfo(res), we = wetInfo(res), wl = wellInfo(res), pp = pipeInfo(res);
+  const top = res.finds.slice(0,40);
+  const none = Object.keys(LISTS).filter(k=>!res.finds.some(f=>f.code===k));
+  const srcs = Object.values(IDX.sources||{}).map(x=>esc(x.title)+(x.fetched?' (retrieved '+esc(x.fetched)+(x.status==='stale'?', stale':'')+')':'')).join('; ');
+  return `<div class="band ${rec.cls}" style="margin-top:0;background:#F2EFE9">
+    <div style="font-size:9pt;color:#5C6670;letter-spacing:.06em;text-transform:uppercase">Ranger Bank · Environmental Screening Summary</div>
+    <h1>${esc(subjTitle(s))}</h1>
+    <div style="font-size:9.5pt">${esc(countyName(s.fips))} County, Texas · screened ${esc(today())}${ctx.by?' · prepared by '+esc(ctx.by):''}</div></div>
+  <div class="two">
+   <div>
+    <h2 style="margin-top:4pt">Conclusion</h2>
+    <div class="band ${rec.cls}"><b>${esc(rec.head)}.</b> ${esc(rec.why)}${rec.sba?'<br><br><b>SBA.</b> '+esc(rec.sba):''}</div>
+    <h2>Property</h2>
+    <div class="kv" style="display:grid">
+      ${s.parcelId?`<div class="k">CRE parcel</div><div>${esc(s.parcelId)}</div>`:''}
+      ${s.owner?`<div class="k">Owner of record</div><div>${esc(s.owner)}</div>`:''}
+      ${s.cd?`<div class="k">Appraisal class</div><div>${esc(s.cd)}${s.sub?', '+esc(s.sub):''}</div>`:''}
+      ${s.legal?`<div class="k">Legal description</div><div>${esc(s.legal)}</div>`:''}
+      <div class="k">Location</div><div>${s.lat.toFixed(5)}, ${s.lng.toFixed(5)} (${esc(s.locSource)})</div>
+      <div class="k">Loan program</div><div>${ctx.prog==='conv'?'Conventional':'SBA '+esc(ctx.prog==='7a'?'7(a)':'504')}${ctx.amt!=null?', '+usd(ctx.amt):''}${ctx.naics?', business NAICS '+esc(ctx.naics):''}${ctx.cld?', construction or land development':''}</div>
+      <div class="k">Screening score</div><div>${res.score} of 100 (${esc(res.band[1])}); ${res.counts.onsite} on the property, ${res.counts.adj} adjoining, ${res.counts.near} nearby</div>
+    </div>
+   </div>
+   <div>${sitePlanSVG(res)}</div>
+  </div>
+  <h2>Phase I triggers in Credit Policy Section 8.3</h2>
+  <table><thead><tr><th style="width:42%">Trigger</th><th style="width:13%">Result</th><th>Evidence</th></tr></thead><tbody>
+   ${res.triggers.map(t=>`<tr><td>${esc(t.label)}</td><td>${t.na?'Not assessed':(t.fired?'Found':'Not found')}</td><td>${t.na||t.fired?t.ev.map(esc).join('<br>'):esc(t.clear)}</td></tr>`).join('')}</tbody></table>
+  <h2>Physical setting and oil and gas</h2>
+  <table><tbody>
+   <tr><th style="width:22%">Flood zone</th><td>${esc(fl.v)}. ${esc(fl.d)}</td></tr>
+   <tr><th>Wetlands</th><td>${esc(we.v)}. ${esc(we.d)}</td></tr>
+   <tr><th>Oil and gas wells</th><td>${esc(wl.v)}. ${esc(wl.d)}</td></tr>
+   <tr><th>Pipelines</th><td>${esc(pp.v)}. ${esc(pp.d)}</td></tr></tbody></table>
+  <h2>Listed sites within search distance</h2>
+  ${top.length?`<table><thead><tr><th>#</th><th>List</th><th>Site and address</th><th>Status</th><th>Distance</th><th>Record</th></tr></thead><tbody>
+   ${top.map(f=>`<tr><td>${f.n}</td><td>${esc(LISTS[f.code].label)}</td><td>${esc(f.name||'(name not reported)')}${f.onsite?' (on the property)':(f.adjoining?' (adjoining)':'')}<br><span style="color:#5C6670">${esc([[f.addr,f.city].filter(Boolean).join(', '), f.detail].filter(Boolean).join('; '))}</span></td>
+     <td>${esc(f.status||'listed')}</td><td>${fmtDist(f.d)} ${esc(f.dir)}</td><td>${esc(f.rid)}</td></tr>`).join('')}</tbody></table>
+   ${res.finds.length>top.length?`<div class="foot">${res.finds.length-top.length} more records are in the findings export.</div>`:''}`:'<p>No listed records within any search distance.</p>'}
+  <h2>Lists searched with no results</h2>
+  <table class="compact"><thead><tr><th>List</th><th>Search distance</th><th>Data as of</th></tr></thead><tbody>
+   ${none.map(k=>`<tr><td>${esc(LISTS[k].label)}</td><td>${esc(radiusLabel(k))}</td><td>${esc(vintage(LISTS[k].src))}</td></tr>`).join('')}</tbody></table>
+  <h2>Historical sources for the Phase I</h2>
+  <p>${histLinks(s).map(([t])=>esc(t)).join('; ')}.</p>
+  <h2>Sources and limitations</h2>
+  <p>Sources: ${srcs}; FEMA National Flood Hazard Layer, US Fish and Wildlife Service National Wetlands Inventory and Railroad Commission well and pipeline layers, queried on ${esc(today())}; SBA SOP 50 10 8.1, Appendices 6 and 7; ASTM E1527-21 minimum search distances.</p>
+  <p>This is a records screen. It is not a Phase I Environmental Site Assessment under ASTM E1527-21, it does not meet All Appropriate Inquiries under CERCLA, and the flood zone is not an official flood determination. Site locations are as reported by each agency and can be off by a parcel or more. Without parcel boundaries, "adjoining" means within ${Math.round(CFG.adjoiningMi*5280)} feet of the subject point and "on the property" means at the same street address, or within ${CFG.onSiteFt} feet when one of the two records has no street address. Visible evidence of a release and undocumented historical use cannot be detected from records and need the borrower questionnaire, a site visit and, where triggered, a Phase I by an environmental professional.</p>`;
+}
+function printReport(){
+  if(!CUR) return;
+  $('#report').innerHTML = reportHTML(CUR);
+  const t = document.title; document.title = fileStem(CUR.subj);
+  document.body.classList.add('print-report');
+  const done = ()=>{ document.body.classList.remove('print-report'); document.title = t; window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(()=>window.print(), 60);
+}
+function memoHTML(res){
+  const s = res.subj, rec = res.rec, fl = floodInfo(res), wl = wellInfo(res), we = wetInfo(res);
+  const nLists = Object.keys(LISTS).length;
+  const key = res.finds.filter(f=>f.onsite||f.adjoining||f.status==='open').slice(0,8);
+  const para = `Environmental records screen (${today()}). The property at ${subjTitle(s)} in ${countyName(s.fips)} County was checked against ${nLists} federal and Texas environmental lists at ASTM E1527-21 minimum search distances, using EPA, TCEQ and Railroad Commission data. `+
+    `${rec.head}. ${rec.why} `+(rec.sba?rec.sba+' ':'')+
+    `The screen found ${res.counts.onsite} listed record${res.counts.onsite===1?'':'s'} on the property, ${res.counts.adj} adjoining and ${res.counts.near} more within the search distances, ${res.counts.open} of them open cases. `+
+    `Flood zone: ${fl.v} (FEMA National Flood Hazard Layer, preliminary). Wetlands: ${we.v}. Oil and gas: ${wl.v}. `+
+    `This is a records screen and does not replace a Phase I Environmental Site Assessment where one is required.`;
+  const tbl = key.length?`<table style="border-collapse:collapse;font-family:Calibri,sans-serif;font-size:10pt"><tr>${['List','Site','Status','Distance'].map(h=>`<th style="border:1px solid #C7BFB1;background:#F0EBE1;padding:3px 6px;text-align:left">${h}</th>`).join('')}</tr>`+
+    key.map(f=>`<tr>${[LISTS[f.code].label, f.name+(f.onsite?' (on the property)':(f.adjoining?' (adjoining)':'')), f.status||'listed', fmtDist(f.d)+' '+f.dir].map(v=>`<td style="border:1px solid #C7BFB1;padding:3px 6px">${esc(v)}</td>`).join('')}</tr>`).join('')+'</table>':'';
+  return {html:`<div style="font-family:Calibri,sans-serif;font-size:11pt"><p>${esc(para)}</p>${tbl}</div>`, text:para};
+}
+async function copyMemo(){
+  if(!CUR) return;
+  const m = memoHTML(CUR);
+  try{
+    if(navigator.clipboard && window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([m.html],{type:'text/html'}),'text/plain':new Blob([m.text],{type:'text/plain'})})]);
+    } else throw new Error('no clipboard API');
+  }catch(e){
+    const d = document.createElement('div'); d.contentEditable='true'; d.innerHTML=m.html; d.style.position='fixed'; d.style.left='-9999px'; document.body.appendChild(d);
+    const rg = document.createRange(); rg.selectNodeContents(d); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rg);
+    try{ document.execCommand('copy'); }catch(_){} sel.removeAllRanges(); d.remove();
+  }
+  const b = $('#btn-copy'); const t = b.textContent; b.textContent='Copied'; setTimeout(()=>b.textContent=t,1600);
+}
+
+/* ===================================================================== tracker */
+const TRK_KEY = 'envTracker';
+function trackKey(s){ return s.parcelId ? s.fips+':'+s.parcelId : s.lat.toFixed(5)+','+s.lng.toFixed(5); }
+function getTracker(){ return lsGet(TRK_KEY, {}); }
+let dlgKey = null;
+function openTrack(key, seed){
+  const T = getTracker(); const e = T[key] || Object.assign({status:'Screened'}, seed||{});
+  dlgKey = key; $('#dt-title').textContent = e.label || key;
+  $('#dt-status').innerHTML = TRACK_STATUS.map(s=>`<option${s===e.status?' selected':''}>${esc(s)}</option>`).join('');
+  $('#dt-cons').value = e.consultant||''; $('#dt-date').value = e.reportDate||''; $('#dt-recs').value = e.recs||''; $('#dt-notes').value = e.notes||'';
+  $('#dlg-track')._seed = Object.assign({}, e);
+  $('#dlg-track').showModal();
+}
+function saveTrack(){
+  const T = getTracker(); const e = Object.assign({}, $('#dlg-track')._seed);
+  Object.assign(e, {status:$('#dt-status').value, consultant:$('#dt-cons').value.trim(), reportDate:$('#dt-date').value, recs:$('#dt-recs').value, notes:$('#dt-notes').value.trim(), updated:today()});
+  T[dlgKey] = e;
+  if(!lsSet(TRK_KEY, T)) alert('This browser blocked local storage, so the tracker could not be saved. Export from another browser instead.');
+  $('#dlg-track').close(); renderTracker();
+}
+function renderTracker(){
+  const T = getTracker(); const keys = Object.keys(T).sort((a,b)=>(T[b].updated||'').localeCompare(T[a].updated||''));
+  $('#t-track tbody').innerHTML = keys.length ? keys.map(k=>{ const e = T[k];
+    return `<tr><td>${esc(e.label||k)}<div class="thin">${esc(e.county||'')}</div></td><td><span class="pill ${e.status==='Cleared'?'green':(/Phase II|exception/i.test(e.status)?'red':(/Phase I/.test(e.status)?'amber':'navy'))}">${esc(e.status)}</span></td>
+      <td class="small">${e.score!=null?esc(e.score)+' · ':''}${esc(e.rec||'')}<div class="thin">${esc(e.screened||'')}</div></td><td class="small">${esc(e.consultant||'')}</td><td class="nw small">${esc(e.reportDate||'')}</td>
+      <td class="small">${esc(e.recs||'')}</td><td class="small">${esc(e.notes||'')}</td><td class="nw small">${esc(e.updated||'')}</td>
+      <td class="nw"><button class="btn" data-edit="${esc(k)}">Edit</button> ${e.url?`<a class="btn" href="${esc(e.url)}" style="text-decoration:none">Open</a>`:''}</td></tr>`; }).join('')
+    : '<tr><td colspan="9" class="muted">Nothing tracked yet. Screen a property and choose Add to tracker.</td></tr>';
+  $('#t-track').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openTrack(b.dataset.edit));
+  if(window.SortableTable) SortableTable.refresh($('#t-track'));
+}
+
+/* ===================================================================== batch */
+let BATCH = [], batchStop = false;
+async function batchSubjects(){
+  const src = $('#b-src').value, max = Math.max(1, Math.min(2000, parseInt($('#b-max').value,10)||200));
+  const out = [];
+  if(src==='pipe'){
+    const pipe = lsGet('crePipeline', {}); const ids = Object.keys(pipe);
+    if(!ids.length) throw new Error('No CRE pipeline found in this browser. Star properties in the CRE dashboard first, or use another source.');
+    const pids = await loadPids();
+    for(const id of ids){ let f = pids[id]; if(!f) continue; const list = Array.isArray(f)?f:[f];
+      for(const fips of list){ const r = (await loadParcels(fips)).find(x=>x[0]===id); if(r) out.push(parcelObj(r,fips)); } }
+  } else if(src==='filter'){
+    const fips = $('#b-county').value, sub = $('#b-sub').value;
+    (await loadParcels(fips)).forEach(r=>{ const p = parcelObj(r,fips);
+      if(!sub || (sub.startsWith('use:') ? p.uses.includes(sub.slice(4)) : p.sub===sub)) out.push(p); });
+  } else {
+    const file = $('#b-file').files[0]; if(!file) throw new Error('Choose a CSV file first.');
+    const lines = (await file.text()).split(/\r?\n/).filter(l=>l.trim());
+    const hdr = lines.shift().split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+    const ix = n=>hdr.indexOf(n);
+    for(const l of lines){ const c = l.split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+      if(ix('lat')>=0 && ix('lng')>=0 && c[ix('lat')]){ const la=+c[ix('lat')], lo=+c[ix('lng')];
+        if(isFinite(la)&&isFinite(lo)){ const f = nearCounties(la,lo,0)[0]; if(f) out.push({id:'', lat:la, lng:lo, addr:ix('address')>=0?c[ix('address')]:'', city:'', uses:[], sba:[], fips:f, fromCsv:true}); } }
+      else if(ix('parcel_id')>=0){ const id = c[ix('parcel_id')]; let fips = '';
+        if(ix('county')>=0){ const nm = c[ix('county')].toUpperCase(); fips = Object.keys(IDX.counties).find(k=>IDX.counties[k].name.toUpperCase()===nm||k===nm)||''; }
+        if(!fips){ const p = (await loadPids())[id]; fips = Array.isArray(p)?p[0]:p; }
+        if(fips){ const r = (await loadParcels(fips)).find(x=>x[0]===id); if(r) out.push(parcelObj(r,fips)); } }
+    }
+  }
+  const located = out.filter(p=>p.lat!=null);
+  return {list: located.slice(0,max), total: out.length, unlocated: out.length-located.length};
+}
+async function runBatch(){
+  batchStop = false; BATCH = [];
+  $('#b-run').disabled = true; $('#b-stop').disabled = false; $('#b-csvout').disabled = true;
+  try{
+    const {list, total, unlocated} = await batchSubjects();
+    const located = list;
+    $('#b-status').textContent = 'Screening '+located.length+' of '+total+' matching properties'+(unlocated?' ('+unlocated+' have no verified location and are skipped)':'')+'…';
+    const live = $('#b-live').checked;
+    for(let i=0;i<located.length && !batchStop;i++){
+      const p = located[i];
+      const subj = {lat:p.lat, lng:p.lng, addr:p.addr, city:p.city, fips:p.fips, parcelId:p.id||'', cd:p.cd, sub:p.sub, uses:p.uses||[], owner:p.owner, legal:p.legal, val:p.val, yr:p.yr, sba:p.sba||[], locSource:p.fromCsv?'uploaded coordinates':'CRE parcel geocode'};
+      try{ BATCH.push(await screenCore(subj, {live, light:true})); }catch(e){ BATCH.push({subj, error:e.message}); }
+      $('#b-bar').style.width = (100*(i+1)/located.length).toFixed(1)+'%';
+      if(live) await new Promise(r=>setTimeout(r,250));
+      if(i%10===9) renderBatch();
+    }
+    $('#b-status').textContent = (batchStop?'Stopped after ':'Done: ')+BATCH.length+' properties screened.';
+  }catch(e){ $('#b-status').textContent = e.message; }
+  $('#b-run').disabled = false; $('#b-stop').disabled = true; $('#b-csvout').disabled = !BATCH.length;
+  renderBatch();
+}
+function renderBatch(){
+  if(!BATCH.length){ $('#t-batch tbody').innerHTML='<tr><td colspan="8" class="muted">No properties screened.</td></tr>'; return; }
+  BATCH.forEach(r=>{ if(!r.error) evaluate(r); });
+  $('#t-batch tbody').innerHTML = BATCH.map((r,i)=>{ if(r.error) return `<tr><td>${esc(subjTitle(r.subj))}</td><td colspan="7" class="muted">${esc(r.error)}</td></tr>`;
+    const top = r.finds.find(f=>f.onsite)||r.finds.find(f=>f.adjoining)||r.finds[0];
+    const fl = r.live.flood?floodInfo(r):null;
+    return `<tr class="clickable" data-i="${i}"><td>${esc(subjTitle(r.subj))}<div class="thin">${esc(r.subj.owner||'')}</div></td><td>${esc(countyName(r.subj.fips))}</td><td class="small">${esc(r.subj.sub||'')}</td>
+      <td class="n" data-sort="${r.score}">${scoreBadge(r)}</td><td class="small"><span class="pill ${r.rec.cls==='req'?'red':(r.rec.cls==='heighten'?'amber':'green')}">${esc(r.rec.head)}</span></td>
+      <td class="small">${top?esc(top.name)+' <span class="thin">'+esc(LISTS[top.code].label)+', '+fmtDist(top.d)+'</span>':'<span class="muted">None</span>'}</td>
+      <td class="small">${fl?esc(fl.zone||fl.v):'<span class="thin">not queried</span>'}</td><td class="n">${r.live.wells?r.live.wells.length:''}</td></tr>`; }).join('');
+  $('#t-batch').querySelectorAll('tr[data-i]').forEach(tr=>tr.onclick=()=>{ const r = BATCH[+tr.dataset.i]; showView('screen'); runScreen(r.subj); });
+  if(window.SortableTable) SortableTable.refresh($('#t-batch'));
+  if(window.ScoreHover) ScoreHover.init();
+}
+function batchCSV(){
+  const h = ['property','county','parcel_id','owner','sub_type','score','band','recommendation','on_property','adjoining','nearby','open_cases','top_finding','flood_zone','wells_quarter_mile','lat','lng'];
+  const rows = BATCH.filter(r=>!r.error).map(r=>{ const top = r.finds.find(f=>f.onsite)||r.finds.find(f=>f.adjoining)||r.finds[0]; const fl = r.live.flood?floodInfo(r):null;
+    return [subjTitle(r.subj), countyName(r.subj.fips), r.subj.parcelId, r.subj.owner, r.subj.sub, r.score, r.band[1], r.rec.head, r.counts.onsite, r.counts.adj, r.counts.near, r.counts.open,
+      top?top.name+' ('+LISTS[top.code].label+')':'', fl?(fl.zone||fl.v):'', r.live.wells?r.live.wells.length:'', r.subj.lat, r.subj.lng]; });
+  download('Environmental Batch Screen - '+today()+'.csv', [h].concat(rows).map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n'), 'text/csv');
+}
+
+/* ===================================================================== explorer */
+let xmap = null, xchoro = null, XROWS = [], XFIPS = null;
+const XMETRIC = {
+  open:{label:'Open cleanup and leaking-tank cases', f:c=>c.open||0, ramp:'risk'},
+  lpst:{label:'Leaking petroleum storage tank records', f:c=>(c.by_list||{}).lpst||0, ramp:'risk'},
+  pst:{label:'Registered petroleum storage tank sites', f:c=>(c.by_list||{}).pst||0, ramp:'gold'},
+  dc:{label:'Dry cleaner registrations and remediation sites', f:c=>((c.by_list||{}).dc_reg||0)+((c.by_list||{}).dcrp||0), ramp:'gold'},
+  oil:{label:'RRC orphan, injection and disposal wells', f:c=>['rrc_orphan','rrc_inj','rrc_disp'].reduce((t,k)=>t+((c.by_list||{})[k]||0),0), ramp:'navy'},
+  all:{label:'All listed records', f:c=>c.sites||0, ramp:'navy'},
+};
+function xValues(m){ const o={}; Object.entries(IDX.counties).forEach(([f,c])=>o[f]=XMETRIC[m].f(c)); return o; }
+function initExplorer(){
+  if(xmap){ setTimeout(()=>xmap.invalidateSize(),50); return; }
+  xmap = L.map('xmap',{scrollWheelZoom:false}).setView([31.3,-99.3],6);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19}).addTo(xmap);
+  const sel = $('#x-metric'); sel.innerHTML = Object.entries(XMETRIC).map(([k,m])=>`<option value="${k}">${esc(m.label)}</option>`).join('');
+  CountyChoropleth.render({map:xmap, values:xValues(sel.value), ramp:XMETRIC[sel.value].ramp, label:XMETRIC[sel.value].label, format:v=>fmtN(v), legendEl:$('#x-legend'),
+    popup:fips=>{ const c = IDX.counties[fips]; if(!c) return fips; setTimeout(()=>loadCounty(fips),0);
+      return `<b>${esc(c.name)} County</b><br>${fmtN(c.sites)} listed records · ${fmtN(c.open)} open cases${c.parcels?'<br>'+fmtN(c.parcels)+' CRE parcels':''}`; }})
+  .then(ch=>{ xchoro = ch; sel.onchange=()=>{ const m = XMETRIC[sel.value]; xchoro.update(xValues(sel.value),{ramp:m.ramp,label:m.label,format:v=>fmtN(v)}); }; })
+  .catch(e=>{ $('#x-note').textContent='County boundaries could not be loaded: '+e.message; });
+}
+async function loadCounty(fips){
+  XFIPS = fips; $('#x-title').textContent = countyName(fips)+' County sites';
+  XROWS = (await loadSites(fips)).map(s=>({code:s[0], lat:s[1], lng:s[2], name:s[3], addr:s[4], city:s[5], rid:s[6], status:s[7], lk:s[8], lid:s[9], detail:s[10]}));
+  renderCounty();
+}
+function renderCounty(){
+  const g = $('#x-group').value, st = $('#x-status').value;
+  const rows = XROWS.filter(f=>LISTS[f.code] && (!g||LISTS[f.code].group===g) && (!st||f.status===st));
+  $('#x-csv').disabled = !rows.length;
+  const show = rows.slice(0,3000);
+  $('#t-x tbody').innerHTML = show.length ? show.map(f=>{ const u = recordLink(f.lk,f.lid);
+    return `<tr><td class="small">${esc(LISTS[f.code].label)}</td><td>${esc(f.name)}</td><td class="small">${esc(f.addr)}</td><td class="small">${esc(f.city)}</td><td>${statusPill(f)}</td><td class="small">${esc(f.detail)}</td>
+      <td class="small">${esc(f.rid)}${u?' <a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(LINK_TEXT[f.lk]||'Source')+'</a>':''}</td></tr>`; }).join('')
+    + (rows.length>show.length?`<tr><td colspan="7" class="muted">Showing 3,000 of ${fmtN(rows.length)}. Use the CSV for the full list.</td></tr>`:'')
+    : '<tr><td colspan="7" class="muted">No records match.</td></tr>';
+  if(window.SortableTable) SortableTable.refresh($('#t-x'));
+}
+
+/* ===================================================================== method */
+function renderMethod(){
+  const src = IDX.sources||{};
+  const srcRows = Object.entries(src).map(([k,s])=>`<tr><td>${esc(s.title)}</td><td class="nw">${esc(s.fetched||'')}</td><td>${s.status==='ok'?'<span class="pill green">Current</span>':'<span class="pill red">Stale</span> <span class="small">'+esc(s.error||'')+'</span>'}</td><td class="small">${esc(Object.entries(s.counts||{}).map(([a,b])=>a+' '+fmtN(b)).join(', '))}</td></tr>`).join('');
+  const listRows = Object.entries(LISTS).map(([k,L])=>`<tr><td>${esc(L.label)}</td><td>${esc(L.agency)}</td><td class="nw">${esc(radiusLabel(k))}</td><td class="nw">${esc(ASTM_NOTE[k]||(L.extra?'Not an ASTM list; context':'State or program-specific'))}</td><td class="n">${fmtN((IDX.lists||{})[k]||0)}</td></tr>`).join('');
+  const P = IDX.parcels||{}; const pc = P.counts||{};
+  $('#method').innerHTML = `
+  <h3>What this page does</h3>
+  <p>For a Texas commercial property, the page finds every site on the federal and Texas environmental lists below that lies within that list's search distance, checks the property against the Phase I triggers in Section 8.3 of the Ranger Bank Credit Policy and, for SBA loans, against SBA SOP 50 10 8.1, and prints a summary for the credit file.</p>
+  <h4>What it is not</h4>
+  <ul><li>It is a desktop records screen. It is not a Phase I Environmental Site Assessment under ASTM E1527-21 and does not meet All Appropriate Inquiries under CERCLA.</li>
+   <li>The flood zone comes from FEMA's National Flood Hazard Layer and is not an official flood zone determination.</li>
+   <li>It does not satisfy SBA's Records Search with Risk Assessment, which needs an environmental professional's risk assessment.</li>
+   <li>Two Section 8.3 triggers cannot be detected from records: visible evidence of a release or improper storage, and undocumented historical use. The summary marks both Not assessed.</li></ul>
+  <h4>Distances</h4>
+  <p>Each list uses the ASTM E1527-21 minimum search distance for its class. The suite has parcel points but no parcel boundaries, so "adjoining" means within ${Math.round(CFG.adjoiningMi*5280)} feet of the subject point, and "on the property" means at the same street address, or within ${CFG.onSiteFt} feet when one of the two records has no street address. Agency coordinates are often geocoded addresses, so a listed site can plot a parcel or two away from where it really is; read the address column before drawing conclusions. Live layers use ${CFG.wellsMi} mile for wells, ${CFG.pipelineFt} feet for pipelines, ${CFG.wetlandFt} feet for wetlands and ${CFG.sfhaFt} feet for a nearby Special Flood Hazard Area.</p>
+  <div class="table-wrap" style="max-height:none"><table class="data"><thead><tr><th>List</th><th>Agency</th><th>Search distance</th><th>ASTM E1527-21 class</th><th class="n">Texas records</th></tr></thead><tbody>${listRows}</tbody></table></div>
+  <h4>Phase I triggers and the recommendation</h4>
+  <p>A trigger fires when the records show: a suspect use (appraisal description or owner wording, the CRE sub-type, appraisal class F2, an SBA loan at the same address with an Appendix 6 NAICS code, or a tank, dry cleaner, hazardous waste or toxics listing on the property); a registered or leaking tank on the property; any listing on the property; or an open or unresolved contaminated site within the adjoining distance. Closed cases within the adjoining distance are listed but do not fire the trigger. Any trigger gives "Phase I ESA required before funding". With no trigger, industrial or warehouse collateral and construction or land-development loans get "Heightened diligence", and everything else gets "No Phase I trigger found", which still needs the questionnaire and site visit.</p>
+  <p>For SBA loans the page applies SOP 50 10 8.1: a business that sells or dispenses fuel always starts with a Phase I (and Appendix 7 applies to gas stations); a NAICS match to Appendix 6 starts with a Phase I regardless of loan amount; otherwise a loan of $250,000 or less may start with an Environmental Questionnaire, and a larger loan needs the questionnaire plus a Records Search with Risk Assessment. The pre-2022 gasoline station code 447 is treated the same as 457, because SBA loan records carry the code in force when they were approved.</p>
+  <h4>Environmental Screening Score</h4>
+  <p>A 0 to 100 score for ranking a batch; higher means more concern. The trigger checklist decides the recommendation, not the score. Components and default weights: on-site listings ${SW_DEFAULTS.onsite}, adjoining listings ${SW_DEFAULTS.adjoining}, nearby listings ${SW_DEFAULTS.nearby}, suspect use ${SW_DEFAULTS.use}, oil and gas ${SW_DEFAULTS.oilgas}. Each listing carries a severity for its list (Superfund and corrective action highest, toxics reporters lowest), scaled by status (open 100%, unknown 80%, inactive 60%, closed 45%), and nearby listings fade with distance inside their search radius. Bands are fixed: High 60 and above, Elevated 40 to 59, Moderate 20 to 39, Low under 20. Flood zone and wetlands stay out of the score. Use Adjust Weights to change the weights.</p>
+  <h4>Property context</h4>
+  <p>CRE parcels come from the CRE Prospecting dashboard (county appraisal district rolls). ${fmtN(pc.located||0)} parcels have a location that falls inside their own county; ${fmtN(pc.coord_outside_county||0)} geocodes landed in another county and were dropped, and ${fmtN(pc.no_coord||0)} parcels have no geocode, so those can be screened only by clicking the map. SBA loans at the same street address come from the SBA 7(a) and 504 loan data (${fmtN(pc.sba_match||0)} parcels matched).</p>
+  <h4>Sources and vintage</h4>
+  <div class="table-wrap" style="max-height:none"><table class="data"><thead><tr><th>Source</th><th>Retrieved</th><th>Status</th><th>Records</th></tr></thead><tbody>${srcRows}
+   <tr><td>FEMA National Flood Hazard Layer; US Fish and Wildlife Service National Wetlands Inventory; Railroad Commission well and pipeline layers</td><td>live</td><td><span class="pill navy">Queried at screen time</span></td><td class="small">1.4 million RRC well locations, pipelines, flood and wetland polygons</td></tr>
+   <tr><td>SBA SOP 50 10 8.1, Appendices 6 and 7 (effective October 1, 2026)</td><td>2026-11-18</td><td><span class="pill green">Current</span></td><td class="small">${SBA_APP6.length} NAICS prefixes</td></tr></tbody></table></div>
+  <h4>Known gaps</h4>
+  <ul><li>Federal RCRA corrective action (CORRACTS) is not in EPA's state facility file. Texas runs RCRA corrective action under its own authorization, and those sites are in the TCEQ Industrial and Hazardous Waste corrective action list above.</li>
+   <li>EPA's SEMS file does not separate archived sites cleanly; non-NPL sites with no current status are treated as archived (property and adjoining distance).</li>
+   <li>TCEQ publishes active landfills only; closed and abandoned landfills are not in this screen.</li>
+   <li>Dry cleaner registrations carry an address only and were geocoded with the US Census geocoder; unmatched addresses are left out.</li>
+   <li>The EPA radon zone map is not included.</li></ul>`;
+}
+
+/* ===================================================================== ribbon, nav, init */
+function renderRibbon(){
+  const src = IDX.sources||{};
+  const pills = Object.values(src).map(s=>`<span class="pill ${s.status==='ok'?'navy':'red'}" title="${esc(s.title)}">${esc((s.title||'').split(/[,(]/)[0].replace('Texas Open Data Portal','').trim())} · ${esc(s.fetched||'')}${s.status==='ok'?'':' stale'}</span>`);
+  pills.push('<span class="pill green">FEMA, wetlands, RRC wells: live</span>');
+  $('#ribbon').innerHTML = pills.join('');
+}
+function showView(v){
+  document.querySelectorAll('#nav button[data-view]').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active', s.id==='v-'+v));
+  if(v==='explore') initExplorer();
+  if(v==='tracker') renderTracker();
+  if(v==='screen' && map) setTimeout(()=>map.invalidateSize(),50);
+  try{ sessionStorage.setItem('envView', v); }catch(e){}
+}
+function fillSelects(){
+  const cs = Object.entries(IDX.counties).filter(([f,c])=>c.parcels).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  const opts = cs.map(([f,c])=>`<option value="${f}">${esc(c.name)} (${fmtN(c.parcels)} parcels)</option>`).join('');
+  $('#in-county').innerHTML = '<option value="">Choose a county…</option>'+opts;
+  $('#b-county').innerHTML = opts;
+  const subs = ['Gas Station/Auto','Auto Service/Repair','Manufacturing/Industrial','Warehouse/Distribution','Energy/Utility','Cold Storage','Airport/Aviation','Retail/Strip Center','Office','Medical/Healthcare','Hotel/Lodging','Apartment Complex','Restaurant/Food','Self-Storage'];
+  $('#b-sub').innerHTML = '<option value="">All parcels</option>'+Object.entries(USE_LABEL).map(([k,l])=>`<option value="use:${k}">Use flag: ${esc(l)}</option>`).join('')+subs.map(s=>`<option value="${esc(s)}">Sub-type: ${esc(s)}</option>`).join('');
+}
+async function init(){
+  // the embedded index comes with the page; the side-car file is the fallback
+  try{ IDX = (EMBED && EMBED.counties) ? EMBED : await getJSON(BASE+'index.json', 30000, 'no-cache'); }
+  catch(e){ $('#screen-empty').innerHTML = 'The environmental data could not be loaded ('+esc(e.message)+'). If you opened this file directly from disk, serve the dashboards folder over http instead.'; return; }
+  renderRibbon(); fillSelects(); renderMethod(); ensureMap();
+  document.querySelectorAll('#nav button[data-view]').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+  let t; $('#in-q').addEventListener('input', ()=>{ clearTimeout(t); t = setTimeout(searchParcels, 250); });
+  $('#in-county').onchange = searchParcels;
+  $('#btn-ll').onclick = ()=>{ const m = $('#in-ll').value.match(/(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/);
+    if(!m){ alert('Enter latitude and longitude, for example 32.4487, -99.7331'); return; }
+    let la = +m[1], lo = +m[2]; if(la<0 && lo>0){ [la,lo] = [lo,la]; } pickPoint(la, lo, 'coordinates entered'); };
+  ['#in-prog','#in-amt','#in-naics','#in-cld','#in-fuel'].forEach(s=>$(s).addEventListener('change', ()=>CUR&&renderScreen()));
+  $('#f-group').onchange = renderFindings;
+  $('#btn-print').onclick = printReport;
+  $('#btn-copy').onclick = copyMemo;
+  $('#btn-csv').onclick = ()=>CUR&&download(fileStem(CUR.subj)+'.csv', findingsCSV(CUR), 'text/csv');
+  $('#btn-json').onclick = ()=>CUR&&download(fileStem(CUR.subj)+'.json', JSON.stringify({screened:CUR.at, subject:CUR.subj, context:currentContext(), config:CFG, weights:W,
+      recommendation:CUR.rec, triggers:CUR.triggers, score:CUR.score, findings:CUR.finds, live:CUR.live, live_errors:CUR.liveErr, sources:IDX.sources}, null, 1), 'application/json');
+  $('#btn-track').onclick = ()=>{ if(!CUR) return; const s = CUR.subj;
+    openTrack(trackKey(s), {label:subjTitle(s), county:countyName(s.fips)+' County', score:CUR.score, rec:CUR.rec.head, screened:today(), url:location.href}); };
+  $('#dt-save').onclick = saveTrack; $('#dt-cancel').onclick = ()=>$('#dlg-track').close();
+  $('#dt-del').onclick = ()=>{ const T = getTracker(); delete T[dlgKey]; lsSet(TRK_KEY, T); $('#dlg-track').close(); renderTracker(); };
+  $('#tr-export').onclick = ()=>download('Environmental Diligence Tracker - '+today()+'.json', JSON.stringify(getTracker(), null, 1), 'application/json');
+  $('#tr-import').onchange = async e=>{ const f = e.target.files[0]; if(!f) return;
+    try{ const d = JSON.parse(await f.text()); const T = Object.assign(getTracker(), d); lsSet(TRK_KEY, T); renderTracker(); }catch(err){ alert('That file is not a tracker export.'); } e.target.value=''; };
+  $('#b-src').onchange = ()=>{ const v = $('#b-src').value; document.querySelectorAll('.b-filter').forEach(x=>x.style.display=v==='filter'?'':'none'); document.querySelectorAll('.b-csv').forEach(x=>x.style.display=v==='csv'?'':'none'); };
+  $('#b-src').onchange();
+  $('#b-run').onclick = runBatch; $('#b-stop').onclick = ()=>{ batchStop = true; }; $('#b-csvout').onclick = batchCSV;
+  $('#x-group').onchange = renderCounty; $('#x-status').onchange = renderCounty;
+  $('#x-csv').onclick = ()=>{ const g = $('#x-group').value, st = $('#x-status').value;
+    const rows = XROWS.filter(f=>LISTS[f.code]&&(!g||LISTS[f.code].group===g)&&(!st||f.status===st));
+    const h = ['list','agency','site','address','city','status','detail','record_id','lat','lng','source_link'];
+    download(countyName(XFIPS)+' County Environmental Sites - '+today()+'.csv', [h].concat(rows.map(f=>[LISTS[f.code].label,LISTS[f.code].agency,f.name,f.addr,f.city,f.status,f.detail,f.rid,f.lat,f.lng,recordLink(f.lk,f.lid)]))
+      .map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n'), 'text/csv'); };
+  if(window.ScoreWeights){
+    ScoreWeights.init({dashboardId:'environmental', title:'CRE Environmental Screening', theme:'light', triggerSelector:'#sw-trigger-mount', bannerSelector:'#sw-banner-mount',
+      scoringSystems:[{id:'env', label:'Environmental Screening Score', tabLabel:'Score', normalizeTo:100, components:[
+        {key:'onsite', label:'On-site listings', desc:'Worst listing on the property', default:SW_DEFAULTS.onsite, min:0, max:100},
+        {key:'adjoining', label:'Adjoining listings', desc:'Listings within the adjoining distance', default:SW_DEFAULTS.adjoining, min:0, max:100},
+        {key:'nearby', label:'Nearby listings', desc:'Listings inside their search distance, fading with distance', default:SW_DEFAULTS.nearby, min:0, max:100},
+        {key:'use', label:'Suspect use', desc:'Fuel, dry cleaning, industrial, automotive or ag-chemical use, or an SBA Appendix 6 NAICS', default:SW_DEFAULTS.use, min:0, max:100},
+        {key:'oilgas', label:'Oil and gas', desc:'Wells within 1/4 mile, orphan wells, injection and disposal wells', default:SW_DEFAULTS.oilgas, min:0, max:100}]}],
+      onChange:all=>{ if(all.env) Object.assign(W, all.env); if(CUR) renderScreen(); if(BATCH.length) renderBatch(); }});
+  }
+  if(window.ScoreHover) ScoreHover.init();
+  try{ const v = sessionStorage.getItem('envView'); if(v && document.getElementById('v-'+v)) showView(v); }catch(e){}
+  const q = new URLSearchParams(location.search);
+  if(q.get('parcel')){
+    let fips = q.get('county')||'';
+    if(fips && !/^48\d{3}$/.test(fips)){ const nm = fips.toUpperCase(); fips = Object.keys(IDX.counties).find(k=>IDX.counties[k].name.toUpperCase()===nm)||''; }
+    if(!fips){ const p = (await loadPids())[q.get('parcel')]; fips = Array.isArray(p)?p[0]:(p||''); }
+    if(fips){ $('#in-county').value = fips; showView('screen'); pickParcel(fips, q.get('parcel')); }
+  } else if(q.get('lat') && q.get('lng')){
+    const la = +q.get('lat'), lo = +q.get('lng'); if(isFinite(la)&&isFinite(lo)){ showView('screen'); pickPoint(la, lo, 'link coordinates'); }
+  }
+}
+init();
+</script>
+</body>
+</html>
